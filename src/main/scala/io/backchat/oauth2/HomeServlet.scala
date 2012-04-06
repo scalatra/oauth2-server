@@ -1,6 +1,6 @@
 package io.backchat.oauth2
 
-import auth.{OAuth2ServerBaseApp, AuthenticationSupport}
+import auth.{ OAuth2ServerBaseApp, AuthenticationSupport }
 import model._
 import org.scalatra._
 import org.scalatra.scalate.ScalateSupport
@@ -16,6 +16,10 @@ import javax.servlet.{ FilterConfig, ServletConfig }
 import org.fusesource.scalate.{ Binding, TemplateEngine }
 
 class HomeServlet(implicit protected val system: ActorSystem) extends OAuth2ServerBaseApp {
+
+  before() {
+    contentType = "text/html"
+  }
 
   get("/") {
     jade("hello-scalate")

@@ -37,6 +37,12 @@ package object oauth2 {
   private[oauth2] implicit def servletBase2RicherServletBase(base: ServletBase) = new {
     def remoteAddress =
       base.request.headers.get("X-FORWARDED-FOR").flatMap(_.blankOption) getOrElse base.request.getRemoteAddr
+
+    def isHttps = { // also respect load balancer version of the protocol
+      val h = base.request.getHeader("X-FORWARDED-PROTO").blankOption
+      base.request.isSecure || (h.isDefined && h.forall(_.toUpperCase(ENGLISH) == "HTTPS"))
+    }
+
   }
 
   val UTF_8 = "UTF-8"

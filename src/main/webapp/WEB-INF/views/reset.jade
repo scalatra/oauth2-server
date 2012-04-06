@@ -1,0 +1,32 @@
+- attributes("title") = "BackChat OAuth2 Server"
+-@ val errors: List[io.backchat.oauth2.model.ValidationError] = Nil
+-@ val token: String = params("token")
+
+- if (errors.nonEmpty)
+  div.alert.alert-error.alert-block
+    a.close(data-dismiss="alert") ×
+    h4.alert-heading Please correct:
+    ul#errors
+      - errors foreach 
+        - error =>
+          li.error= error.message
+form.form-horizontal(method="post" action="/reset/#{token}")
+  fieldset
+    legend Reset your password
+    - if (errors.exists(_.field == "password"))
+      div.control-group.error
+        label.control-label(for="password") Password:
+        div.controls
+          input#password(type="input-xlarge" type="password" name="password" placeholder="Password" )
+    - else
+      div.control-group
+        label.control-label(for="password") Password:
+        div.controls
+          input#password(type="input-xlarge" type="password" name="password" placeholder="Password" )
+    div.control-group
+      label.control-label(for="password_confirmation") Password confirmation:
+      div.controls
+        input#password_confirmation(type="input-xlarge" type="password" name="password_confirmation" placeholder="Password confirmation" )
+    div.form-actions
+      button.btn.btn-primary(type="submit") Register
+      a.btn(href="/login") Log in

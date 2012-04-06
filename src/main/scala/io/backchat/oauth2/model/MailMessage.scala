@@ -40,8 +40,8 @@ object MailMessage {
   def apply(mail: ConfirmationMail)(implicit system: ActorSystem): MailMessage = {
     val oauth = OAuth2Extension(system)
     val params = Map(
-      "activation_url" -> "%s/activate/%s".format(oauth.guiUrl, mail.token),
-      "apikey_url" -> oauth.guiUrl,
+      "activation_url" -> "%s/activate/%s".format(oauth.web.guiUrl, mail.token),
+      "apikey_url" -> oauth.web.guiUrl,
       "name" -> mail.name,
       "login" -> mail.login,
       "email" -> mail.email)
@@ -55,7 +55,7 @@ object MailMessage {
   def apply(mail: SendForgotPasswordMail)(implicit system: ActorSystem): MailMessage = {
     val oauth = OAuth2Extension(system)
     val params = Map(
-      "url" -> (oauth.guiUrl + "/reset/%s".format(mail.token)),
+      "url" -> (oauth.web.guiUrl + "/reset/%s".format(mail.token)),
       "name" -> mail.name,
       "login" -> mail.login,
       "email" -> mail.email)

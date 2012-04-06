@@ -6,19 +6,21 @@ import org.scalatra.auth.{ ScentryStrategy, ScentryConfig, ScentrySupport }
 import org.fusesource.scalate.Binding
 import javax.servlet.http.{ HttpServletResponse, HttpServletRequest }
 import java.io.PrintWriter
-import model.{ AlreadyConfirmed, ResourceOwner }
 import org.scalatra.{ FlashMapSupport, CookieSupport }
 import org.scalatra.scalate.ScalateSupport
 import scalaz._
 import Scalaz._
+import model.{ ValidationError, AlreadyConfirmed, ResourceOwner }
+
+class OAuthScentryConfig extends ScentryConfig
 
 trait AuthenticationSupport[UserClass >: Null <: AppUser[_]] extends ScentrySupport[UserClass] with ScalateSupport { self: ServletBase with CookieSupport with FlashMapSupport ⇒
 
   protected def fromSession = { case id: String ⇒ authProvider.findUserById(id).orNull }
   protected def toSession = { case usr: AppUser[_] ⇒ usr.idString }
 
-  type ScentryConfiguration = ScentryConfig
-  protected val scentryConfig = new ScentryConfig {}
+  type ScentryConfiguration = OAuthScentryConfig
+  protected val scentryConfig = new OAuthScentryConfig
 
   protected def userManifest: Manifest[UserClass]
   type AuthProvider = UserProvider[UserClass] with ForgotPasswordProvider[UserClass] with RememberMeProvider[UserClass]
@@ -40,34 +42,33 @@ trait AuthenticationSupport[UserClass >: Null <: AppUser[_]] extends ScentrySupp
   }
 
   before() {
-    if (!isAuthenticated)
-      scentry.authenticate('remember_me)
+    if (isAnonymous) scentry.authenticate('remember_me)
   }
 
   get("/login") {
-    if (isAuthenticated) redirect("/")
+    redirectIfAuthenticated()
     jade("login")
   }
 
   post("/login") {
-    if (isAuthenticated) redirect("/")
+    redirectIfAuthenticated()
     authenticate()
     if (isAnonymous) {
       flash.now("error") = "Username/password is incorrect"
       jade("login")
     } else {
       flash("success") = ("Welcome back, " + user.name)
-      redirect("/")
+      redirectAuthenticated()
     }
   }
 
   get("/register") {
-    if (isAuthenticated) redirect("/")
+    redirectIfAuthenticated()
     jade("register")
   }
 
   post("/register") {
-    if (isAuthenticated) redirect("/")
+    redirectIfAuthenticated()
     val regResult =
       authProvider.register(
         params.get("login"),
@@ -81,16 +82,41 @@ trait AuthenticationSupport[UserClass >: Null <: AppUser[_]] extends ScentrySupp
   }
 
   get("/forgot") {
+    redirectIfAuthenticated()
     jade("forgot")
   }
 
   post("/forgot") {
-    jade("forgot")
+    redirectIfAuthenticated()
+    authProvider.forgot(params.get("login")).fold(
+      err ⇒ jade("forgot", "error" -> err.message),
+      owner ⇒ {
+        flash("info") = "Password reset link has been sent to <a href=\"mailto:%s\">%s</a>.".format(owner.email, owner.email)
+        redirectAuthenticated()
+      })
+  }
+
+  get("/reset/:token") {
+    redirectIfAuthenticated()
+    jade("reset", "token" -> params("token"))
+  }
+
+  post("/reset/:token") {
+    redirectIfAuthenticated()
+    authProvider.resetPassword(params("token"), ~params.get("password"), ~params.get("password_confirmation")).fold(
+      err ⇒ {
+        (err.list.filter {
+          case a: ValidationError ⇒ false
+          case _                  ⇒ true
+        }).headOption foreach { m ⇒ flash.now("error") = m.message }
+        jade("reset", "errors" -> err.list.collect { case a: ValidationError ⇒ a })
+      },
+      loggedIn(_, "Password reset successfully"))
   }
 
   get("/logout") {
-    scentry.logout()
-    redirect("/login")
+    logOut()
+    redirect(scentryConfig.failureUrl)
   }
 
   get("/activate/:token") {
@@ -108,10 +134,24 @@ trait AuthenticationSupport[UserClass >: Null <: AppUser[_]] extends ScentrySupp
       })
   }
 
+  get("/unauthenticated") {
+    flash("warn") = "You must be logged in to view this page."
+    redirect(scentryConfig.login)
+  }
+
+  def unauthenticated() = {
+    session(scentryConfig.returnToKey) = request.getRequestURI
+    redirect(scentryConfig.failureUrl)
+  }
+
+  def redirectIfAuthenticated() = if (isAuthenticated) redirectAuthenticated()
+
+  def redirectAuthenticated() = redirect(session.get(scentryConfig.returnToKey).map(_.toString) | scentryConfig.returnTo)
+
   def loggedIn(authenticated: UserClass, message: String) = {
     scentry.user = authenticated
     flash("success") = message
-    redirect("/")
+    redirectAuthenticated()
   }
 
   override protected def createTemplateEngine(config: ConfigT) = {
@@ -133,4 +173,14 @@ trait AuthenticationSupport[UserClass >: Null <: AppUser[_]] extends ScentrySupp
     ctx.attributes.update("isAuthenticated", isAuthenticated)
     ctx
   }
+
+  /**
+   * Builds a full URL from the given relative path. Takes into account the port configuration, https, ...
+   *
+   * @param path a relative path
+   *
+   * @return the full URL
+   */
+  protected def buildFullUrl(path: String): String
+
 }

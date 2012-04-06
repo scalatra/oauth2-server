@@ -1,5 +1,8 @@
-- attributes("title") = "BackChat OAuth2 Server"
+- attributes("title") = "BackChat OAuth2 Server - Register Account"
 -@ val errors: List[io.backchat.oauth2.model.ValidationError] = Nil
+-@ val login: String = params.get("login").getOrElse("")
+-@ val email: String = params.get("email").getOrElse("")
+-@ val name: String = params.get("name").getOrElse("")
 
 - if (errors.nonEmpty)
   div.alert.alert-error.alert-block
@@ -12,22 +15,46 @@
 form.form-horizontal(method="post" action="/register")
   fieldset
     legend Register an account
-    div.control-group
-      label.control-label(for="login") Login:
-      div.controls
-        input#login(type="input-xlarge" type="text" name="login" placeholder="Login" )
-    div.control-group
-      label.control-label(for="email") Email:
-      div.controls
-        input#email(type="input-xlarge" type="text" name="email" placeholder="Email" )
-    div.control-group
-      label.control-label(for="name") Full name:
-      div.controls
-        input#name(type="input-xlarge" type="text" name="name" placeholder="Full name" )
-    div.control-group
-      label.control-label(for="password") Password:
-      div.controls
-        input#password(type="input-xlarge" type="password" name="password" placeholder="Password" )
+    - if (errors.exists(_.field == "login"))
+      div.control-group.error
+        label.control-label(for="login") Login:
+        div.controls
+          input#login(type="input-xlarge" type="text" name="login" placeholder="Login" value="#{login}" )
+    - else
+      div.control-group
+        label.control-label(for="login") Login:
+        div.controls
+          input#login(type="input-xlarge" type="text" name="login" placeholder="Login" value="#{login}" )
+    - if (errors.exists(_.field == "email"))
+      div.control-group.error
+        label.control-label(for="email") Email:
+        div.controls
+          input#email(type="input-xlarge" type="text" name="email" placeholder="Email"  value="#{email}")
+    - else
+      div.control-group
+        label.control-label(for="email") Email:
+        div.controls
+          input#email(type="input-xlarge" type="text" name="email" placeholder="Email"  value="#{email}")
+    - if (errors.exists(_.field == "name"))
+      div.control-group.error
+        label.control-label(for="name") Full name:
+        div.controls
+          input#name(type="input-xlarge" type="text" name="name" placeholder="Full name" value="#{name}" )
+    - else
+      div.control-group
+        label.control-label(for="name") Full name:
+        div.controls
+          input#name(type="input-xlarge" type="text" name="name" placeholder="Full name" value="#{name}" )
+    - if (errors.exists(_.field == "password"))
+      div.control-group.error
+        label.control-label(for="password") Password:
+        div.controls
+          input#password(type="input-xlarge" type="password" name="password" placeholder="Password" )
+    - else
+      div.control-group
+        label.control-label(for="password") Password:
+        div.controls
+          input#password(type="input-xlarge" type="password" name="password" placeholder="Password" )
     div.control-group
       label.control-label(for="password_confirmation") Password confirmation:
       div.controls

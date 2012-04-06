@@ -14,6 +14,8 @@ object JettyMain {
 
     implicit val system = ActorSystem("oauth2server")
 
+    val oauth = OAuth2Extension(system)
+
     val server: Server = new Server
 
     server setGracefulShutdown 5000
@@ -22,15 +24,16 @@ object JettyMain {
     server setStopAtShutdown true
 
     val connector = new SelectChannelConnector
-    connector setPort 8080
+    connector setHost oauth.web.host
+    connector setPort oauth.web.port
+    connector setName "Backchat OAuth2 Server"
     connector setMaxIdleTime 90000
     server addConnector connector
 
-    val webapp = system.settings.config.getString(confKey("web.public"))
     val webApp = new WebAppContext
     webApp setContextPath "/"
-    webApp setResourceBase webapp
-    webApp setDescriptor (webapp + "/WEB-INF/web.xml")
+    webApp setResourceBase oauth.web.public
+    webApp setDescriptor (oauth.web.public + "/WEB-INF/web.xml")
     webApp addServlet (new ServletHolder(new HomeServlet), "/*")
 
     server setHandler webApp

@@ -35,6 +35,8 @@ html
                 li
                   a(href="/register") Sign up
               - else
+                li
+                  a(href="/logout") Logout
                 li.dropdown#clients
                   a.dropdown-toggle(href="#clients" data-toggle="dropdown")
                     | Clients
@@ -50,15 +52,19 @@ html
       - if (flash.get("success").isDefined)
         div.alert.alert-success
           a.close(data-dismiss="alert") ×
-          = flash("success")
+          != flash("success")
+      - if (flash.get("info").isDefined)
+        div.alert.alert-info
+          a.close(data-dismiss="alert") ×
+          != flash("info")
       - if (flash.get("warn").isDefined)
         div.alert.alert-success
           a.close(data-dismiss="alert") ×
-          = flash("warn")
+          != flash("warn")
       - if (flash.get("error").isDefined)
         div.alert.alert-error
           a.close(data-dismiss="alert") ×
-          = flash("error")
+          != flash("error")
       != body
 
 

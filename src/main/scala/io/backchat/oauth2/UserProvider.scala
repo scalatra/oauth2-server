@@ -43,7 +43,7 @@ trait RememberMeProvider[UserClass <: AppUser[_]] {
 }
 
 trait ForgotPasswordProvider[UserClass <: AppUser[_]] {
-  def forgot(loginOrEmail: String): Validation[Error, UserClass]
+  def forgot(loginOrEmail: Option[String]): Validation[Error, UserClass]
   def resetPassword(token: String, password: String, passwordConfirmation: String): ValidationNEL[Error, UserClass]
   def rememberedPassword(owner: UserClass, ipAddress: String): UserClass
 }

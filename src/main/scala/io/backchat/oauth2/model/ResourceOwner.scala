@@ -79,15 +79,15 @@ case class BCryptPassword(pwd: String, salted: Boolean, stretches: Int) {
   def isMatch(candidate: String) = BCryptPassword.isMatch(candidate, this)
 }
 object BCryptPassword {
-  def apply(in: String, stretches: Int = 20): BCryptPassword = BCryptPassword(in, false, stretches)
+  def apply(in: String, stretches: Int = 10): BCryptPassword = BCryptPassword(in, false, stretches)
 
   def hash(pwd: BCryptPassword): BCryptPassword =
-    createHashed(pwd.pwd, BCrypt.gensalt(pwd.stretches))
+    createHashed(pwd.pwd, BCrypt.gensalt(pwd.stretches), pwd.stretches)
 
-  def hash(pwd: String, stretches: Int = 15): BCryptPassword =
-    createHashed(pwd, BCrypt.gensalt(stretches))
+  def hash(pwd: String, stretches: Int = 10): BCryptPassword =
+    createHashed(pwd, BCrypt.gensalt(stretches), stretches)
 
-  private def createHashed(pwd: String, salt: String, stretches: Int = 15) = {
+  private def createHashed(pwd: String, salt: String, stretches: Int) = {
     BCryptPassword(BCrypt.hashpw(pwd, salt), true, stretches)
   }
 
@@ -226,7 +226,7 @@ class ResourceOwnerDao(collection: MongoCollection)(implicit system: ActorSystem
     name: Option[String],
     password: Option[String],
     passwordConfirmation: Option[String]): ValidationNEL[Error, ResourceOwner] = {
-    val newOwner = (validations.login(~login).liftFailNel
+    val newOwner: ValidationNEL[Error, ResourceOwner] = (validations.login(~login).liftFailNel
       |@| validations.email(~email).liftFailNel
       |@| validations.name(~name).liftFailNel
       |@| (validations
@@ -252,13 +252,15 @@ class ResourceOwnerDao(collection: MongoCollection)(implicit system: ActorSystem
     }
   }
 
-  def forgot(loginOrEmail: String): Validation[Error, ResourceOwner] = {
-    findByLoginOrEmail(loginOrEmail) map { owner ⇒
-      val updated = owner.copy(reset = Token(), resetAt = MinDate)
-      save(updated)
-      oauth.smtp.send(MailMessage(SendForgotPasswordMail(owner.name, owner.login, owner.email, owner.reset.token)))
-      updated.success[Error]
-    } getOrElse SimpleError("Account not found.").fail
+  def forgot(loginOrEmail: Option[String]): Validation[Error, ResourceOwner] = {
+    Validations.nonEmptyString(fieldNames.login).validate(~loginOrEmail) flatMap { loe ⇒
+      findByLoginOrEmail(loe) map { owner ⇒
+        val updated = owner.copy(reset = Token(), resetAt = MinDate)
+        save(updated)
+        oauth.smtp.send(MailMessage(SendForgotPasswordMail(updated.name, updated.login, updated.email, updated.reset.token)))
+        updated.success[Error]
+      } getOrElse SimpleError("Account not found.").fail
+    }
   }
 
   def resetPassword(token: String, password: String, passwordConfirmation: String): ValidationNEL[Error, ResourceOwner] = {

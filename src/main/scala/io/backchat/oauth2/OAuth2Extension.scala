@@ -1,7 +1,7 @@
 package io.backchat.oauth2
 
 import akka.actor._
-import model.{ MailSender, SmtpConfig, ResourceOwnerDao, MongoConfiguration }
+import model._
 import net.liftweb.json.Formats
 import service.SmtpTransport
 
@@ -33,8 +33,6 @@ class OAuth2Extension(system: ExtendedActorSystem) extends Extension {
 
   lazy val userProvider = new ResourceOwnerDao(mongo.db("resource_owners"))(system)
 
-  val guiUrl = cfg.getString(confKey("web.url"))
-
   val smtp = new SmtpTransport(SmtpConfig(
     cfg.getString("backchat.smtp.host"),
     cfg.getInt("backchat.smtp.port"),
@@ -42,5 +40,12 @@ class OAuth2Extension(system: ExtendedActorSystem) extends Extension {
     cfg.getString("backchat.smtp.user").blankOption,
     cfg.getString("backchat.smtp.password").blankOption,
     cfg.getBoolean("backchat.smtp.sslRequired")))
+
+  val web = WebConfig(
+    cfg.getString(confKey("web.guiUrl")),
+    cfg.getString(confKey("web.host")),
+    cfg.getInt(confKey("web.port")),
+    cfg.getBoolean(confKey("web.sslRequired")),
+    cfg.getString(confKey("web.public")))
 
 }
