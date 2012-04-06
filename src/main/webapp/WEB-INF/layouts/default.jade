@@ -1,0 +1,68 @@
+-@ val title: String
+-@ val body: String
+-@ val userOption: Option[io.backchat.oauth2.model.ResourceOwner] = None
+-@ val user: io.backchat.oauth2.model.ResourceOwner = null
+
+!!! 5
+html
+  head
+    title= title
+    meta(charset="utf-8")
+    meta(name="viewport" content="width=device-width, initial-scale=1.0")
+    link(rel='stylesheet' href='/css/bootstrap.min.css')
+    :css
+      body {
+        padding-top: 60px; /* 60px to make the container go all the way to the bottom of the topbar */
+      }
+    link(rel='stylesheet' href='/css/bootstrap-responsive.min.css')
+    link(rel='stylesheet' href='/css/app.css')
+  body
+    div.navbar.navbar-fixed-top
+      div.navbar-inner
+        div.container
+          a.btn.btn-navbar(data-toggle="collapse" data-target=".nav-collapse")
+            span.icon-bar
+            span.icon-bar
+            span.icon-bar
+          a.brand(href="/")= title
+          div.nav-collapse
+            ul.nav
+              li
+                a(href="/") Home
+              - if (isAnonymous)
+                li
+                  a(href="/login") Login
+                li
+                  a(href="/register") Sign up
+              - else
+                li.dropdown#clients
+                  a.dropdown-toggle(href="#clients" data-toggle="dropdown")
+                    | Clients
+                    b.caret
+                  ul.dropdown-menu
+                    li
+                      a(href="/clients") List
+                      a(href="/clients/new") Create
+
+
+
+    div.container
+      - if (flash.get("success").isDefined)
+        div.alert.alert-success
+          a.close(data-dismiss="alert") ×
+          = flash("success")
+      - if (flash.get("warn").isDefined)
+        div.alert.alert-success
+          a.close(data-dismiss="alert") ×
+          = flash("warn")
+      - if (flash.get("error").isDefined)
+        div.alert.alert-error
+          a.close(data-dismiss="alert") ×
+          = flash("error")
+      != body
+
+
+    script(src="/js/jquery-1.7.2.min.js")
+    script(src="/js/bootstrap.min.js")
+    script(src='http://static.ak.fbcdn.net/connect/en_US/core.js')
+

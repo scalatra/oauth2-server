@@ -1,0 +1,14 @@
+- attributes("title") = "BackChat OAuth2 Server"
+
+form(method="post" action="/login")
+  label
+    | Login:
+  input.span3(type="text" name="login" value="" placeholder="Login or email")
+  span.help-inline Please enter your login or email.
+  label Password:
+  input.span3(type="password" name="password" value="" placeholder="Password")
+  span.help-inline Please enter your password.
+  label.checkbox
+    input(type="checkbox" name="remember") Remember me
+  button.btn.btn-primary(type="submit") Log in
+  a.btn(href="/register") Register

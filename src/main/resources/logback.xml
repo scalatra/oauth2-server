@@ -1,0 +1,19 @@
+<configuration>
+  <conversionRule conversionWord="levelcolor"
+                  converterClass="io.backchat.logback.LevelColorizer" />
+
+  <contextListener class="ch.qos.logback.classic.jul.LevelChangePropagator"/>
+
+  <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+    <!-- encoders are assigned the type
+         ch.qos.logback.classic.encoder.PatternLayoutEncoder by default -->
+    <encoder>
+      <pattern>[%4levelcolor] [%d{ISO8601}] [%X{sourceThread}] [%logger{4}] %X{akkaSource}: %m%n</pattern>
+      <!--<pattern>%-4relative [%thread] %-5level %logger{35} - %msg %n</pattern>-->
+    </encoder>
+  </appender>
+  <logger name="OAuth2 Server" level="DEBUG" />
+  <root level="INFO">
+    <appender-ref ref="STDOUT"/>
+  </root>
+</configuration>

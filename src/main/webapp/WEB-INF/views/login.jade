@@ -1,0 +1,23 @@
+- attributes("title") = "BackChat OAuth2 Server"
+
+h2= attribute("title")
+
+form.form-horizontal(method="post" action="/login")
+  fieldset
+    legend Login
+    div.control-group
+      label.control-label(for="login") Login:
+      div.controls
+        input#login(type="input-xlarge" type="text" name="login" placeholder="login or email" )
+    div.control-group
+      label.control-label(for="password") Password:
+      div.controls
+        input#password(type="input-xlarge" type="password" name="password" placeholder="password" )
+    div.control-group
+      label.control-label(for="remember") Remember:
+      div.controls
+        label.checkbox
+          input(type="checkbox" name="remember") 
+    div.form-actions
+      button.btn.btn-primary(type="submit") Log in
+      a.btn(href="/register") Register
