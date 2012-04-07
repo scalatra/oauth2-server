@@ -10,40 +10,11 @@ import org.scalatra.{ FlashMapSupport, CookieSupport }
 import org.scalatra.scalate.ScalateSupport
 import scalaz._
 import Scalaz._
-import model.{ ValidationError, AlreadyConfirmed, ResourceOwner }
+import model.{ ValidationError }
 
 class OAuthScentryConfig extends ScentryConfig
 
-trait AuthenticationSupport[UserClass >: Null <: AppUser[_]] extends ScentrySupport[UserClass] with ScalateSupport { self: ServletBase with CookieSupport with FlashMapSupport ⇒
-
-  protected def fromSession = { case id: String ⇒ authProvider.findUserById(id).orNull }
-  protected def toSession = { case usr: AppUser[_] ⇒ usr.idString }
-
-  type ScentryConfiguration = OAuthScentryConfig
-  protected val scentryConfig = new OAuthScentryConfig
-
-  protected def userManifest: Manifest[UserClass]
-  type AuthProvider = UserProvider[UserClass] with ForgotPasswordProvider[UserClass] with RememberMeProvider[UserClass]
-
-  implicit override protected def user = scentry.user
-  protected def authProvider: AuthProvider
-
-  /**
-   * Registers authentication strategies.
-   */
-  override protected def registerAuthStrategies = {
-    Seq(
-      new PasswordStrategy(self, authProvider),
-      new ForgotPasswordStrategy(self, authProvider),
-      new RememberMeStrategy(self, authProvider)) foreach { strategy ⇒
-        scentry.registerStrategy(strategy.name, _ ⇒ strategy)
-      }
-
-  }
-
-  before() {
-    if (isAnonymous) scentry.authenticate('remember_me)
-  }
+trait PasswordAuthSupport[UserClass >: Null <: AppUser[_]] { self: ServletBase with FlashMapSupport with CookieSupport with AuthenticationSupport[UserClass] ⇒
 
   get("/login") {
     redirectIfAuthenticated()
@@ -81,6 +52,35 @@ trait AuthenticationSupport[UserClass >: Null <: AppUser[_]] extends ScentrySupp
       loggedIn(_, "Registered and logged in."))
   }
 
+  get("/logout") {
+    logOut()
+    redirect(scentryConfig.failureUrl)
+  }
+
+  get("/activate") {
+    flash("error") = "The token is required"
+    redirect(scentryConfig.login)
+  }
+
+  get("/activate/:token") {
+    authProvider.confirm(params("token")).fold(
+      m ⇒ {
+        flash("error") = m.message
+        redirect(scentryConfig.failureUrl)
+      },
+      owner ⇒ {
+        flash("success") = "Account confirmed!"
+        redirect(scentryConfig.failureUrl)
+      })
+  }
+
+  get("/unauthenticated") {
+    flash("warn") = "You must be logged in to view this page."
+    redirect(scentryConfig.login)
+  }
+}
+
+trait ForgotPasswordAuthSupport[UserClass >: Null <: AppUser[_]] { self: ServletBase with FlashMapSupport with AuthenticationSupport[UserClass] ⇒
   get("/forgot") {
     redirectIfAuthenticated()
     jade("forgot")
@@ -114,29 +114,41 @@ trait AuthenticationSupport[UserClass >: Null <: AppUser[_]] extends ScentrySupp
       loggedIn(_, "Password reset successfully"))
   }
 
-  get("/logout") {
-    logOut()
-    redirect(scentryConfig.failureUrl)
+}
+
+trait RememberMeAuthSupport[UserClass >: Null <: AppUser[_]] { self: AuthenticationSupport[UserClass] ⇒
+
+  before() {
+    if (isAnonymous) scentry.authenticate('remember_me)
   }
 
-  get("/activate/:token") {
-    authProvider.confirm(params("token")).fold(
-      {
-        case m: AlreadyConfirmed ⇒
-          flash("warn") = m.message + " Please log in."
-          redirect("/login")
-        case m ⇒
-          jade("error", "errors" -> m.message)
-      },
-      owner ⇒ {
-        flash("success") = "Account confirmed!"
-        redirect("/login")
-      })
-  }
+}
 
-  get("/unauthenticated") {
-    flash("warn") = "You must be logged in to view this page."
-    redirect(scentryConfig.login)
+trait AuthenticationSupport[UserClass >: Null <: AppUser[_]] extends ScentrySupport[UserClass] with ScalateSupport { self: ServletBase with CookieSupport with FlashMapSupport ⇒
+
+  protected def fromSession = { case id: String ⇒ authProvider.findUserById(id).orNull }
+  protected def toSession = { case usr: AppUser[_] ⇒ usr.idString }
+
+  type ScentryConfiguration = OAuthScentryConfig
+  protected val scentryConfig = new OAuthScentryConfig
+
+  protected def userManifest: Manifest[UserClass]
+  type AuthProvider = UserProvider[UserClass] with ForgotPasswordProvider[UserClass] with RememberMeProvider[UserClass]
+
+  implicit override protected def user = scentry.user
+  protected def authProvider: AuthProvider
+
+  /**
+   * Registers authentication strategies.
+   */
+  override protected def registerAuthStrategies = {
+    Seq(
+      new PasswordStrategy(self, authProvider),
+      new ForgotPasswordStrategy(self, authProvider),
+      new RememberMeStrategy(self, authProvider)) foreach { strategy ⇒
+        scentry.registerStrategy(strategy.name, _ ⇒ strategy)
+      }
+
   }
 
   def unauthenticated() = {

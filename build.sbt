@@ -47,7 +47,7 @@ libraryDependencies ++= Seq(
 
 resolvers += "sonatype oss snapshots" at "https://oss.sonatype.org/content/repositories/snapshots/"
 
-resolvers += "Akka Releases" at "http://repo.akka.io/releases/"
+resolvers += "TypeSafe Releases" at "http://repo.typesafe.com/typesafe/releases/"
 
 testOptions += Tests.Setup( () => System.setProperty("akka.mode", "test") )
 

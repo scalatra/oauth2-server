@@ -16,6 +16,8 @@ import org.joda.time._
 import com.mongodb.BasicDBObject
 import format.{ ISODateTimeFormat, DateTimeFormatter }
 import java.nio.charset.Charset
+import org.scalatra.{ Request, ScalatraBase }
+import org.eclipse.jetty.http.HttpHeaders
 
 package object oauth2 {
 
@@ -34,12 +36,11 @@ package object oauth2 {
     }
   }
 
-  private[oauth2] implicit def servletBase2RicherServletBase(base: ServletBase) = new {
-    def remoteAddress =
-      base.request.headers.get("X-FORWARDED-FOR").flatMap(_.blankOption) getOrElse base.request.getRemoteAddr
+  private[oauth2] implicit def servletBase2RicherServletBase(base: ScalatraBase) = new {
+    def remoteAddress = base.request.remoteAddress
 
     def isHttps = { // also respect load balancer version of the protocol
-      val h = base.request.getHeader("X-FORWARDED-PROTO").blankOption
+      val h = base.request.headers.get("X-FORWARDED-PROTO").flatMap(_.blankOption)
       base.request.isSecure || (h.isDefined && h.forall(_.toUpperCase(ENGLISH) == "HTTPS"))
     }
 

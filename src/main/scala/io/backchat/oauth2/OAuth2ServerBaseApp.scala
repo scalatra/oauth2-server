@@ -1,29 +1,17 @@
 package io.backchat.oauth2
-package auth
 
+import auth.{ RememberMeAuthSupport, ForgotPasswordAuthSupport, PasswordAuthSupport, AuthenticationSupport }
 import model.ResourceOwner
-import org.scalatra.{ CookieSupport, FlashMapSupport, ScalatraServlet }
 import org.scalatra.scalate.ScalateSupport
+import org.scalatra.{ ScalatraServlet, FlashMapSupport, CookieSupport }
 import akka.actor.ActorSystem
-import java.net.URI
-import org.eclipse.jetty.http.HttpHeaders
+import org.scalatra.servlet.ServletBase
 
-trait LoadBalancedSslRequirement extends org.scalatra.servlet.ServletBase {
-
-  implicit def system: ActorSystem
-
-  abstract override def handle(req: RequestT, res: ResponseT) {
-    if (OAuth2Extension(system).web.sslRequired && !this.isHttps && !req.getRequestURI.contains("eb_ping")) {
-      val oldUri = new URI(req.getRequestURL.toString)
-      val url = new URI("https", oldUri.getAuthority, oldUri.getPath, oldUri.getQuery, oldUri.getFragment).toASCIIString
-      res.setStatus(301)
-      res.addHeader(HttpHeaders.LOCATION, res.encodeRedirectURL(url))
-    } else {
-      super.handle(req, res)
-    }
-  }
-
-  get("/eb_ping") { "pong" }
+trait AuthenticationApp[UserClass >: Null <: AppUser[_]]
+    extends PasswordAuthSupport[UserClass]
+    with ForgotPasswordAuthSupport[UserClass]
+    with RememberMeAuthSupport[UserClass] {
+  self: ServletBase with FlashMapSupport with CookieSupport with ScalateSupport with AuthenticationSupport[UserClass] ⇒
 
 }
 
@@ -57,3 +45,4 @@ trait OAuth2ServerBaseApp extends ScalatraServlet
     }
   }
 }
+
