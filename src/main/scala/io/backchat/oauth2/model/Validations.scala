@@ -9,6 +9,7 @@ import net.liftweb.json._
 import org.apache.commons.validator.routines.{ UrlValidator, EmailValidator }
 import util.matching.Regex
 import model.Validations.PredicateValidator
+import java.net.URI
 
 sealed trait Error {
   def message: String
@@ -27,7 +28,7 @@ object Validations {
       extends Validator[TValue] {
     override def validate[TResult >: TValue <: TValue](value: TResult): Validation[Error, TResult] = {
       if (isValid(value)) value.success
-      else ValidationError(messageFormat.format(fieldName), fieldName).fail[TResult]
+      else ValidationError(messageFormat.format(fieldName.humanize), fieldName.underscore).fail[TResult]
     }
   }
 
@@ -40,8 +41,17 @@ object Validations {
   def validEmail(fieldName: String): Validator[String] =
     new PredicateValidator[String](fieldName, EmailValidator.getInstance.isValid(_), "%s must be a valid email.")
 
-  def validUrl(fieldName: String): Validator[String] =
-    new PredicateValidator[String](fieldName, UrlValidator.getInstance.isValid(_), "%s must be a valid url.")
+  def validUrl(fieldName: String, absolute: Boolean, schemes: String*): Validator[String] = {
+    val urlValidator = if (schemes.isEmpty) UrlValidator.getInstance() else new UrlValidator(Array(schemes: _*))
+    val validator = (s: String) ⇒ {
+      urlValidator.isValid(s) && (!absolute || {
+        try {
+          URI.create(s).isAbsolute
+        } catch { case _ ⇒ false }
+      })
+    }
+    new PredicateValidator[String](fieldName, validator, "%s must be a valid url.")
+  }
 
   def validFormat(fieldName: String, regex: Regex, messageFormat: String = "%s is invalid."): Validator[String] =
     new PredicateValidator[String](fieldName, regex.findFirstIn(_).isDefined, messageFormat)
@@ -70,4 +80,10 @@ object Validations {
       s ⇒ collection.count(Map(fieldName -> s), Map(fieldName -> 1)) == 0,
       "%s exists already.")
   }
+
+  def oneOf[TResult](fieldName: String, expected: TResult*): Validator[TResult] =
+    new PredicateValidator[TResult](fieldName, expected.contains, "%s must be one of " + expected.mkString("[", ", ", "]"))
+
+  def enumValue(fieldName: String, enum: Enumeration): Validator[String] =
+    oneOf(fieldName, enum.values.map(_.toString).toSeq: _*)
 }

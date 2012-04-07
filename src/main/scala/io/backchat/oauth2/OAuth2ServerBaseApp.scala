@@ -45,10 +45,10 @@ trait OAuth2ServerBaseApp extends ScalatraServlet
     }
   }
 
-
   notFound {
     serveStaticResource() getOrElse resourceNotFound()
   }
 
+  override def environment = oauth.environment
 }
 

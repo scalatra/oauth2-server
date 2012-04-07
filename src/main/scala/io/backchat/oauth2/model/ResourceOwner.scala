@@ -56,6 +56,8 @@ object fieldNames {
   val confirmation = "confirmation"
   val reset = "reset"
   val stats = "stats"
+  val clientType = "clientType"
+  val profile = "profile"
 }
 
 case class Token(token: String, createdAt: DateTime = DateTime.now) extends AppToken {
@@ -234,7 +236,7 @@ class ResourceOwnerDao(collection: MongoCollection)(implicit system: ActorSystem
         map (BCryptPassword(_).encrypted)).liftFailNel) { ResourceOwner(_, _, _, _) }
     newOwner foreach { o ⇒
       save(o)
-      oauth.smtp.send(MailMessage(ConfirmationMail(o.name, o.login, o.email, o.confirmation.token)))
+      if (!oauth.isTest) oauth.smtp.send(MailMessage(ConfirmationMail(o.name, o.login, o.email, o.confirmation.token)))
     }
     newOwner
   }
@@ -257,7 +259,7 @@ class ResourceOwnerDao(collection: MongoCollection)(implicit system: ActorSystem
       findByLoginOrEmail(loe) map { owner ⇒
         val updated = owner.copy(reset = Token(), resetAt = MinDate)
         save(updated)
-        oauth.smtp.send(MailMessage(SendForgotPasswordMail(updated.name, updated.login, updated.email, updated.reset.token)))
+        if (!oauth.isTest) oauth.smtp.send(MailMessage(SendForgotPasswordMail(updated.name, updated.login, updated.email, updated.reset.token)))
         updated.success[Error]
       } getOrElse SimpleError("Account not found.").fail
     }

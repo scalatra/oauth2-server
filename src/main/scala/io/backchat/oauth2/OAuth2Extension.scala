@@ -14,11 +14,32 @@ object OAuth2Extension extends ExtensionId[OAuth2Extension] with ExtensionIdProv
   val Development = "development"
   val Staging = "staging"
   val Test = "test"
+
+  private def readEnvironmentKey(failWith: String ⇒ Unit = _ ⇒ null) = {
+    (sys.env.get("AKKA_MODE") orElse sys.props.get("akka.mode")) getOrElse {
+      val inferred = "development"
+      failWith("no environment found, defaulting to: " + inferred)
+      inferred
+    }
+  }
+
+  val environment = readEnvironmentKey(System.err.println _)
+
 }
 
 class OAuth2Extension(system: ExtendedActorSystem) extends Extension {
 
   import JettyMain.confKey
+  import OAuth2Extension.{ Production, Development, Staging, Test }
+
+  def environment = OAuth2Extension.environment
+
+  def isProduction = isEnvironment(Production)
+  def isDevelopment = isEnvironment(Development)
+  def isStaging = isEnvironment(Staging)
+  def isTest = isEnvironment(Test)
+  def isEnvironment(env: String) = environment equalsIgnoreCase env
+
   private[this] val cfg = system.settings.config
   private[this] def key(value: String) = confKey("mongo.%s" format value)
 

@@ -35,6 +35,7 @@ libraryDependencies ++= Seq(
   "commons-validator"      % "commons-validator"  % "1.4.0",
   "org.scalaz"            %% "scalaz-core"        % "6.0.4",
   "com.typesafe.akka"      % "akka-actor"         % "2.0",
+  "com.typesafe.akka"      % "akka-testkit"       % "2.0"             % "test",
   "org.fusesource.scalate" % "scalate-jruby"      % "1.5.3",
   "org.fusesource.scalate" % "scalate-markdownj"  % "1.5.3",
   "org.scala-tools.time"  %% "time"               % "0.5",
@@ -47,7 +48,7 @@ libraryDependencies ++= Seq(
 
 resolvers += "sonatype oss snapshots" at "https://oss.sonatype.org/content/repositories/snapshots/"
 
-resolvers += "TypeSafe Releases" at "http://repo.typesafe.com/typesafe/releases/"
+resolvers += Classpaths.typesafeResolver
 
 testOptions += Tests.Setup( () => System.setProperty("akka.mode", "test") )
 
