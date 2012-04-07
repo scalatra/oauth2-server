@@ -29,6 +29,17 @@ html
             ul.nav
               li
                 a(href="/") Home
+              - if (isAuthenticated) 
+                li.dropdown#clients-menu
+                  a.dropdown-toggle(href="#clients-menu" data-toggle="dropdown")
+                    | Clients
+                    b.caret
+                  ul.dropdown-menu
+                    li
+                      a(href="/clients") List
+                      a(href="/clients/new") Create
+          div.nav-collapse.pull-right  
+            ul.nav
               - if (isAnonymous)
                 li
                   a(href="/login") Login
@@ -36,15 +47,10 @@ html
                   a(href="/register") Sign up
               - else
                 li
+                  p.navbar-text Logged in as #{user.name}
+                li.divider-vertical
+                li
                   a(href="/logout") Logout
-                li.dropdown#clients
-                  a.dropdown-toggle(href="#clients" data-toggle="dropdown")
-                    | Clients
-                    b.caret
-                  ul.dropdown-menu
-                    li
-                      a(href="/clients") List
-                      a(href="/clients/new") Create
 
 
 

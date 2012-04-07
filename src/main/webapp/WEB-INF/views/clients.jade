@@ -1,0 +1,29 @@
+- attributes("title") = "BackChat OAuth2 Server"
+-@ val clients: com.novus.salat.dao.SalatMongoCursor[io.backchat.oauth2.model.Client] = null
+
+- if (clients != null && clients.nonEmpty)
+  table.table.table-bordered.table-striped
+    caption A list of registered clients
+    thead
+      tr
+        th Name
+        th Scope
+        th Granted
+        th Revoked
+        th Active
+        th &nbsp;
+    tbody
+    - clients foreach 
+      - client =>
+        tr
+          td= client.displayName
+          td= client.scope.mkString(", ")
+          td= client.tokensGranted
+          td= client.tokensRevoked
+          td
+            a.btn.btn-mini(href="/edit/#{client.id.toString}") Edit
+            a.btn.btn-mini(href="/delete/#{client.id.toString}") Delete
+
+- else
+  p There are currently no clients registered
+

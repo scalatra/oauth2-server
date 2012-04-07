@@ -18,7 +18,7 @@ class HomeServlet(implicit protected val system: ActorSystem)
   }
 
   get("/") {
-    jade("hello-scalate")
+    jade("home")
   }
 
 }

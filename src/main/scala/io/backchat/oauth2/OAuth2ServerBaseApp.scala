@@ -3,9 +3,10 @@ package io.backchat.oauth2
 import auth.{ RememberMeAuthSupport, ForgotPasswordAuthSupport, PasswordAuthSupport, AuthenticationSupport }
 import model.ResourceOwner
 import org.scalatra.scalate.ScalateSupport
-import org.scalatra.{ ScalatraServlet, FlashMapSupport, CookieSupport }
 import akka.actor.ActorSystem
 import org.scalatra.servlet.ServletBase
+import org.scalatra.liftjson.LiftJsonRequestBody
+import org.scalatra.{ ApiFormats, ScalatraServlet, FlashMapSupport, CookieSupport }
 
 trait AuthenticationApp[UserClass >: Null <: AppUser[_]]
     extends PasswordAuthSupport[UserClass]
@@ -19,6 +20,8 @@ trait OAuth2ServerBaseApp extends ScalatraServlet
     with FlashMapSupport
     with CookieSupport
     with ScalateSupport
+    with LiftJsonRequestBody
+    with ApiFormats
     with AuthenticationSupport[ResourceOwner] {
 
   implicit protected def system: ActorSystem

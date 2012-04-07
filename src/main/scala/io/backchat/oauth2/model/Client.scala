@@ -76,20 +76,9 @@ class ClientDao(collection: MongoCollection)(implicit system: ActorSystem)
     cl
   }
 
-  def update(
-    id: String,
-    profile: String,
-    displayName: String,
-    authType: String,
-    scopes: List[String],
-    redirectUri: Option[String],
-    link: Option[String]) = {
-    (findOneByID(new ObjectId(id)) map { client ⇒
-      val factory: Factory = client.copy(client.secret, _, _, _, client.id, _, _, _)
-      val cl = buildClient(profile, displayName, authType, scopes, redirectUri, link)(factory)
-      cl foreach save
-      cl
-    }) | SimpleError("Client not found").failNel
+  def validateClient(client: Client) = {
+    val factory: Factory = client.copy(client.secret, _, _, _, client.id, _, _, _)
+    buildClient(client.profile, client.displayName, client.authorizationType.toString, client.scope, client.redirectUri, client.link)(factory)
   }
 
   private def buildClient(

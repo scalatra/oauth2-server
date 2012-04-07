@@ -54,6 +54,7 @@ class OAuth2Extension(system: ExtendedActorSystem) extends Extension {
   val defaultFormats: Formats = new OAuth2Formats
 
   lazy val userProvider = new ResourceOwnerDao(mongo.db("resource_owners"))(system)
+  lazy val clients = new ClientDao(mongo.db("clients"))(system)
 
   val smtp = new SmtpTransport(SmtpConfig(
     cfg.getString("backchat.smtp.host"),

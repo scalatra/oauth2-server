@@ -1,0 +1,26 @@
+- attributes("title") = "BackChat OAuth2 Server"
+-@ val owners: com.novus.salat.dao.SalatMongoCursor[io.backchat.oauth2.model.ResourceOwner] = Nil
+
+- if (owners.nonEmpty)
+  table.table.table-bordered.table-striped
+    caption A list of resource owners
+    thead
+      tr
+        th login
+        th email
+        th &nbsp;
+    tbody
+    - owners foreach 
+      - owner
+        tr
+          td= owner.login
+          td
+            address
+              a(href="mailto:#{owner.email}")= owner.email
+          td
+            a.btn.btn-mini Edit
+            a.btn.btn-mini Delete
+
+- else
+  p There are currently no owners registered
+
