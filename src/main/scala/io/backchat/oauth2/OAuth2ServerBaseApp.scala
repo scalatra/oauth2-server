@@ -44,5 +44,11 @@ trait OAuth2ServerBaseApp extends ScalatraServlet
         path)
     }
   }
+
+
+  notFound {
+    serveStaticResource() getOrElse resourceNotFound()
+  }
+
 }
 

@@ -9,6 +9,8 @@ import Enums._
 import scalaz._
 import Scalaz._
 import OAuth2Imports._
+import akka.actor.ActorSystem
+
 
 case class Client(
   @Key("_id") id: String,
@@ -22,3 +24,9 @@ case class Client(
   revoked: Option[DateTime],
   tokensGranted: Int,
   tokensRevoked: Int)
+
+class ClientDao(collection: MongoCollection)(implicit system: ActorSystem)
+    extends SalatDAO[Client, String](collection = collection) {
+
+  def create()
+}

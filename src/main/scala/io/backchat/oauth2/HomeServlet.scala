@@ -11,12 +11,14 @@ class HomeServlet(implicit protected val system: ActorSystem)
     contentType = "text/html"
   }
 
-  get("/") {
-    jade("hello-scalate")
+  def requiresHttps = oauth.web.sslRequired && !this.isHttps
+
+  before(requiresHttps) {
+    halt(400, "The request needs to be secure")
   }
 
-  notFound {
-    serveStaticResource() getOrElse resourceNotFound()
+  get("/") {
+    jade("hello-scalate")
   }
 
 }

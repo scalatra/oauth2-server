@@ -7,7 +7,7 @@ import org.eclipse.jetty.http.HttpHeaders
 import org.scalatra.{ ResponseStatus, ScalatraBase }
 import org.scalatra.servlet.ServletBase
 
-trait LoadBalancedSslRequirement extends ServletBase {
+trait LoadBalancedSslRequirement extends ScalatraBase {
 
   implicit def system: ActorSystem
 

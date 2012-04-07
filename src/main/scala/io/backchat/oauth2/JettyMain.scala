@@ -35,6 +35,7 @@ object JettyMain {
     webApp setResourceBase oauth.web.public
     webApp setDescriptor (oauth.web.public + "/WEB-INF/web.xml")
     webApp addServlet (new ServletHolder(new HomeServlet), "/*")
+    webApp addServlet (new ServletHolder(new HomeServlet), "/*")
 
     server setHandler webApp
 
