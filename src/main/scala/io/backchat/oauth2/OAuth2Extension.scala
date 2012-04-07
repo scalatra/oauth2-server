@@ -2,6 +2,7 @@ package io.backchat.oauth2
 
 import akka.actor._
 import model._
+import model.Enums.AuthorizationType
 import net.liftweb.json.Formats
 import service.SmtpTransport
 
@@ -67,6 +68,9 @@ class OAuth2Extension(system: ExtendedActorSystem) extends Extension {
     cfg.getString(confKey("web.host")),
     cfg.getInt(confKey("web.port")),
     cfg.getBoolean(confKey("web.sslRequired")),
-    cfg.getString(confKey("web.public")))
+    cfg.getString(confKey("web.public")),
+    AuthorizationType.withName(cfg.getString(confKey("web.authorizationType"))),
+    cfg.getString(confKey("web.realm")),
+    cfg.getBoolean(confKey("web.useParams")))
 
 }

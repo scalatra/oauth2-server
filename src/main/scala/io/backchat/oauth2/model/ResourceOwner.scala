@@ -183,38 +183,37 @@ class ResourceOwnerDao(collection: MongoCollection)(implicit system: ActorSystem
   object validations {
     import Validations._
 
-    def name(name: String): Validation[Error, String] =
-      nonEmptyString(fieldNames.name).validate(name)
+    def name(name: String): Validation[Error, String] = nonEmptyString(fieldNames.name, name)
 
     def login(login: String): Validation[Error, String] = {
       for {
-        a ← nonEmptyString(fieldNames.login).validate(login)
-        b ← validFormat(fieldNames.login, """^\w+([\.\w]*)*$""".r, "%s can only contain letters, numbers, underscores and dots.").validate(a)
-        c ← uniqueField[String](fieldNames.login, collection).validate(b)
+        a ← nonEmptyString(fieldNames.login, login)
+        b ← validFormat(fieldNames.login, a, """^\w+([\.\w]*)*$""".r, "%s can only contain letters, numbers, underscores and dots.")
+        c ← uniqueField[String](fieldNames.login, b, collection)
       } yield c
     }
 
     def email(email: String): Validation[Error, String] =
       for {
-        a ← nonEmptyString(fieldNames.email).validate(email)
-        b ← validEmail(fieldNames.email).validate(a)
-        c ← uniqueField[String](fieldNames.email, collection).validate(b)
+        a ← nonEmptyString(fieldNames.email, email)
+        b ← validEmail(fieldNames.email, a)
+        c ← uniqueField[String](fieldNames.email, b, collection)
       } yield c
 
     def password(password: String): Validation[Error, String] =
       for {
-        a ← nonEmptyString(fieldNames.password).validate(password)
-        b ← minLength(fieldNames.password, 6).validate(a)
+        a ← nonEmptyString(fieldNames.password, password)
+        b ← minLength(fieldNames.password, a, 6)
       } yield b
 
     def passwordWithConfirmation(password: String, passwordConfirmation: String): Validation[Error, String] =
       for {
         a ← this.password(password)
-        b ← validConfirmation(fieldNames.password, fieldNames.password + "Confirmation", passwordConfirmation).validate(a)
+        b ← validConfirmation(fieldNames.password, a, fieldNames.password + "Confirmation", passwordConfirmation)
       } yield b
 
     def tokenRequired(tokenType: String, token: String): Validation[Error, String] =
-      nonEmptyString(tokenType.toLowerCase + "." + fieldNames.token).validate(token)
+      nonEmptyString(tokenType.toLowerCase + "." + fieldNames.token, token)
 
     def validPassword(owner: ResourceOwner, password: String): Validation[Error, ResourceOwner] =
       if (owner.password.isMatch(password)) owner.success
@@ -255,7 +254,7 @@ class ResourceOwnerDao(collection: MongoCollection)(implicit system: ActorSystem
   }
 
   def forgot(loginOrEmail: Option[String]): Validation[Error, ResourceOwner] = {
-    Validations.nonEmptyString(fieldNames.login).validate(~loginOrEmail) flatMap { loe ⇒
+    Validations.nonEmptyString(fieldNames.login, ~loginOrEmail) flatMap { loe ⇒
       findByLoginOrEmail(loe) map { owner ⇒
         val updated = owner.copy(reset = Token(), resetAt = MinDate)
         save(updated)
