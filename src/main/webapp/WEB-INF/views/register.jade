@@ -4,14 +4,7 @@
 -@ val email: String = params.get("email").getOrElse("")
 -@ val name: String = params.get("name").getOrElse("")
 
-- if (errors.nonEmpty)
-  div.alert.alert-error.alert-block
-    a.close(data-dismiss="alert") ×
-    h4.alert-heading Please correct:
-    ul#errors
-      - errors foreach 
-        - error =>
-          li.error= error.message
+- render("shared/validation_errors.jade", Map("errors" -> errors))
 form.form-horizontal(method="post" action="/register")
   fieldset
     legend Register an account

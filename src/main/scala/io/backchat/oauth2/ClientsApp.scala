@@ -44,6 +44,10 @@ class ClientsApp(implicit protected val system: ActorSystem) extends OAuth2Serve
     } getOrElse halt(404, "No client exists")
   }
 
+  get("/new") {
+    jade("clients/new", templateData(): _*)
+  }
+
   post("/:id") {
     (oauth.clients.findOneByID(new ObjectId(params("id"))) map { client ⇒
       val update = client.copy(

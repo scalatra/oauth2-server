@@ -7,6 +7,8 @@ import akka.actor.ActorSystem
 import org.scalatra.servlet.ServletBase
 import org.scalatra.liftjson.LiftJsonRequestBody
 import org.scalatra.{ ApiFormats, ScalatraServlet, FlashMapSupport, CookieSupport }
+import javax.servlet.http.{ HttpServletResponse, HttpServletRequest }
+import java.io.PrintWriter
 
 trait AuthenticationApp[UserClass >: Null <: AppUser[_]]
     extends PasswordAuthSupport[UserClass]
@@ -20,7 +22,6 @@ trait OAuth2ServerBaseApp extends ScalatraServlet
     with FlashMapSupport
     with CookieSupport
     with ScalateSupport
-    with LiftJsonRequestBody
     with ApiFormats
     with AuthenticationSupport[ResourceOwner] {
 
@@ -53,5 +54,11 @@ trait OAuth2ServerBaseApp extends ScalatraServlet
   }
 
   override def environment = oauth.environment
+
+  override protected def createRenderContext(req: HttpServletRequest, resp: HttpServletResponse, out: PrintWriter) = {
+    val ctx = super.createRenderContext(req, resp, out)
+    ctx.attributes("title") = "Backchat OAuth2"
+    ctx
+  }
 }
 

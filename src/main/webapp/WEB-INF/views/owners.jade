@@ -1,7 +1,7 @@
 - attributes("title") = "BackChat OAuth2 Server"
--@ val owners: com.novus.salat.dao.SalatMongoCursor[io.backchat.oauth2.model.ResourceOwner] = Nil
+-@ val owners: com.novus.salat.dao.SalatMongoCursor[io.backchat.oauth2.model.ResourceOwner] = null
 
-- if (owners.nonEmpty)
+- if (owners != null && owners.nonEmpty)
   table.table.table-bordered.table-striped
     caption A list of resource owners
     thead

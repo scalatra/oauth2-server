@@ -1,0 +1,19 @@
+-@ val errors: List[io.backchat.oauth2.model.ValidationError] = Nil
+-@ val profiles: Seq[(String, String)] = Nil
+-@ val authTypes: Seq[(String, String)] = Nil
+
+- render("../shared/validation_errors.jade", Map("errors" -> errors))
+
+form.form-horizontal(method="post" action="/")
+  fieldset
+    legend Create a new client
+    div{:class => {if (errors.exists(_.field == "password")) "error control-group" else "control-group"} }
+      label.control-label(for="password") Password:
+      div.controls
+        input#password(type="input-xlarge" type="password" name="password" placeholder="Password" )
+    div.control-group
+      label.control-label(for="password_confirmation") Password confirmation:
+      div.controls
+        input#password_confirmation(type="input-xlarge" type="password" name="password_confirmation" placeholder="Password confirmation" )
+    div.form-actions
+      button.btn.btn-primary(type="submit") Reset
