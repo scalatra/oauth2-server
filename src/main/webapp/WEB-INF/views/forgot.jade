@@ -1,11 +1,11 @@
 
-form(method="post" action="/forgot")
+form.form-horizontal(method="post" action="/forgot")
   fieldset
     legend Forgot password
-    div.control-group
+    div{ :class => "control-group" }
       label.control-label(for="login") Login:
       div.controls
-        input#login(type="input-xlarge" type="text" name="login" placeholder="login or email" )
+        input#login.input-xlarge(type="text" name="login" placeholder="login or email")
     div.form-actions
       button.btn.btn-primary(type="submit") 
         i.icon-envelope 

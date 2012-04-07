@@ -52,7 +52,7 @@ class ClientsApp(implicit protected val system: ActorSystem) extends OAuth2Serve
     (oauth.clients.findOneByID(new ObjectId(params("id"))) map { client ⇒
       val update = client.copy(
         profile = ~params.get("profile"),
-        displayName = ~params.get("displayName"),
+        displayName = ~params.get("display_name"),
         authorizationType = AuthorizationType.withName(~params.get("auth_type")),
         scope = multiParams("scope").toList,
         redirectUri = params.get("redirect_uri"),
@@ -74,7 +74,7 @@ class ClientsApp(implicit protected val system: ActorSystem) extends OAuth2Serve
     redirect("/clients")
   }
 
-  private val authTypes = AuthorizationType.values.map(v ⇒ (v.toString, v.toString.humanize))
+  private val authTypes = AuthorizationType.values.map(v ⇒ (v.toString, v.toString.humanize)).toSeq
   private val profiles = List(
     "Web Application" -> "Web application",
     "User-Agent" -> "Browser based application",

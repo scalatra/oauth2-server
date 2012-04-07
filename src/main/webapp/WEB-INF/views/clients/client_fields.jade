@@ -1,19 +1,49 @@
 -@ val errors: List[io.backchat.oauth2.model.ValidationError] = Nil
 -@ val profiles: Seq[(String, String)] = Nil
 -@ val authTypes: Seq[(String, String)] = Nil
-
+-@ val profile: String = params.get("profile").getOrElse("")
+-@ val displayName: String = params.get("display_name").getOrElse("")
+-@ val authType: String = params.get("auth_type").getOrElse("code_and_token")
+-@ val scope: List[String] = multiParams("scope")
+-@ val redirectUri: String = params.get("redirect_uri").getOrElse("")
+-@ val link: String = params.get("link").getOrElse(link)
+ 
 - render("../shared/validation_errors.jade", Map("errors" -> errors))
 
 form.form-horizontal(method="post" action="/")
   fieldset
     legend Create a new client
-    div{:class => {if (errors.exists(_.field == "password")) "error control-group" else "control-group"} }
-      label.control-label(for="password") Password:
+    div{:class => {if (errors.exists(_.field == "profile")) "error control-group" else "control-group"} }
+      label.control-label(for="profile") Profile:
       div.controls
-        input#password(type="input-xlarge" type="password" name="password" placeholder="Password" )
-    div.control-group
-      label.control-label(for="password_confirmation") Password confirmation:
+        select#profile(name="profile")
+          option{:value => "", :selected => {if (profile == null || profile.isEmpty) "selected" else ""} }
+          - profiles foreach
+            - prof =>
+              - if (profile == prof._1)
+                option(value="#{prof._1}" selected )= prof._2
+              - else
+                option(value="#{prof._1}" )= prof._2
+    div{:class => {if (errors.exists(_.field == "display_name")) "error control-group" else "control-group"} }
+      label.control-label(for="display_name") Display name:
       div.controls
-        input#password_confirmation(type="input-xlarge" type="password" name="password_confirmation" placeholder="Password confirmation" )
+        input#display_name(name="display_name" type="text" value=displayName placeholder="Name" )
+    div{:class => {if (errors.exists(_.field == "display_name")) "error control-group" else "control-group"} }
+      label.control-label(for="auth_type") Authorization type:
+      div.controls
+        input#auth_type(name="auth_type" type="text" value=authType.toString placeholder="Name" )
+    div{:class => {if (errors.exists(_.field == "display_name")) "error control-group" else "control-group"} }
+      label.control-label(for="display_name") Scope:
+      div.controls
+        input#profile(name="display_name" type="text" value=displayName placeholder="Name" )
+    div{:class => {if (errors.exists(_.field == "redirect_uri")) "error control-group" else "control-group"} }
+      label.control-label(for="redirect_uri") Redirect url:
+      div.controls
+        input#redirect_uri(name="redirect_uri" type="text" value=redirectUri placeholder="Redirect url" )
+    div{:class => {if (errors.exists(_.field == "link")) "error control-group" else "control-group"} }
+      label.control-label(for="link") Link:
+      div.controls
+        input#link(name="link" type="text" value=link placeholder="Link" )
     div.form-actions
-      button.btn.btn-primary(type="submit") Reset
+      button.btn.btn-primary(type="submit") Create
+      button.btn(type="reset") Cancel
