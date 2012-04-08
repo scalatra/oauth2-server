@@ -7,12 +7,12 @@ import akka.actor.ActorSystem
 import org.scalatra.servlet.ServletBase
 import javax.servlet.http.{ HttpServletResponse, HttpServletRequest }
 import org.scalatra._
-import liftjson.{ LiftJsonRequestBody }
+import liftjson.LiftJsonRequestBody
 import scalaz._
 import Scalaz._
 import net.liftweb.json._
 import OAuth2Imports._
-import java.io.{ InputStreamReader, StringReader, PrintWriter }
+import java.io.PrintWriter
 
 trait AuthenticationApp[UserClass >: Null <: AppUser[_]]
     extends PasswordAuthSupport[UserClass]
@@ -50,17 +50,14 @@ trait OAuth2MethodOverride extends Handler {
 
 trait OAuth2ServerBaseApp extends ScalatraServlet
     with OAuth2ResponseSupport
+    with OAuth2MethodOverride
+    with OAuth2LiftJsonRequestBody
     with FlashMapSupport
     with CookieSupport
     with ScalateSupport
-    with ApiFormats
-    with OAuth2MethodOverride
-    with LiftJsonRequestBody
     with CORSSupport
     with LoadBalancedSslRequirement
     with AuthenticationSupport[ResourceOwner] {
-
-  override protected implicit val jsonFormats = new OAuth2Formats
 
   implicit protected def system: ActorSystem
   val oauth = OAuth2Extension(system)

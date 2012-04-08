@@ -1,15 +1,14 @@
-package io.backchat
+package io.backchat.oauth2
 
 import net.liftweb.json._
-import net.liftweb.json.Xml._
-import org.scalatra.{ MatchedRoute, ApiFormats, ScalatraBase }
+import net.liftweb.json.Xml.toJson
 import java.io.InputStreamReader
+import org.scalatra.{ApiFormats, MatchedRoute, ScalatraBase}
 
-object OAuth2LiftJsonRequestBody {
+trait OAuth2LiftJsonRequestBody extends ScalatraBase with ApiFormats {
 
-  val ParsedBodyKey = "org.scalatra.liftjson.ParsedBody".intern
-}
-trait LiftJsonRequestBodyWithoutFormats extends ScalatraBase with ApiFormats {
+  protected implicit val jsonFormats: Formats = new OAuth2Formats
+
   import OAuth2LiftJsonRequestBody._
 
   protected def parseRequestBody(format: String) = try {
@@ -18,13 +17,17 @@ trait LiftJsonRequestBodyWithoutFormats extends ScalatraBase with ApiFormats {
     } else if (format == "xml") {
       transformRequestBody(toJson(scala.xml.XML.load(request.inputStream)))
     } else JNothing
-  } catch { case _ ⇒ JNothing }
+  } catch {
+    case _ ⇒ JNothing
+  }
 
   protected def transformRequestBody(body: JValue) = body
 
   override protected def invoke(matchedRoute: MatchedRoute) = {
     withRouteMultiParams(Some(matchedRoute)) {
-      val mt = request.contentType map { _.split(";").head } getOrElse "application/x-www-form-urlencoded"
+      val mt = request.contentType map {
+        _.split(";").head
+      } getOrElse "application/x-www-form-urlencoded"
       val fmt = mimeTypes get mt getOrElse "html"
       if (shouldParseBody(fmt)) {
         request(ParsedBodyKey) = parseRequestBody(fmt)
@@ -37,14 +40,10 @@ trait LiftJsonRequestBodyWithoutFormats extends ScalatraBase with ApiFormats {
     (fmt == "json" || fmt == "xml") && parsedBody != JNothing
 
   def parsedBody = request.get(ParsedBodyKey) getOrElse JNothing
+
 }
 
-/**
- * Parses request bodies with lift json if the appropriate content type is set.
- * Be aware that it also parses XML and returns a JValue of the parsed XML.
- */
-trait OAuth2LiftJsonRequestBody extends LiftJsonRequestBodyWithoutFormats {
+object OAuth2LiftJsonRequestBody {
 
-  protected implicit def jsonFormats: Formats = DefaultFormats
-
+  val ParsedBodyKey = "org.scalatra.liftjson.ParsedBody".intern
 }
