@@ -6,13 +6,13 @@ import org.scalatra.scalate.ScalateSupport
 import akka.actor.ActorSystem
 import org.scalatra.servlet.ServletBase
 import javax.servlet.http.{ HttpServletResponse, HttpServletRequest }
-import java.io.PrintWriter
 import org.scalatra._
 import liftjson.{ LiftJsonRequestBody }
 import scalaz._
 import Scalaz._
 import net.liftweb.json._
 import OAuth2Imports._
+import java.io.{ InputStreamReader, StringReader, PrintWriter }
 
 trait AuthenticationApp[UserClass >: Null <: AppUser[_]]
     extends PasswordAuthSupport[UserClass]
@@ -49,6 +49,7 @@ trait OAuth2MethodOverride extends Handler {
 }
 
 trait OAuth2ServerBaseApp extends ScalatraServlet
+    with OAuth2ResponseSupport
     with FlashMapSupport
     with CookieSupport
     with ScalateSupport
@@ -116,6 +117,19 @@ trait OAuth2ServerBaseApp extends ScalatraServlet
   override protected def transformRequestBody(body: JValue) = body.camelizeKeys
 
   override protected def contentTypeInferrer = inferFromFormats orElse inferFromJValue orElse super.contentTypeInferrer
+
+  override protected def renderPipeline = renderBackchatResponse orElse super.renderPipeline
+
+  /**
+   * Redirect to full URL build from the given relative path.
+   *
+   * @param path a relative path
+   */
+  override def redirect(path: String) = {
+    val url = buildFullUrl(path)
+    logger debug ("redirecting to [%s]" format url)
+    super.redirect(url)
+  }
 
 }
 
