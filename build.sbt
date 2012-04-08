@@ -157,3 +157,9 @@ scalateBindings ++= Seq(
   Binding("user", "ResourceOwner", defaultValue = "null"),
   Binding("isAnonymous", "Boolean", defaultValue = "true"),
   Binding("isAuthenticated", "Boolean", defaultValue = "false"))
+
+seq(coffeeSettings: _*)
+
+(CoffeeKeys.iced in (Compile, CoffeeKeys.coffee)) := true
+
+(resourceManaged in (Compile, CoffeeKeys.coffee)) <<= (sourceDirectory in Compile)(_ / "webapp" / "js")

@@ -5,6 +5,7 @@ import model._
 import net.liftweb.json.Formats
 import service.SmtpTransport
 import OAuth2Imports._
+import collection.JavaConverters._
 
 object OAuth2Extension extends ExtensionId[OAuth2Extension] with ExtensionIdProvider {
   def lookup() = OAuth2Extension
@@ -72,6 +73,12 @@ class OAuth2Extension(system: ExtendedActorSystem) extends Extension {
     cfg.getString(confKey("web.public")),
     AuthorizationType.withName(cfg.getString(confKey("web.authorizationType"))),
     cfg.getString(confKey("web.realm")),
-    cfg.getBoolean(confKey("web.useParams")))
+    cfg.getBoolean(confKey("web.useParams")),
+    CORSConfig(
+      cfg.getStringList(confKey("web.cors.allowedOrigins")).asScala,
+      cfg.getStringList(confKey("web.cors.allowedMethods")).asScala,
+      cfg.getStringList(confKey("web.cors.allowedHeaders")).asScala,
+      cfg.getBoolean(confKey("web.cors.allowCredentials")),
+      cfg.getInt(confKey("web.cors.preflightMaxAge"))))
 
 }

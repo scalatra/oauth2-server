@@ -1,5 +1,7 @@
 package io.backchat.oauth2
 
+import net.liftweb.json._
+
 class OAuthString(s: String) {
   def blankOption = if (isBlank) None else Some(s)
   def isBlank = s == null || s.trim.isEmpty
@@ -20,5 +22,20 @@ class OAuthString(s: String) {
 
   def formDecode: String = { // This gives the same output as java.net.URLDecoder
     UrlCodingUtils.urlDecode(s, plusIsSpace = true)
+  }
+}
+
+class OAuthJValue(json: JValue) {
+
+  import OAuth2Imports.string2InflectorString
+
+  def camelizeKeys = rewriteJsonAST(true)
+  def snakizeKeys = rewriteJsonAST(false)
+
+  private def rewriteJsonAST(camelize: Boolean): JValue = {
+    json transform {
+      case JField(nm, x) if !nm.startsWith("_") ⇒ JField(if (camelize) nm.camelize else nm.underscore, x)
+      case x                                    ⇒ x
+    }
   }
 }

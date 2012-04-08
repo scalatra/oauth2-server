@@ -9,7 +9,8 @@ import net.liftweb.json._
 import org.apache.commons.validator.routines.{ UrlValidator, EmailValidator }
 import util.matching.Regex
 import model.Validations.PredicateValidator
-import java.net.URI
+import util.control.Exception._
+import java.net.{ HttpURLConnection, URI }
 
 object Validations {
 
@@ -41,13 +42,11 @@ object Validations {
     buildUrlValidator(fieldName, value, false, schemes: _*)
 
   private def buildUrlValidator(fieldName: String, value: ⇒ String, absolute: Boolean, schemes: String*): Validation[Error, String] = {
-    val urlValidator = if (schemes.isEmpty) UrlValidator.getInstance() else new UrlValidator(Array(schemes: _*))
-    val validator = (s: String) ⇒ {
-      urlValidator.isValid(s) && (!absolute || {
-        try {
-          URI.create(s).isAbsolute
-        } catch { case _ ⇒ false }
-      })
+    val validator = (url: String) ⇒ {
+      (allCatch opt {
+        val u = URI.create(url).normalize()
+        !absolute || u.isAbsolute
+      }).isDefined
     }
     new PredicateValidator[String](fieldName, validator, "%s must be a valid url.").validate(value)
   }

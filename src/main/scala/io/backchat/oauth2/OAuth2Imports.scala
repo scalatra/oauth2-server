@@ -10,6 +10,7 @@ import java.util.concurrent.TimeUnit
 import org.joda.time._
 import format.DateTimeFormatter
 import io.backchat.inflector.InflectorImports
+import net.liftweb.json.JsonAST.JValue
 
 object OAuth2Imports extends InflectorImports with com.mongodb.casbah.Imports with commons.Imports with query.Imports {
 
@@ -118,4 +119,5 @@ object OAuth2Imports extends InflectorImports with com.mongodb.casbah.Imports wi
   }
 
   implicit def string2RicherString(s: String) = new OAuthString(s)
+  implicit def jvalue2RicherJValue(j: JValue) = new OAuthJValue(j)
 }

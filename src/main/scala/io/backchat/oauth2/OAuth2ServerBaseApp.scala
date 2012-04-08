@@ -5,12 +5,14 @@ import model.ResourceOwner
 import org.scalatra.scalate.ScalateSupport
 import akka.actor.ActorSystem
 import org.scalatra.servlet.ServletBase
-import org.scalatra.liftjson.LiftJsonRequestBody
 import javax.servlet.http.{ HttpServletResponse, HttpServletRequest }
 import java.io.PrintWriter
 import org.scalatra._
+import liftjson.{ LiftJsonRequestBody }
 import scalaz._
 import Scalaz._
+import net.liftweb.json._
+import OAuth2Imports._
 
 trait AuthenticationApp[UserClass >: Null <: AppUser[_]]
     extends PasswordAuthSupport[UserClass]
@@ -52,7 +54,12 @@ trait OAuth2ServerBaseApp extends ScalatraServlet
     with ScalateSupport
     with ApiFormats
     with OAuth2MethodOverride
+    with LiftJsonRequestBody
+    with CORSSupport
+    with LoadBalancedSslRequirement
     with AuthenticationSupport[ResourceOwner] {
+
+  override protected implicit val jsonFormats = new OAuth2Formats
 
   implicit protected def system: ActorSystem
   val oauth = OAuth2Extension(system)
@@ -101,5 +108,14 @@ trait OAuth2ServerBaseApp extends ScalatraServlet
       Nil
     eng
   }
+
+  protected def inferFromJValue: ContentTypeInferrer = {
+    case _: JValue ⇒ formats('json.name)
+  }
+
+  override protected def transformRequestBody(body: JValue) = body.camelizeKeys
+
+  override protected def contentTypeInferrer = inferFromFormats orElse inferFromJValue orElse super.contentTypeInferrer
+
 }
 

@@ -136,6 +136,7 @@ trait AuthenticationSupport[UserClass >: Null <: AppUser[_]] extends ScentrySupp
   type AuthProvider = UserProvider[UserClass] with ForgotPasswordProvider[UserClass] with RememberMeProvider[UserClass]
 
   implicit override protected def user = scentry.user
+  protected def oauth: OAuth2Extension
   protected def authProvider: AuthProvider
 
   /**
@@ -145,7 +146,8 @@ trait AuthenticationSupport[UserClass >: Null <: AppUser[_]] extends ScentrySupp
     Seq(
       new PasswordStrategy(self, authProvider),
       new ForgotPasswordStrategy(self, authProvider),
-      new RememberMeStrategy(self, authProvider)) foreach { strategy ⇒
+      new RememberMeStrategy(self, authProvider),
+      new AppUserBasicAuth(self, oauth.web.realm, authProvider)) foreach { strategy ⇒
         scentry.registerStrategy(strategy.name, _ ⇒ strategy)
       }
 
@@ -188,7 +190,6 @@ trait AuthenticationSupport[UserClass >: Null <: AppUser[_]] extends ScentrySupp
     ctx.attributes.update("flash", ctx.flash)
     ctx.attributes.update("params", ctx.params)
     ctx.attributes.update("multiParams", ctx.multiParams)
-
     ctx
   }
 
