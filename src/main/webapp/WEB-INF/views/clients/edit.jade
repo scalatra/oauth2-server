@@ -1,0 +1,10 @@
+-@ val errors: List[io.backchat.oauth2.model.ValidationError] = Nil
+-@ val client: Client 
+- println("Client")
+- println(client.toString)
+- render("../shared/validation_errors.jade", Map("errors" -> errors))
+
+form.form-horizontal(method="post")
+  fieldset
+    legend Update #{client.displayName}
+    - render("client_fields.jade", Map("errors" -> errors, "profile" -> client.profile, "displayName" -> client.displayName, "authType" -> client.authorizationType.toString, "scope" -> client.scope, "redirectUri" -> ~client.redirectUri, "link" -> ~client.link))

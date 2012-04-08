@@ -3,8 +3,12 @@ package io.backchat.oauth2
 import org.eclipse.jetty.server.nio.SelectChannelConnector
 import org.eclipse.jetty.server.Server
 import org.eclipse.jetty.webapp.WebAppContext
-import org.eclipse.jetty.servlet.ServletHolder
 import akka.actor.ActorSystem
+import org.eclipse.jetty.annotations.AnnotationConfiguration
+import org.eclipse.jetty.servlet.{ DefaultServlet, ServletHolder }
+import OAuth2Imports._
+import org.eclipse.jetty.util.thread.ExecutorThreadPool
+import java.util.concurrent.Executors
 
 object JettyMain {
 
@@ -27,15 +31,23 @@ object JettyMain {
     connector setHost oauth.web.host
     connector setPort oauth.web.port
     connector setName "Backchat OAuth2 Server"
-    connector setMaxIdleTime 90000
+    connector setMaxIdleTime 90.seconds.toMillis.toInt
+    connector setSoLingerTime 0
+    connector setReuseAddress true
+    connector setThreadPool new ExecutorThreadPool(Executors.newCachedThreadPool())
     server addConnector connector
 
     val webApp = new WebAppContext
+
     webApp setContextPath "/"
+    webApp.setConfigurations(Array(new AnnotationConfiguration))
     webApp setResourceBase oauth.web.public
-    webApp setDescriptor (oauth.web.public + "/WEB-INF/web.xml")
     webApp addServlet (new ServletHolder(new HomeServlet), "/*")
     webApp addServlet (new ServletHolder(new ClientsApp), "/clients/*")
+    webApp addServlet (new ServletHolder(new DefaultServlet()), "/img/*")
+    webApp addServlet (new ServletHolder(new DefaultServlet()), "/js/*")
+    webApp addServlet (new ServletHolder(new DefaultServlet()), "/css/*")
+    webApp addServlet (new ServletHolder(new DefaultServlet()), "/")
 
     server setHandler webApp
 

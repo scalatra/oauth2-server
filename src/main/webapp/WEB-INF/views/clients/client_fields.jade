@@ -1,5 +1,5 @@
 
--@ val errors: List[ValidationError] = Nil
+-@ val errors: List[io.backchat.oauth2.model.ValidationError] = Nil
 -@ val profiles: Seq[(String, String)] = Nil
 -@ val authTypes: Seq[(String, String)] = Nil
 -@ val profile: String = params.get("profile").getOrElse("")
@@ -8,48 +8,47 @@
 -@ val scope: List[String] = multiParams("scope").toList
 -@ val redirectUri: String = params.get("redirect_uri").getOrElse("")
 -@ val link: String = params.get("link").getOrElse("")
--@ val scopeStr: String = multiParams("scope").mkString(",")
+-@ val scopeStr: String = scope.mkString(", ")
+-@ val buttonText: String = "Save"
 
-- render("../shared/validation_errors.jade", Map("errors" -> errors))
-
-form.form-horizontal{:method => "post", :action=>{""+params.get("id").getOrElse("")}}
-  fieldset
-    legend Create a new client
-    div{:class => {if (errors.exists(_.field == "profile")) "error control-group" else "control-group"} }
-      label.control-label(for="profile") Profile:
-      div.controls
-        select#profile(name="profile")
-          option{:value => "", :selected => {if (profile.nonBlank) "selected" else ""} }
-          - profiles foreach
-            - prof =>
-              - if (profile == prof._1)
-                option(value="#{prof._1}" selected )= prof._2
-              - else
-                option(value="#{prof._1}" )= prof._2
-    div{:class => {if (errors.exists(_.field == "display_name")) "error control-group" else "control-group"} }
-      label.control-label(for="display_name") Display name:
-      div.controls
-        input#display_name(name="display_name" type="text" value=displayName placeholder="Name" )
-    div{:class => {if (errors.exists(_.field == "auth_type")) "error control-group" else "control-group"} }
-      label.control-label(for="auth_type") Authorization type:
-      div.controls
-        - authTypes foreach
-          - at =>
-            label.radio
-              input#auth_type{:name => "auth_type", :type => "radio", :value => {at.toString}, :selected => {if (at._1.toString == authType) "selected" else ""}}
-              = at._2
-    div{:class => {if (errors.exists(_.field == "scope")) "error control-group" else "control-group"} }
-      label.control-label(for="scope") Scope:
-      div.controls
-        input#scope(name="scope" type="text" value="#{scopeStr}" placeholder="Scope" )
-    div{:class => {if (errors.exists(_.field == "redirect_uri")) "error control-group" else "control-group"} }
-      label.control-label(for="redirect_uri") Redirect url:
-      div.controls
-        input#redirect_uri(name="redirect_uri" type="text" value=redirectUri placeholder="Redirect url" )
-    div{:class => {if (errors.exists(_.field == "link")) "error control-group" else "control-group"} }
-      label.control-label(for="link") Link:
-      div.controls
-        input#link(name="link" type="text" value=link placeholder="Link" )
-    div.form-actions
-      button.btn.btn-primary(type="submit") Create
-      button.btn(type="reset") Cancel
+div{:class => {if (errors.exists(_.field == "profile")) "error control-group" else "control-group"} }
+  label.control-label(for="profile") Profile:
+  div.controls
+    select#profile(name="profile")
+      option{:value => "", :selected => {if (profile.nonBlank) "selected" else ""} }
+      - profiles foreach
+        - prof =>
+          - if (profile == prof._1)
+            option(value="#{prof._1}" selected )= prof._2
+          - else
+            option(value="#{prof._1}" )= prof._2
+div{:class => {if (errors.exists(_.field == "display_name")) "error control-group" else "control-group"} }
+  label.control-label(for="display_name") Display name:
+  div.controls
+    input#display_name(name="display_name" type="text" value=displayName placeholder="Name" )
+div{:class => {if (errors.exists(_.field == "auth_type")) "error control-group" else "control-group"} }
+  label.control-label(for="auth_type") Authorization type:
+  div.controls
+    - authTypes foreach
+      - at =>
+        label.radio
+          - if (at._1.toString == authType)
+            input#auth_type(name="auth_type" type ="radio" value="#{at._1.toString}" checked="checked" )
+          - else 
+            input#auth_type(name="auth_type" type ="radio" value="#{at._1.toString}" )
+          = at._2
+div{:class => {if (errors.exists(_.field == "scope")) "error control-group" else "control-group"} }
+  label.control-label(for="scope") Scope:
+  div.controls
+    input#scope(name="scope" type="text" value="#{scopeStr}" placeholder="Scope" )
+div{:class => {if (errors.exists(_.field == "redirect_uri")) "error control-group" else "control-group"} }
+  label.control-label(for="redirect_uri") Redirect url:
+  div.controls
+    input#redirect_uri(name="redirect_uri" type="text" value=redirectUri placeholder="Redirect url" )
+div{:class => {if (errors.exists(_.field == "link")) "error control-group" else "control-group"} }
+  label.control-label(for="link") Link:
+  div.controls
+    input#link(name="link" type="text" value=link placeholder="Link" )
+div.form-actions
+  button.btn.btn-primary(type="submit")= buttonText
+  button.btn(type="reset") Cancel

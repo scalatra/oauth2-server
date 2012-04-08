@@ -2,7 +2,6 @@ package io.backchat.oauth2
 
 import akka.actor._
 import model._
-import model.Enums.AuthorizationType
 import net.liftweb.json.Formats
 import service.SmtpTransport
 import OAuth2Imports._

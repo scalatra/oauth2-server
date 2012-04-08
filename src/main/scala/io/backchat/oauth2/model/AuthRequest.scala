@@ -5,7 +5,6 @@ import com.novus.salat._
 import com.novus.salat.global._
 import com.novus.salat.annotations._
 import com.novus.salat.dao._
-import Enums._
 import scalaz._
 import Scalaz._
 import OAuth2Imports._

@@ -1,14 +1,16 @@
 package io.backchat.oauth2
 
-import auth.{ RememberMeAuthSupport, ForgotPasswordAuthSupport, PasswordAuthSupport, AuthenticationSupport }
+import io.backchat.oauth2.auth.{ RememberMeAuthSupport, ForgotPasswordAuthSupport, PasswordAuthSupport, AuthenticationSupport }
 import model.ResourceOwner
 import org.scalatra.scalate.ScalateSupport
 import akka.actor.ActorSystem
 import org.scalatra.servlet.ServletBase
 import org.scalatra.liftjson.LiftJsonRequestBody
-import org.scalatra.{ ApiFormats, ScalatraServlet, FlashMapSupport, CookieSupport }
 import javax.servlet.http.{ HttpServletResponse, HttpServletRequest }
 import java.io.PrintWriter
+import org.scalatra._
+import scalaz._
+import Scalaz._
 
 trait AuthenticationApp[UserClass >: Null <: AppUser[_]]
     extends PasswordAuthSupport[UserClass]
@@ -18,11 +20,38 @@ trait AuthenticationApp[UserClass >: Null <: AppUser[_]]
 
 }
 
+/**
+ * Mixin for clients that only support a limited set of HTTP verbs.  If the
+ * request is a POST and the `_method` request parameter is set, the value of
+ * the `_method` parameter is treated as the request's method.
+ */
+trait OAuth2MethodOverride extends Handler {
+  abstract override def handle(req: RequestT, res: ResponseT) {
+    val req2 = req.requestMethod match {
+      case Post | Get ⇒ req.parameters.get(paramName) some (m ⇒ requestWithMethod(req, HttpMethod(m))) none req
+      case _          ⇒ req
+    }
+    super.handle(req2, res)
+  }
+
+  /**
+   * Returns a request identical to the current request, but with the
+   * specified method.
+   *
+   * For backward compatibility, we need to transform the underlying request
+   * type to pass to the super handler.
+   */
+  protected def requestWithMethod(req: RequestT, method: HttpMethod): RequestT
+
+  private val paramName = "_method"
+}
+
 trait OAuth2ServerBaseApp extends ScalatraServlet
     with FlashMapSupport
     with CookieSupport
     with ScalateSupport
     with ApiFormats
+    with OAuth2MethodOverride
     with AuthenticationSupport[ResourceOwner] {
 
   implicit protected def system: ActorSystem

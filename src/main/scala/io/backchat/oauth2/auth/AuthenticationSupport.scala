@@ -7,10 +7,10 @@ import org.fusesource.scalate.Binding
 import javax.servlet.http.{ HttpServletResponse, HttpServletRequest }
 import java.io.PrintWriter
 import org.scalatra.{ FlashMapSupport, CookieSupport }
-import org.scalatra.scalate.ScalateSupport
 import scalaz._
 import Scalaz._
 import model.{ ValidationError }
+import org.scalatra.scalate.{ ScalatraRenderContext, ScalateSupport }
 
 class OAuthScentryConfig extends ScentryConfig
 
@@ -178,11 +178,17 @@ trait AuthenticationSupport[UserClass >: Null <: AppUser[_]] extends ScentrySupp
   }
 
   override protected def createRenderContext(req: HttpServletRequest, resp: HttpServletResponse, out: PrintWriter) = {
-    val ctx = super.createRenderContext(req, resp, out)
+    val ctx = super.createRenderContext(req, resp, out).asInstanceOf[ScalatraRenderContext]
     ctx.attributes.update("userOption", userOption)
     ctx.attributes.update("user", user)
     ctx.attributes.update("isAnonymous", isAnonymous)
     ctx.attributes.update("isAuthenticated", isAuthenticated)
+    ctx.attributes.update("session", ctx.session)
+    ctx.attributes.update("sessionOption", ctx.sessionOption)
+    ctx.attributes.update("flash", ctx.flash)
+    ctx.attributes.update("params", ctx.params)
+    ctx.attributes.update("multiParams", ctx.multiParams)
+
     ctx
   }
 

@@ -1,8 +1,7 @@
 package io.backchat.oauth2
 
 import akka.actor.ActorSystem
-import model.Enums.AuthorizationType
-import model.{ Token, Client }
+import model._
 import scalaz._
 import Scalaz._
 import OAuth2Imports._
@@ -16,26 +15,6 @@ class ClientsApp(implicit protected val system: ActorSystem) extends OAuth2Serve
 
   get("/") {
     jade("clients", "clients" -> oauth.clients.find(MongoDBObject()).limit(pageSize).skip((page - 1) * pageSize))
-  }
-
-  post("/") {
-    val client = Client(
-      Token.generate.token,
-      ~params.get("profile"),
-      ~params.get("display_name"),
-      AuthorizationType.withName(~params.get("auth_type")),
-      scope = multiParams("scope").toList,
-      redirectUri = params.get("redirect_uri"),
-      link = params.get("link"))
-
-    val validated = oauth.clients.validateClient(client)
-    validated foreach oauth.clients.save
-    validated.fold(
-      errs ⇒ jade("client/new", templateData("errors" -> errs.list, "client" -> client): _*),
-      client ⇒ {
-        flash("success") = "Created client %s".format(client.displayName)
-        redirect("/clients")
-      })
   }
 
   get("/:id") {
@@ -60,12 +39,32 @@ class ClientsApp(implicit protected val system: ActorSystem) extends OAuth2Serve
       val saved = oauth.clients.validateClient(update)
       saved foreach oauth.clients.save
       saved.fold(
-        errs ⇒ jade("edit", templateData("errors" -> errs.list, "client" -> client): _*),
+        errs ⇒ jade("edit", templateData("errors" -> errs.list, "client" -> client, "id" -> params("id")): _*),
         cl ⇒ {
           flash("success") = "Updated client %s".format(cl.displayName)
           redirect("/clients")
         })
     }) getOrElse halt(404, "Client not found")
+  }
+
+  post("/") {
+    val client = Client(
+      Token.generate.token,
+      ~params.get("profile"),
+      ~params.get("display_name"),
+      AuthorizationType.withName(~params.get("auth_type")),
+      scope = multiParams("scope").toList,
+      redirectUri = params.get("redirect_uri"),
+      link = params.get("link"))
+
+    val validated = oauth.clients.validateClient(client)
+    validated foreach oauth.clients.save
+    validated.fold(
+      errs ⇒ jade("clients/new", templateData("errors" -> errs.list, "client" -> client): _*),
+      client ⇒ {
+        flash("success") = "Created client %s".format(client.displayName)
+        redirect("/clients")
+      })
   }
 
   delete("/:id") {

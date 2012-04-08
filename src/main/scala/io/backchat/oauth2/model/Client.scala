@@ -5,24 +5,25 @@ import com.novus.salat._
 import com.novus.salat.global._
 import com.novus.salat.annotations._
 import com.novus.salat.dao._
-import Enums._
 import scalaz._
 import Scalaz._
 import OAuth2Imports._
 import akka.actor.ActorSystem
 
 case class Client(
-  secret: String,
-  profile: String,
-  displayName: String,
-  authorizationType: AuthorizationType.Value,
-  @Key("_id") id: ObjectId = new ObjectId,
-  scope: List[String] = Nil,
-  redirectUri: Option[String],
-  link: Option[String] = None,
-  revoked: DateTime = MinDate,
-  tokensGranted: Int = 0,
-  tokensRevoked: Int = 0)
+    secret: String,
+    profile: String,
+    displayName: String,
+    @EnumAs(strategy = EnumStrategy.BY_VALUE) authorizationType: AuthorizationType.Value,
+    @Key("_id") id: ObjectId = new ObjectId(),
+    scope: List[String] = Nil,
+    redirectUri: Option[String],
+    link: Option[String] = None,
+    revoked: DateTime = MinDate,
+    tokensGranted: Int = 0,
+    tokensRevoked: Int = 0) {
+  def isRevoked = revoked > MinDate
+}
 
 class ClientDao(collection: MongoCollection)(implicit system: ActorSystem)
     extends SalatDAO[Client, ObjectId](collection = collection) {
@@ -62,19 +63,19 @@ class ClientDao(collection: MongoCollection)(implicit system: ActorSystem)
   }
   private type Factory = (String, String, AuthorizationType.Value, List[String], Option[String], Option[String]) ⇒ Client
 
-  def create(
-    profile: String,
-    displayName: String,
-    authType: String,
-    scopes: List[String],
-    redirectUri: Option[String],
-    link: Option[String]) = {
-    val factory = (p: String, n: String, at: AuthorizationType.Value, s: List[String], r: Option[String], l: Option[String]) ⇒
-      Client(Token.generate.token, p, n, at, scope = s, redirectUri = r, link = l)
-    val cl = buildClient(profile, displayName, authType, scopes, redirectUri, link)(factory)
-    cl foreach save
-    cl
-  }
+  //  def create(
+  //    profile: String,
+  //    displayName: String,
+  //    authType: String,
+  //    scopes: List[String],
+  //    redirectUri: Option[String],
+  //    link: Option[String]) = {
+  //    val factory = (p: String, n: String, at: AuthorizationType.Value, s: List[String], r: Option[String], l: Option[String]) ⇒
+  //      Client(Token.generate.token, p, n, at, scope = s, redirectUri = r, link = l)
+  //    val cl = buildClient(profile, displayName, authType, scopes, redirectUri, link)(factory)
+  //    cl foreach save
+  //    cl
+  //  }
 
   def validateClient(client: Client) = {
     val factory: Factory = client.copy(client.secret, _, _, _, client.id, _, _, _)

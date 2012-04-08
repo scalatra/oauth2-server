@@ -27,7 +27,6 @@ libraryDependencies ++= Seq(
   "org.scalatra"           % "scalatra-scalate"   % "2.1.0-SNAPSHOT",
   "org.scalatra"           % "scalatra-lift-json" % "2.1.0-SNAPSHOT",
   "org.scalatra"           % "scalatra-swagger"   % "2.1.0-SNAPSHOT",
-  "net.liftweb"           %% "lift-json-ext"      % "2.4",
   "org.clapper"           %% "scalasti"           % "0.5.8",
   "org.mindrot"            % "jbcrypt"            % "0.3m",
   "org.scribe"             % "scribe"             % "1.3.0",
@@ -44,6 +43,9 @@ libraryDependencies ++= Seq(
   "junit"                  % "junit"              % "4.10"            % "test",
   "ch.qos.logback"         % "logback-classic"    % "1.0.0",
   "org.eclipse.jetty"      % "jetty-webapp"       % "8.1.0.v20120127",
+  "org.eclipse.jetty"      % "jetty-servlet"      % "8.1.0.v20120127",
+  "org.eclipse.jetty"      % "test-jetty-servlet" % "8.1.0.v20120127" % "test",
+  "org.eclipse.jetty"      % "jetty-annotations"  % "8.1.0.v20120127",
   "com.novus"             %% "salat-core"         % "0.0.8-SNAPSHOT"
 )
 

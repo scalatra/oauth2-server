@@ -1,8 +1,6 @@
 package io.backchat.oauth2
 package model
 
-import model.Enums.AuthorizationType
-
 case class WebConfig(
     guiUrl: String,
     host: String,

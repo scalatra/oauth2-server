@@ -1,1 +1,13 @@
-- render("client_fields.jade")
+- attributes("buttonText") = "Create"
+-@ val errors: List[io.backchat.oauth2.model.ValidationError] = Nil
+-@ val client: Client = null
+
+- render("../shared/validation_errors.jade", Map("errors" -> errors))
+
+form.form-horizontal(method="post" action="/clients")
+  fieldset
+    legend Create a new client
+    - if (client == null)
+      - render("client_fields.jade")
+    - else 
+      - render("client_fields.jade", Map("errors" -> errors, "profile" -> client.profile, "displayName" -> client.displayName, "authType" -> client.authorizationType.toString, "scope" -> client.scope, "redirectUri" -> ~client.redirectUri, "link" -> ~client.link))
