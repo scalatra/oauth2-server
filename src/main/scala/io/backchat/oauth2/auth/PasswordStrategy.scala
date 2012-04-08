@@ -5,6 +5,7 @@ import org.scalatra.servlet.ServletBase
 import org.scalatra.auth.ScentryStrategy
 import scalaz._
 import Scalaz._
+import OAuth2Imports._
 
 class PasswordStrategy[UserClass <: AppUser[_]](protected val app: ServletBase, userProvider: UserProvider[UserClass]) extends ScentryStrategy[UserClass] {
 

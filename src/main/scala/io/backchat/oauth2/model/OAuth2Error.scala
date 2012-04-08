@@ -4,6 +4,7 @@ package model
 import java.net.URI
 import collection.mutable.HashMap
 import Enums._
+import OAuth2Imports._
 
 sealed trait Error {
   def message: String

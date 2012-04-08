@@ -1,5 +1,6 @@
 package io.backchat.oauth2
 
+import OAuth2Imports._
 import java.net.URI
 
 class OAuthUri(uri: URI) {

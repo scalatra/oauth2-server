@@ -60,5 +60,17 @@ trait OAuth2ServerBaseApp extends ScalatraServlet
     ctx.attributes("title") = "Backchat OAuth2"
     ctx
   }
+
+  override protected def createTemplateEngine(config: ConfigT) = {
+    val eng = super.createTemplateEngine(config)
+    eng.importStatements :::=
+      "import scalaz._" ::
+      "import scalaz.Scalaz._" ::
+      "import io.backchat.oauth2._" ::
+      "import io.backchat.oauth2.OAuth2Imports._" ::
+      "import io.backchat.oauth2.model._" ::
+      Nil
+    eng
+  }
 }
 

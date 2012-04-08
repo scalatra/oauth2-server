@@ -5,6 +5,7 @@ import org.scalatra.{ CookieSupport, CookieOptions, Cookie }
 import org.scalatra.servlet.ServletBase
 import scalaz._
 import org.scalatra.auth.ScentryStrategy
+import OAuth2Imports._
 
 object RememberMeStrategy {
   val CookieKey = "backchat.oauth2.remember"

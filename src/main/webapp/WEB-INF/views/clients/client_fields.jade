@@ -1,12 +1,14 @@
--@ val errors: List[io.backchat.oauth2.model.ValidationError] = Nil
+
+-@ val errors: List[ValidationError] = Nil
 -@ val profiles: Seq[(String, String)] = Nil
 -@ val authTypes: Seq[(String, String)] = Nil
 -@ val profile: String = params.get("profile").getOrElse("")
 -@ val displayName: String = params.get("display_name").getOrElse("")
 -@ val authType: String = params.get("auth_type").getOrElse("code_and_token")
--@ val scope: List[String] = multiParams("scope")
+-@ val scope: List[String] = multiParams("scope").toList
 -@ val redirectUri: String = params.get("redirect_uri").getOrElse("")
--@ val link: String = params.get("link").getOrElse(link)
+-@ val link: String = params.get("link").getOrElse("")
+-@ val scopeStr: String = multiParams("scope").mkString(",")
 
 - render("../shared/validation_errors.jade", Map("errors" -> errors))
 
@@ -17,7 +19,7 @@ form.form-horizontal{:method => "post", :action=>{""+params.get("id").getOrElse(
       label.control-label(for="profile") Profile:
       div.controls
         select#profile(name="profile")
-          option{:value => "", :selected => {if (profile == null || profile.isEmpty) "selected" else ""} }
+          option{:value => "", :selected => {if (profile.nonBlank) "selected" else ""} }
           - profiles foreach
             - prof =>
               - if (profile == prof._1)
@@ -31,11 +33,15 @@ form.form-horizontal{:method => "post", :action=>{""+params.get("id").getOrElse(
     div{:class => {if (errors.exists(_.field == "auth_type")) "error control-group" else "control-group"} }
       label.control-label(for="auth_type") Authorization type:
       div.controls
-        input#auth_type(name="auth_type" type="text" value=authType.toString placeholder="Name" )
+        - authTypes foreach
+          - at =>
+            label.radio
+              input#auth_type{:name => "auth_type", :type => "radio", :value => {at.toString}, :selected => {if (at._1.toString == authType) "selected" else ""}}
+              = at._2
     div{:class => {if (errors.exists(_.field == "scope")) "error control-group" else "control-group"} }
       label.control-label(for="scope") Scope:
       div.controls
-        input#scope(name="scope" type="text" value=scope.mkString(", ") placeholder="Scope" )
+        input#scope(name="scope" type="text" value="#{scopeStr}" placeholder="Scope" )
     div{:class => {if (errors.exists(_.field == "redirect_uri")) "error control-group" else "control-group"} }
       label.control-label(for="redirect_uri") Redirect url:
       div.controls

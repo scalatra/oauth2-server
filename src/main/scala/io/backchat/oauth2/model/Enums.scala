@@ -1,6 +1,8 @@
 package io.backchat.oauth2
 package model
 
+import OAuth2Imports._
+
 object Enums {
 
   object AuthorizationType extends Enumeration {

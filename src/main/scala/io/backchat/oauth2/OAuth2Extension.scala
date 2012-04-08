@@ -5,6 +5,7 @@ import model._
 import model.Enums.AuthorizationType
 import net.liftweb.json.Formats
 import service.SmtpTransport
+import OAuth2Imports._
 
 object OAuth2Extension extends ExtensionId[OAuth2Extension] with ExtensionIdProvider {
   def lookup() = OAuth2Extension
