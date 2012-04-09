@@ -51,7 +51,7 @@ trait OAuth2MethodOverride extends Handler {
 trait OAuth2ServerBaseApp extends ScalatraServlet
     with OAuth2ResponseSupport
     with OAuth2MethodOverride
-    with OAuth2LiftJsonRequestBody
+    with LiftJsonRequestBody
     with FlashMapSupport
     with CookieSupport
     with ScalateSupport
@@ -60,6 +60,8 @@ trait OAuth2ServerBaseApp extends ScalatraServlet
     with AuthenticationSupport[ResourceOwner] {
 
   implicit protected def system: ActorSystem
+  override protected implicit def jsonFormats: Formats = new OAuth2Formats
+
   val oauth = OAuth2Extension(system)
 
   protected val userManifest = manifest[ResourceOwner]

@@ -163,3 +163,5 @@ seq(coffeeSettings: _*)
 (CoffeeKeys.iced in (Compile, CoffeeKeys.coffee)) := true
 
 (resourceManaged in (Compile, CoffeeKeys.coffee)) <<= (sourceDirectory in Compile)(_ / "webapp" / "js")
+
+watchSources <+= (sourceDirectory in Compile) map { _ / "webapp" }

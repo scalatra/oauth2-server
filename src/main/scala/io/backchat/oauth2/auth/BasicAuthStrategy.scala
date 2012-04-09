@@ -34,7 +34,7 @@ trait BasicAuthSupport[UserType <: AppUser[_]] { self: ScalatraBase with Scentry
 abstract class BasicAuthStrategy[UserType <: AnyRef](protected val app: ServletBase, realm: String, override val name: Symbol)
     extends ScentryStrategy[UserType] {
 
-  private val REMOTE_USER = "REMOTE_USER".intern
+  private val REMOTE_USER = "REMOTE_USER"
   protected def challenge = "Basic realm=\"%s\"" format realm
 
   override def isValid = {
