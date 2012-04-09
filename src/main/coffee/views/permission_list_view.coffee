@@ -1,10 +1,3 @@
-Item = Backbone.Model.extend
-  defaults:
-    part1: "Hello"
-    part2: "Backbone"
-
-ItemList = Backbone.Collection.extend
-  model: Item
 
 PermissionListView = Backbone.View.extend
   el: $ 'body'
