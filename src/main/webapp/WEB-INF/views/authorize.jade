@@ -1,0 +1,26 @@
+-@ val client: Client = null
+div.container
+  | Do you want want to grant #{client.displayName} access to your account?
+  | The application requests access for the following items: 
+  ul.unstyled
+    -# client.scopes foreach 
+      -# scope =>
+        -# li= {scope._1 + " " + scope._2}
+form.form-horizontal(method="post")
+  fieldset
+    legend Authorize #{client.displayName}
+    - if (isAnonymous)
+      div.control-group
+        label.control-label(for="login") Login:
+        div.controls
+          input#login.input-xlarge(type="text" name="login" placeholder="login or email" )
+      div.control-group
+        label.control-label(for="password") Password:
+        div.controls
+          input#password.input-xlarge(type="password" name="password" placeholder="password" )
+
+    div.form-actions
+      button.btn.btn-primary(type="submit") Grant
+      button.btn(type="submit") Deny
+      a.btn(href="/register") Register
+      a(href="/forgot") Forgot password

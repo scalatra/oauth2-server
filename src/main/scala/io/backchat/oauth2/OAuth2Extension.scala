@@ -81,4 +81,10 @@ class OAuth2Extension(system: ExtendedActorSystem) extends Extension {
       cfg.getBoolean(confKey("web.cors.allowCredentials")),
       cfg.getInt(confKey("web.cors.preflightMaxAge"))))
 
+  val permissions = {
+    cfg.getConfigList(confKey("permissions")).asScala map { cc ⇒
+      Permission(cc.getString("code"), cc.getString("name"), cc.getString("description"), true)
+    }
+  }
+
 }

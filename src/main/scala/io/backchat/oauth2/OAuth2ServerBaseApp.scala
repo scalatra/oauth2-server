@@ -1,6 +1,6 @@
 package io.backchat.oauth2
 
-import io.backchat.oauth2.auth.{ RememberMeAuthSupport, ForgotPasswordAuthSupport, PasswordAuthSupport, AuthenticationSupport }
+import io.backchat.oauth2.auth.{ ForgotPasswordAuthSupport, PasswordAuthSupport, AuthenticationSupport }
 import model.ResourceOwner
 import org.scalatra.scalate.ScalateSupport
 import akka.actor.ActorSystem
@@ -16,9 +16,8 @@ import java.io.PrintWriter
 
 trait AuthenticationApp[UserClass >: Null <: AppUser[_]]
     extends PasswordAuthSupport[UserClass]
-    with ForgotPasswordAuthSupport[UserClass]
-    with RememberMeAuthSupport[UserClass] {
-  self: ServletBase with FlashMapSupport with CookieSupport with ScalateSupport with AuthenticationSupport[UserClass] ⇒
+    with ForgotPasswordAuthSupport[UserClass] {
+  self: ServletBase with ApiFormats with FlashMapSupport with CookieSupport with ScalateSupport with AuthenticationSupport[UserClass] ⇒
 
 }
 
@@ -77,11 +76,11 @@ trait OAuth2ServerBaseApp extends ScalatraServlet
    */
   protected def buildFullUrl(path: String) = {
     if (path.startsWith("http")) path else {
-      "http%s://%s%s/%s".format(
+      "http%s://%s%s%s".format(
         if (oauth.web.sslRequired || this.isHttps) "s" else "",
         oauth.web.domainWithPort,
-        request.getContextPath,
-        path)
+        request.getContextPath.blankOption.map("/" + _) | "/",
+        if (path.startsWith("/")) path.substring(1) else path)
     }
   }
 

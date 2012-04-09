@@ -23,6 +23,7 @@ case class Client(
     tokensGranted: Int = 0,
     tokensRevoked: Int = 0) {
   def isRevoked = revoked > MinDate
+  def isConfidential = profile equalsIgnoreCase "Web Application"
 }
 
 class ClientDao(collection: MongoCollection)(implicit system: ActorSystem)
@@ -33,10 +34,7 @@ class ClientDao(collection: MongoCollection)(implicit system: ActorSystem)
 
     def name(displayName: String) = nonEmptyString(fieldNames.displayName, displayName)
 
-    def scopes(scope: List[String]) = {
-      val r = nonEmptyCollection(fieldNames.scope, scope.filter(_.nonBlank))
-      r
-    }
+    def scopes(scope: List[String]) = nonEmptyCollection(fieldNames.scope, scope.filter(_.nonBlank))
 
     def clientProfile(profile: String): Validation[Error, String] =
       for {

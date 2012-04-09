@@ -5,10 +5,11 @@ import org.eclipse.jetty.http.HttpHeaders
 import net.iharder.Base64
 import scalaz._
 import Scalaz._
+import OAuth2Imports._
 
 class OAuthRequest(req: Request) {
 
-  private[this] def authorizationKey = req.headers.get(HttpHeaders.AUTHORIZATION)
+  private[this] def authorizationKey = req.headers.get(HttpHeaders.AUTHORIZATION).flatMap(_.blankOption)
   /**
    * A flag to indicate this request has the OAuth2 Authorization header
    */

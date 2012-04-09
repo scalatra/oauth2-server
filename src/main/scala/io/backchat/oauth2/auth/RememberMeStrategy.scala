@@ -2,9 +2,9 @@ package io.backchat.oauth2
 package auth
 
 import org.scalatra.{ CookieSupport, CookieOptions, Cookie }
-import org.scalatra.servlet.ServletBase
+import org.scalatra.ScalatraBase
 import scalaz._
-import org.scalatra.auth.ScentryStrategy
+import scentry.ScentryStrategy
 import OAuth2Imports._
 
 object RememberMeStrategy {
@@ -15,12 +15,12 @@ object RememberMeStrategy {
  * Authentication strategy to authenticate a user from a cookie.
  */
 class RememberMeStrategy[UserClass <: AppUser[_]](
-  protected val app: ServletBase with CookieSupport,
+  protected val app: ScalatraBase with CookieSupport,
   rememberMeProvider: RememberMeProvider[UserClass],
   cookieKey: String = RememberMeStrategy.CookieKey)
     extends ScentryStrategy[UserClass] {
 
-  override val name = 'remember_me
+  override val name = "remember_me"
 
   private val oneWeek = 7 * 24 * 3600
 
@@ -31,7 +31,7 @@ class RememberMeStrategy[UserClass <: AppUser[_]](
   /**
    * After authentication, sets the remember-me cookie on the response.
    */
-  override def afterAuthenticate(winningStrategy: Symbol, user: UserClass) = {
+  override def afterAuthenticate(winningStrategy: String, user: UserClass) = {
     logger debug "Executing after authenticate in remember me strategy with winning strategy [%s] and user [%s]".format(winningStrategy, user.login)
     if (winningStrategy == 'remember_me ||
       (winningStrategy == 'user_password && app.params.getOrElse("remember_me", "").asCheckboxBool)) {
@@ -73,5 +73,30 @@ class RememberMeStrategy[UserClass <: AppUser[_]](
     app.cookies.get(cookieKey) foreach { _ ⇒ app.cookies.update(cookieKey, null) }
     logger info "Removed cookie for user [%s]".format(user.login)
   }
+
+  override def beforeSetUser(user: UserClass) {
+    println("before set user " + getClass.getName)
+  }
+
+  override def beforeFetch[IdType](userId: IdType) {
+    println("before fetch user " + getClass.getName)
+  }
+
+  override def afterFetch(user: UserClass) {
+    println("before fetch user " + getClass.getName)
+  }
+
+  override def afterSetUser(user: UserClass) {
+    println("after set user " + getClass.getName)
+  }
+
+  override def unauthenticated() {
+    println("unauthenticated " + getClass.getName)
+  }
+
+  override def afterLogout(user: UserClass) {
+    println("after logout " + getClass.getName)
+  }
+
 }
 

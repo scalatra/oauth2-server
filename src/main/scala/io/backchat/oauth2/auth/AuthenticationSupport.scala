@@ -2,15 +2,15 @@ package io.backchat.oauth2
 package auth
 
 import org.scalatra.servlet.ServletBase
-import org.scalatra.auth.{ ScentryStrategy, ScentryConfig, ScentrySupport }
 import org.fusesource.scalate.Binding
 import javax.servlet.http.{ HttpServletResponse, HttpServletRequest }
 import java.io.PrintWriter
-import org.scalatra.{ FlashMapSupport, CookieSupport }
 import scalaz._
 import Scalaz._
 import model.{ ValidationError }
 import org.scalatra.scalate.{ ScalatraRenderContext, ScalateSupport }
+import org.scalatra.{ ApiFormats, FlashMapSupport, CookieSupport }
+import scentry._
 
 class OAuthScentryConfig extends ScentryConfig
 
@@ -116,15 +116,7 @@ trait ForgotPasswordAuthSupport[UserClass >: Null <: AppUser[_]] { self: Servlet
 
 }
 
-trait RememberMeAuthSupport[UserClass >: Null <: AppUser[_]] { self: AuthenticationSupport[UserClass] ⇒
-
-  before() {
-    if (isAnonymous) scentry.authenticate('remember_me)
-  }
-
-}
-
-trait AuthenticationSupport[UserClass >: Null <: AppUser[_]] extends ScentrySupport[UserClass] with ScalateSupport { self: ServletBase with CookieSupport with FlashMapSupport ⇒
+trait AuthenticationSupport[UserClass >: Null <: AppUser[_]] extends ScentrySupport[UserClass] with ScalateSupport { self: ServletBase with CookieSupport with FlashMapSupport with ApiFormats ⇒
 
   protected def fromSession = { case id: String ⇒ authProvider.findUserById(id).orNull }
   protected def toSession = { case usr: AppUser[_] ⇒ usr.idString }
@@ -142,6 +134,13 @@ trait AuthenticationSupport[UserClass >: Null <: AppUser[_]] extends ScentrySupp
   /**
    * Registers authentication strategies.
    */
+  override protected def configureScentry {
+    scentry.unauthenticated {
+      println("unauthenticated callback")
+      unauthenticated()
+    }
+  }
+
   override protected def registerAuthStrategies = {
     Seq(
       new PasswordStrategy(self, authProvider),
@@ -154,8 +153,13 @@ trait AuthenticationSupport[UserClass >: Null <: AppUser[_]] extends ScentrySupp
   }
 
   def unauthenticated() = {
+
+    //    format match {
+    //      case "json" ⇒ scentry.strategies('resource_owner_basic).unauthenticated()
+    //      case _ ⇒
     session(scentryConfig.returnToKey) = request.getRequestURI
     redirect(scentryConfig.failureUrl)
+    //    }
   }
 
   def redirectIfAuthenticated() = if (isAuthenticated) redirectAuthenticated()

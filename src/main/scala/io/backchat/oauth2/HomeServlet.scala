@@ -7,6 +7,9 @@ class HomeServlet(implicit protected val system: ActorSystem)
     extends OAuth2ServerBaseApp
     with AuthenticationApp[ResourceOwner] {
 
+  before("/") {
+    if (isAnonymous) scentry.authenticate("remember_me")
+  }
   before() {
     contentType = "text/html"
   }
@@ -19,6 +22,10 @@ class HomeServlet(implicit protected val system: ActorSystem)
 
   get("/") {
     jade("home")
+  }
+
+  get("/permissions") {
+    jade("permissions", "layout" -> "")
   }
 
 }

@@ -54,6 +54,7 @@ trait OAuth2ResponseSupport { self: ScalatraBase ⇒
       }
       val r = includeStatusInResponse ? x.copy(statusCode = x.statusCode orElse status.some) | x.copy(statusCode = None)
       Printer.compact(render(r.toJValue.snakizeKeys), response.writer)
+      ()
     }
     case x: ApiError ⇒ ApiErrorList(x :: Nil)
     case x: ApiErrorList ⇒ {

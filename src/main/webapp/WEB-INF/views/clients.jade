@@ -21,8 +21,8 @@
           td= client.tokensRevoked
           td= client.isRevoked
           td
-            a.btn.btn-mini(href="/clients/#{client.id.toString}") Edit
-            a.btn.btn-mini(href="/clients/#{client.id.toString}?_method=delete") Delete
+            a(href="/clients/#{client.id.toString}") Edit
+            a(href="/clients/#{client.id.toString}?_method=delete") Delete
 
 - else
   p There are currently no clients registered

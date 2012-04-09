@@ -162,6 +162,30 @@ seq(coffeeSettings: _*)
 
 (CoffeeKeys.iced in (Compile, CoffeeKeys.coffee)) := true
 
-(resourceManaged in (Compile, CoffeeKeys.coffee)) <<= (sourceDirectory in Compile)(_ / "webapp" / "js")
+(resourceManaged in (Compile, CoffeeKeys.coffee)) <<= (sourceDirectory in Compile)(_ / "javascript")
 
-watchSources <+= (sourceDirectory in Compile) map { _ / "webapp" }
+sourceGenerators in Compile <+= (sourceDirectory in Compile) map { dir =>
+  val files = (dir / "javascript" ** "*.js") x relativeTo (dir / "javascript")
+  val tgt = dir / "javascript/app.jsm"
+  IO.write(tgt, files.map(_._2).mkString("", "\n", "\n"))
+  Seq.empty[File]
+}
+
+watchSources <+= (sourceDirectory in Compile) map { _ / "coffee" }
+
+seq(closureSettings:_*)
+
+(sourceDirectory in (Compile, ClosureKeys.closure)) <<= (sourceDirectory in Compile)(_ / "javascript")
+
+(resourceManaged in (Compile, ClosureKeys.closure)) <<= (sourceDirectory in Compile)(_ / "webapp" / "js")
+
+seq(buildInfoSettings: _*)
+
+sourceGenerators in Compile <+= buildInfo
+
+buildInfoKeys := Seq[Scoped](name, version, scalaVersion, sbtVersion, ClosureKeys.suffix in (Compile, ClosureKeys.closure))
+// buildInfoKeys := Seq[Scoped](name, version, scalaVersion, sbtVersion)
+
+buildInfoPackage := "io.backchat.oauth2"
+
+

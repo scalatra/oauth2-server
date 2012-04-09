@@ -4,6 +4,7 @@ import java.util.Date
 import org.joda.time.DateTime
 import net.liftweb.json.ext.JodaTimeSerializers
 import net.liftweb.json.{ Serializer, DateFormat, DefaultFormats }
+import java.io.File
 
 class OAuth2Formats extends DefaultFormats {
 
