@@ -27,6 +27,12 @@ object OAuth2Extension extends ExtensionId[OAuth2Extension] with ExtensionIdProv
 
   val environment = readEnvironmentKey(System.err.println _)
 
+  val isProduction = isEnvironment(Production)
+  val isDevelopment = isEnvironment(Development)
+  val isStaging = isEnvironment(Staging)
+  val isTest = isEnvironment(Test)
+  def isEnvironment(env: String) = environment equalsIgnoreCase env
+
 }
 
 class OAuth2Extension(system: ExtendedActorSystem) extends Extension {

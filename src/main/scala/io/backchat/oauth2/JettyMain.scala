@@ -12,6 +12,8 @@ import ro.isdc.wro.http.WroFilter
 import collection.JavaConverters._
 import org.eclipse.jetty.servlet.{ FilterMapping, FilterHolder, DefaultServlet, ServletHolder }
 import org.eclipse.jetty.plus.servlet.ServletHandler
+import ro.isdc.wro.model.resource.processor.impl.ExtensionsAwareProcessorDecorator
+import ro.isdc.wro.extensions.processor.js.CoffeeScriptProcessor
 
 object JettyMain {
 
@@ -50,12 +52,11 @@ object JettyMain {
     webApp setContextPath "/"
     webApp setParentLoaderPriority true
 
+    ExtensionsAwareProcessorDecorator.decorate(new CoffeeScriptProcessor()).addExtension("coffee");
     val wro4jFilter = new FilterHolder(classOf[WroFilter])
     wro4jFilter.setName("WebResourceOptimizer")
     wro4jFilter.setInitParameters(Map(
-      "managerFactoryClassName" -> "ro.isdc.wro.extensions.manager.ExtensionsConfigurableWroManagerFactory",
-      "uriLocators" -> "servletContext,classpath,url",
-      "preProcessors" -> "cssUrlRewriting.css,cssImport.css,semicolonAppender.js,lessCss.less,coffeeScript.coffee").asJava)
+      "managerFactoryClassName" -> "io.backchat.oauth2.OAuthWroManagerFactory").asJava)
     //      "postProcessors" -> "cssVariables.css,cssMinJawr.css,googleClosureAdvanced.js").asJava)
     val mapping = new FilterMapping()
     mapping.setFilterName(wro4jFilter.getName)
