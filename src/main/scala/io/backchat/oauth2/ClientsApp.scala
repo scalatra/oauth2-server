@@ -9,10 +9,10 @@ import net.liftweb.json._
 
 class ClientsApp(implicit protected val system: ActorSystem) extends OAuth2ServerBaseApp {
 
-  before() {
-    if (!authenticate().isDefined) unauthenticated()
+  before("/") {
+    if (isAnonymous) scentry.authenticate("remember_me")
+    if (isAnonymous && scentry.authenticate().isEmpty) unauthenticated()
   }
-
   def page = params.getOrElse("page", "1").toInt max 1
   def pageSize = params.getOrElse("pageSize", "20").toInt max 1
 

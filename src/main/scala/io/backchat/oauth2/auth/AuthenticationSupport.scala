@@ -11,6 +11,7 @@ import model.{ ValidationError }
 import org.scalatra.scalate.{ ScalatraRenderContext, ScalateSupport }
 import org.scalatra.{ ApiFormats, FlashMapSupport, CookieSupport }
 import scentry._
+import scentry.ScentryAuthStore.HttpOnlyCookieAuthStore
 
 class OAuthScentryConfig extends ScentryConfig
 
@@ -135,8 +136,8 @@ trait AuthenticationSupport[UserClass >: Null <: AppUser[_]] extends ScentrySupp
    * Registers authentication strategies.
    */
   override protected def configureScentry {
+    scentry.store = new HttpOnlyCookieAuthStore(self, oauth.web.sslRequired)
     scentry.unauthenticated {
-      println("unauthenticated callback")
       unauthenticated()
     }
   }
@@ -154,12 +155,12 @@ trait AuthenticationSupport[UserClass >: Null <: AppUser[_]] extends ScentrySupp
 
   def unauthenticated() = {
 
-    //    format match {
-    //      case "json" ⇒ scentry.strategies('resource_owner_basic).unauthenticated()
-    //      case _ ⇒
-    session(scentryConfig.returnToKey) = request.getRequestURI
-    redirect(scentryConfig.failureUrl)
-    //    }
+    format match {
+      case "json" ⇒ scentry.strategies("resource_owner_basic").unauthenticated()
+      case _ ⇒
+        session(scentryConfig.returnToKey) = request.getRequestURI
+        redirect(scentryConfig.failureUrl)
+    }
   }
 
   def redirectIfAuthenticated() = if (isAuthenticated) redirectAuthenticated()
@@ -198,7 +199,7 @@ trait AuthenticationSupport[UserClass >: Null <: AppUser[_]] extends ScentrySupp
   }
 
   /**
-   * Builds a full URL from the given relative path. Takes into account the port configuration, https, ...
+   * Builds a full URL from the given relative path. Takes the port configuration, https, ... into account
    *
    * @param path a relative path
    *

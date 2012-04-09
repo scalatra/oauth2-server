@@ -1,5 +1,5 @@
 
-PermissionListView = Backbone.View.extend
+window.PermissionListView = Backbone.View.extend
   el: $ 'body'
 
   initialize: ->
@@ -27,4 +27,3 @@ PermissionListView = Backbone.View.extend
 
   events: 'click button': 'addItem'
 
-window.list_view = new PermissionListView()

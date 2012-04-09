@@ -17,10 +17,7 @@ object ScentryAuthStore {
     private val SET_COOKIE = "Set-Cookie".intern
 
     override def set(value: String) {
-
-      app.response.addHeader(
-        SET_COOKIE,
-        Cookie(Scentry.scentryAuthKey, value)(CookieOptions(secure = secureOnly, httpOnly = true)).toCookieString)
+      app.cookies.update(Scentry.scentryAuthKey, value)(CookieOptions(secure = secureOnly, httpOnly = true))
     }
 
   }

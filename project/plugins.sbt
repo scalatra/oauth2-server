@@ -12,10 +12,6 @@ addSbtPlugin("fi.jawsy.sbtplugins" %% "sbt-jrebel-plugin" % "0.9.0")
 
 addSbtPlugin("org.ensime" % "ensime-sbt-cmd" % "0.0.10")
 
-addSbtPlugin("me.lessis" % "coffeescripted-sbt" % "0.2.2")
-
 addSbtPlugin("com.eed3si9n" % "sbt-buildinfo" % "0.1.1")
-
-addSbtPlugin("org.scala-sbt" % "sbt-closure" % "0.1.2")
 
 //libraryDependencies <+= sbtVersion(v => "com.mojolly.scalate" %% "xsbt-scalate-generator" % (v + "-0.1.6-SNAPSHOT"))
