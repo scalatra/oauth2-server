@@ -4,11 +4,14 @@ import org.eclipse.jetty.server.nio.SelectChannelConnector
 import org.eclipse.jetty.server.Server
 import org.eclipse.jetty.webapp.WebAppContext
 import akka.actor.ActorSystem
-import org.eclipse.jetty.annotations.AnnotationConfiguration
-import org.eclipse.jetty.servlet.{ DefaultServlet, ServletHolder }
 import OAuth2Imports._
 import org.eclipse.jetty.util.thread.ExecutorThreadPool
 import java.util.concurrent.Executors
+import org.eclipse.jetty.annotations.{ MultiPartConfigAnnotationHandler, AnnotationConfiguration }
+import ro.isdc.wro.http.WroFilter
+import collection.JavaConverters._
+import org.eclipse.jetty.servlet.{ FilterMapping, FilterHolder, DefaultServlet, ServletHolder }
+import org.eclipse.jetty.plus.servlet.ServletHandler
 
 object JettyMain {
 
@@ -40,8 +43,27 @@ object JettyMain {
     val webApp = new WebAppContext
 
     webApp setContextPath "/"
-    webApp.setConfigurations(Array(new AnnotationConfiguration))
+
+    val ac = new AnnotationConfiguration()
     webApp setResourceBase oauth.web.public
+    //    webApp setDescriptor (oauth.web.public + "/WEB-INF/web.xml")
+    webApp setContextPath "/"
+    webApp setParentLoaderPriority true
+
+    val wro4jFilter = new FilterHolder(classOf[WroFilter])
+    wro4jFilter.setName("WebResourceOptimizer")
+    wro4jFilter.setInitParameters(Map(
+      "managerFactoryClassName" -> "ro.isdc.wro.extensions.manager.ExtensionsConfigurableWroManagerFactory",
+      "uriLocators" -> "servletContext,classpath,url",
+      "preProcessors" -> "cssUrlRewriting.css,cssImport.css,semicolonAppender.js,lessCss.less,coffeeScript.coffee").asJava)
+    //      "postProcessors" -> "cssVariables.css,cssMinJawr.css,googleClosureAdvanced.js").asJava)
+    val mapping = new FilterMapping()
+    mapping.setFilterName(wro4jFilter.getName)
+    mapping.setPathSpec("/wro/*")
+    val servletHandler = new ServletHandler
+    servletHandler.addFilter(wro4jFilter, mapping)
+    webApp.setServletHandler(servletHandler)
+
     webApp addServlet (new ServletHolder(new HomeServlet), "/*")
     webApp addServlet (new ServletHolder(new ClientsApp), "/clients/*")
     webApp addServlet (new ServletHolder(new DefaultServlet()), "/img/*")

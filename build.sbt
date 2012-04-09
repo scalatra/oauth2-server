@@ -30,6 +30,8 @@ libraryDependencies ++= Seq(
   "org.clapper"           %% "scalasti"           % "0.5.8",
   "org.mindrot"            % "jbcrypt"            % "0.3m",
   "org.scribe"             % "scribe"             % "1.3.0",
+  "ro.isdc.wro4j"          % "wro4j-core"         % "1.4.5" exclude("log4j", "log4j") exclude("org.slf4j", "slf4j-log4j12"),
+  "ro.isdc.wro4j"          % "wro4j-extensions"   % "1.4.5" exclude("log4j", "log4j") exclude("org.slf4j", "slf4j-log4j12"),
   "javax.mail"             % "mail"               % "1.4.5",
   "commons-codec"          % "commons-codec"      % "1.6",
   "commons-validator"      % "commons-validator"  % "1.4.0",
@@ -82,11 +84,6 @@ pomExtra <<= (pomExtra, name, description) {(pom, name, desc) => pom ++ Group(
       <id>casualjim</id>
       <name>Ivan Porto Carrero</name>
       <url>http://flanders.co.nz/</url>
-    </developer>
-    <developer>
-      <id>sdb</id>
-      <name>Stefan De Boey</name>
-      <url>http://ellefant.be/</url>
     </developer>
   </developers>
 )}
