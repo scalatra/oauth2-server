@@ -146,10 +146,13 @@ class ResourceOwnerDao(collection: MongoCollection)(implicit system: ActorSystem
   collection.ensureIndex(Map("reset.token" -> 1), "reset_token_idx")
   collection.ensureIndex(Map("remembered.token" -> 1), "remembered_token_idx")
 
-  def login(loginOrEmail: String, password: String, ipAddress: String): Validation[Error, ResourceOwner] =
-    (findByLoginOrEmail(loginOrEmail)
+  def login(loginOrEmail: String, password: String, ipAddress: String): Validation[Error, ResourceOwner] = {
+    val usrOpt = findByLoginOrEmail(loginOrEmail)
+
+    (usrOpt
       filter (_.password.isMatch(password))
       map (loggedIn(_, ipAddress).success)).getOrElse(SimpleError("Login/password don't match.").fail)
+  }
 
   def loggedIn(owner: ResourceOwner, ipAddress: String): ResourceOwner = {
     val ticked = owner.copy(stats = owner.stats.tick(ipAddress))

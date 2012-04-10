@@ -76,11 +76,10 @@ trait OAuth2ServerBaseApp extends ScalatraServlet
    */
   protected def buildFullUrl(path: String) = {
     if (path.startsWith("http")) path else {
-      "http%s://%s%s%s".format(
+      "http%s://%s%s".format(
         if (oauth.web.sslRequired || this.isHttps) "s" else "",
         oauth.web.domainWithPort,
-        request.getContextPath.blankOption.map("/" + _) | "/",
-        if (path.startsWith("/")) path.substring(1) else path)
+        url(path))
     }
   }
 
@@ -109,7 +108,7 @@ trait OAuth2ServerBaseApp extends ScalatraServlet
   }
 
   protected def inferFromJValue: ContentTypeInferrer = {
-    case _: JValue ⇒ formats('json.name)
+    case _: JValue ⇒ formats("json")
   }
 
   override protected def transformRequestBody(body: JValue) = body.camelizeKeys
@@ -117,6 +116,8 @@ trait OAuth2ServerBaseApp extends ScalatraServlet
   override protected def contentTypeInferrer = inferFromFormats orElse inferFromJValue orElse super.contentTypeInferrer
 
   override protected def renderPipeline = renderBackchatResponse orElse super.renderPipeline
+
+  override protected def isScalateErrorPageEnabled = isDevelopmentMode
 
   /**
    * Redirect to full URL build from the given relative path.
@@ -127,6 +128,25 @@ trait OAuth2ServerBaseApp extends ScalatraServlet
     val url = buildFullUrl(path)
     logger debug ("redirecting to [%s]" format url)
     super.redirect(url)
+  }
+
+  override def url(path: String, params: Iterable[(String, Any)] = Iterable.empty): String = {
+    val newPath = path match {
+      case x if x.startsWith("/") ⇒ ensureSlash(contextPath) + ensureSlash(path)
+      case _                      ⇒ ensureSlash(routeBasePath) + ensureSlash(path)
+    }
+    val pairs = params map { case (key, value) ⇒ key.urlEncode + "=" + value.toString.urlEncode }
+    val queryString = if (pairs.isEmpty) "" else pairs.mkString("?", "&", "")
+    addSessionId(newPath + queryString)
+  }
+
+  private def ensureSlash(candidate: String) = {
+    (candidate.startsWith("/"), candidate.endsWith("/")) match {
+      case (true, true)   ⇒ candidate.dropRight(1)
+      case (true, false)  ⇒ candidate
+      case (false, true)  ⇒ "/" + candidate.dropRight(1)
+      case (false, false) ⇒ "/" + candidate
+    }
   }
 
 }

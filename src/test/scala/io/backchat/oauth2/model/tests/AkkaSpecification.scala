@@ -10,7 +10,6 @@ import akka.dispatch.Await
 import java.util.concurrent.TimeoutException
 import akka.util.duration._
 import io.backchat.oauth2.Logging
-import io.backchat.Logging
 import collection.JavaConverters._
 
 object AkkaSpecification {

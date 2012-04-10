@@ -66,7 +66,7 @@ object JettyMain {
     webApp.setServletHandler(servletHandler)
 
     webApp addServlet (new ServletHolder(new HomeServlet), "/*")
-    webApp addServlet (new ServletHolder(new ClientsApp), "/clients/*")
+    webApp addServlet (new ServletHolder(new ClientsCrudApp), "/clients/*")
     webApp addServlet (new ServletHolder(new DefaultServlet()), "/img/*")
     webApp addServlet (new ServletHolder(new DefaultServlet()), "/js/*")
     webApp addServlet (new ServletHolder(new DefaultServlet()), "/css/*")

@@ -9,13 +9,13 @@ import collection.immutable.BitSet
 
 trait UrlCodingUtils {
 
-  private val toSkip = BitSet((('a' to 'z') ++ ('A' to 'Z') ++ ('0' to '9') ++ "!$&'()*+,;=:/?#[]@-._~".toSet).map(_.toInt): _*)
-  private val space = ' '.toInt
-  private val PctEncoded = """%([0-9a-fA-F][0-9a-fA-F])""".r
-  private val LowerPctEncoded = """%([0-9a-f][0-9a-f])""".r
-  private val InvalidChars = "[^\\.a-zA-Z0-9!$&'()*+,;=:/?#\\[\\]@-_~]".r
+  private[this] val toSkip = BitSet((('a' to 'z') ++ ('A' to 'Z') ++ ('0' to '9') ++ "!$&'()*+,;=:/?#[]@-._~".toSet).map(_.toInt): _*)
+  private[this] val space = ' '.toInt
+  private[this] val PctEncoded = """%([0-9a-fA-F][0-9a-fA-F])""".r
+  private[this] val LowerPctEncoded = """%([0-9a-f][0-9a-f])""".r
+  private[this] val InvalidChars = "[^\\.a-zA-Z0-9!$&'()*+,;=:/?#\\[\\]@-_~]".r
 
-  private val HexUpperCaseChars = (0 until 16) map { i ⇒ Character.toUpperCase(Character.forDigit(i, 16)) }
+  private[this] val HexUpperCaseChars = (0 until 16) map { i ⇒ Character.toUpperCase(Character.forDigit(i, 16)) }
 
   def isUrlEncoded(string: String) = {
     PctEncoded.findFirstIn(string).isDefined
@@ -73,7 +73,7 @@ trait UrlCodingUtils {
             in.position(mark)
           }
         } else {
-          in.position(in.position() - 1)
+          in.position(mark - 1)
         }
       } else if (c == '+' && plusIsSpace) {
         out.put(' '.toByte)
@@ -82,7 +82,7 @@ trait UrlCodingUtils {
       }
     }
     out.flip()
-    Utf8.decode(out).toString
+    charset.decode(out).toString
   }
 }
 

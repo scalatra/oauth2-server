@@ -6,7 +6,7 @@ resolvers += Resolver.url("sbt-plugin-releases",
 
 resolvers += Classpaths.typesafeResolver
 
-addSbtPlugin("com.typesafe.sbtscalariform" % "sbtscalariform" % "0.3.0")
+addSbtPlugin("com.typesafe.sbtscalariform" % "sbtscalariform" % "0.3.1")
 
 addSbtPlugin("fi.jawsy.sbtplugins" %% "sbt-jrebel-plugin" % "0.9.0")
 

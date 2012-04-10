@@ -2,6 +2,7 @@
   <conversionRule conversionWord="levelcolor"
                   converterClass="io.backchat.logback.LevelColorizer" />
 
+  <!-- don't leak stuff coming from jul.Logging -->
   <contextListener class="ch.qos.logback.classic.jul.LevelChangePropagator"/>
 
   <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">

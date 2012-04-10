@@ -7,7 +7,7 @@ import Scalaz._
 import OAuth2Imports._
 import net.liftweb.json._
 
-class ClientsApp(implicit protected val system: ActorSystem) extends OAuth2ServerBaseApp {
+class ClientsCrudApp(implicit protected val system: ActorSystem) extends OAuth2ServerBaseApp {
 
   before("/") {
     if (isAnonymous) scentry.authenticate("remember_me")

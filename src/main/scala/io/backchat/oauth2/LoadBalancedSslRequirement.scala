@@ -3,7 +3,7 @@ package io.backchat.oauth2
 import akka.actor.ActorSystem
 import java.net.URI
 import org.eclipse.jetty.http.HttpHeaders
-import org.scalatra.{ ResponseStatus, ScalatraBase, Handler }
+import org.scalatra.{ Initializable, ResponseStatus, ScalatraBase, Handler }
 
 trait LoadBalancedSslRequirement extends Handler with LoadBalancerPing { self: ScalatraBase ⇒
 
@@ -22,10 +22,13 @@ trait LoadBalancedSslRequirement extends Handler with LoadBalancerPing { self: S
 
 }
 
-trait LoadBalancerPing { self: ScalatraBase ⇒
+trait LoadBalancerPing extends Initializable { self: ScalatraBase ⇒
 
-  get("/eb_ping") {
-    "pong"
+  private[this] val defaultPingPath = "/eb_ping"
+  def pingPath: String = defaultPingPath
+
+  abstract override def initialize(config: ConfigT) {
+    super.initialize(config)
+    get(pingPath) { "pong" }
   }
-
 }
