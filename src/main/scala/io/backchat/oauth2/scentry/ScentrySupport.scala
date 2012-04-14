@@ -30,7 +30,7 @@ trait ScentrySupport[TypeForUser <: AnyRef] extends Handler with Initializable w
     readStrategiesFromConfig(config)
   }
 
-  abstract override def handle(req: RequestT, res: ResponseT) = {
+  abstract override def handle(req: this.RequestT, res: this.ResponseT) = {
     withRequest(req) {
       request(Scentry.ScentryRequestKey) = new Scentry[UserType](self, toSession, fromSession)
       configureScentry

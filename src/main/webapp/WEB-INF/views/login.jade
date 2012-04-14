@@ -21,3 +21,8 @@ form.form-horizontal(method="post" action="/login")
       button.btn.btn-primary(type="submit") Log in
       a.btn(href="/register") Register
       a(href="/forgot") Forgot password
+      #fb-login.fb_button(style='background-position: left -200px')
+        a.fb_button_medium(href='/auth/facebook')
+          span#fb_login_text.fb_button_text Connect with Facebook
+          
+script(src='http://static.ak.fbcdn.net/connect/en_US/core.js')

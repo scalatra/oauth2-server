@@ -1,4 +1,5 @@
 import scala.xml.Group
+import com.typesafe.startscript.StartScriptPlugin
 import scalariform.formatter.preferences._
 import com.mojolly.scalate.ScalatePlugin._
 
@@ -27,7 +28,9 @@ libraryDependencies ++= Seq(
   "org.scalatra"           % "scalatra-scalate"   % "2.1.0-SNAPSHOT",
   "org.scalatra"           % "scalatra-lift-json" % "2.1.0-SNAPSHOT",
   "org.scalatra"           % "scalatra-swagger"   % "2.1.0-SNAPSHOT",
-  "org.clapper"           %% "scalasti"           % "0.5.8",
+  "net.databinder"        %% "dispatch-http"      % "0.8.7",
+  "net.databinder"        %% "dispatch-oauth"     % "0.8.7",
+  "org.clapper"            % "scalasti_2.9.1"     % "0.5.8",
   "org.mindrot"            % "jbcrypt"            % "0.3m",
   "org.scribe"             % "scribe"             % "1.3.0",
   "ro.isdc.wro4j"          % "wro4j-core"         % "1.4.5" exclude("log4j", "log4j") exclude("org.slf4j", "slf4j-log4j12"),
@@ -35,20 +38,20 @@ libraryDependencies ++= Seq(
   "javax.mail"             % "mail"               % "1.4.5",
   "commons-codec"          % "commons-codec"      % "1.6",
   "commons-validator"      % "commons-validator"  % "1.4.0",
-  "org.scalaz"            %% "scalaz-core"        % "6.0.4",
+  "org.scalaz"             % "scalaz-core_2.9.1"  % "6.0.4",
   "com.typesafe.akka"      % "akka-actor"         % "2.0",
   "com.typesafe.akka"      % "akka-testkit"       % "2.0"             % "test",
   "org.fusesource.scalate" % "scalate-jruby"      % "1.5.3",
   "org.fusesource.scalate" % "scalate-markdownj"  % "1.5.3",
-  "org.scala-tools.time"  %% "time"               % "0.5",
-  "org.scalatra"          %% "scalatra-specs2"    % "2.1.0-SNAPSHOT"  % "test",
+  "org.scala-tools.time"   % "time_2.9.1"         % "0.5",
+  "org.scalatra"           % "scalatra-specs2"    % "2.1.0-SNAPSHOT"  % "test",
   "junit"                  % "junit"              % "4.10"            % "test",
   "ch.qos.logback"         % "logback-classic"    % "1.0.0",
   "org.eclipse.jetty"      % "jetty-webapp"       % "8.1.0.v20120127",
   "org.eclipse.jetty"      % "jetty-servlet"      % "8.1.0.v20120127",
   "org.eclipse.jetty"      % "test-jetty-servlet" % "8.1.0.v20120127" % "test",
   "org.eclipse.jetty"      % "jetty-annotations"  % "8.1.0.v20120127",
-  "com.novus"             %% "salat-core"         % "0.0.8-SNAPSHOT"
+  "com.novus"              % "salat-core_2.9.1"   % "0.0.8-SNAPSHOT"
 )
 
 resolvers += "sonatype oss snapshots" at "https://oss.sonatype.org/content/repositories/snapshots/"
@@ -166,4 +169,6 @@ buildInfoKeys := Seq[Scoped](name, version, scalaVersion, sbtVersion)
 
 buildInfoPackage := "io.backchat.oauth2"
 
+seq(StartScriptPlugin.startScriptForClassesSettings: _*)
 
+externalResolvers <<= resolvers map { Resolver.withDefaultResolvers(_, scalaTools = false) }

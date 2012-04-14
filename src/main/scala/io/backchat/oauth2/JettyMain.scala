@@ -67,6 +67,7 @@ object JettyMain {
 
     webApp addServlet (new ServletHolder(new HomeServlet), "/*")
     webApp addServlet (new ServletHolder(new ClientsCrudApp), "/clients/*")
+    webApp addServlet (new ServletHolder(new OAuthAuthentication), "/auth/*")
     webApp addServlet (new ServletHolder(new DefaultServlet()), "/img/*")
     webApp addServlet (new ServletHolder(new DefaultServlet()), "/js/*")
     webApp addServlet (new ServletHolder(new DefaultServlet()), "/css/*")

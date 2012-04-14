@@ -6,6 +6,8 @@ import net.liftweb.json.Formats
 import service.SmtpTransport
 import OAuth2Imports._
 import collection.JavaConverters._
+import org.scribe.builder.ServiceBuilder
+import org.scribe.builder.api.{ Api, FacebookApi }
 
 object OAuth2Extension extends ExtensionId[OAuth2Extension] with ExtensionIdProvider {
   def lookup() = OAuth2Extension
@@ -32,6 +34,17 @@ object OAuth2Extension extends ExtensionId[OAuth2Extension] with ExtensionIdProv
   val isStaging = isEnvironment(Staging)
   val isTest = isEnvironment(Test)
   def isEnvironment(env: String) = environment equalsIgnoreCase env
+
+}
+
+case class OAuthProvider(name: String, clientId: String, clientSecret: String, scope: List[String] = Nil) {
+  def service[SvcType <: Api: Manifest](urlFormat: String) =
+    (new ServiceBuilder
+      provider manifest[SvcType].erasure.asSubclass(classOf[Api])
+      apiKey clientId
+      apiSecret clientSecret
+      callback urlFormat.format(name)
+      scope scope.mkString(",") build)
 
 }
 
@@ -87,9 +100,18 @@ class OAuth2Extension(system: ExtendedActorSystem) extends Extension {
       cfg.getBoolean(confKey("web.cors.allowCredentials")),
       cfg.getInt(confKey("web.cors.preflightMaxAge"))))
 
+  private[this] val provPath = "backchat.auth.providers"
+
   val permissions = {
     cfg.getConfigList(confKey("permissions")).asScala map { cc ⇒
       Permission(cc.getString("code"), cc.getString("name"), cc.getString("description"), true)
+    }
+  }
+  val providers = new {
+    def apply(key: String): OAuthProvider = {
+      val v = cfg.getConfig(provPath)
+      val scope = if (cfg.hasPath("scope")) v.getStringList("scope").asScala.toList else Nil
+      OAuthProvider(key, v.getString("clientId"), v.getString("clientSecret"), scope)
     }
   }
 

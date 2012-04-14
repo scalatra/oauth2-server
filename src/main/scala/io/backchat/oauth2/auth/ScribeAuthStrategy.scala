@@ -23,7 +23,7 @@ trait ScribeAuthStrategyContext[UserClass >: Null <: AppUser[_]] {
   def name: String
 
   def app: ScalatraBase with FlashMapSupport with ScribeAuthSupport[UserClass]
-  def createOrUpdateFromOAuthService(accessToken: OAuthToken): UserClass
+  def findOrCreateUser(accessToken: OAuthToken): Validation[model.Error, UserClass]
 }
 
 trait ScribeAuthSupport[UserClass >: Null <: AppUser[_]] extends ScentrySupport[UserClass] { self: ScalatraBase with SessionSupport with FlashMapSupport ⇒
@@ -43,13 +43,16 @@ trait ScribeAuthSupport[UserClass >: Null <: AppUser[_]] extends ScentrySupport[
 
   protected def sslRequired: Boolean = true
 
-  def registerOAuthService(name: String, service: OAuthService)(createOrUpdateUser: OAuthToken ⇒ UserClass) = {
+  def registerOAuthService(name: String, service: OAuthService)(findOrCreateUser: OAuthToken ⇒ Validation[model.Error, UserClass]) = {
     val nm = name
     scentry.registerStrategy(name, _ ⇒ new ScribeAuthStrategy[UserClass](new ScribeAuthStrategyContext[UserClass] {
       val oauthService = service
       val name = nm
       val app = thisApp
-      def createOrUpdateFromOAuthService(accessToken: OAuthToken) = createOrUpdateUser(accessToken)
+      def findOrCreateUser(accessToken: OAuthToken) = {
+        session("oauth.accessToken") = accessToken
+        findOrCreateUser(accessToken)
+      }
     }))
     oauthServicesRegistry += name -> service
   }
@@ -138,7 +141,7 @@ class ScribeAuthStrategy[UserClass >: Null <: AppUser[_]](context: ScribeAuthStr
       val reqToken = app.params.get("oauth_token").flatMap(requestTokens.get)
       reqToken foreach (requestTokens -= _.getToken)
       val accessToken = OAuthToken(context.oauthService.getAccessToken(reqToken.orNull, new Verifier(verifier)))
-      Option(context.createOrUpdateFromOAuthService(accessToken))
+      context.findOrCreateUser(accessToken).toOption
     }
 
   private[this] def logError(ex: Throwable): Option[UserClass] = {

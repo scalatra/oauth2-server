@@ -7,7 +7,6 @@ import collection.mutable.{ HashMap, Map ⇒ MMap }
 import org.scalatra.ScalatraBase
 import scala.PartialFunction
 import ScentryAuthStore.{ SessionAuthStore, ScentryAuthStore }
-import collection.immutable.List._
 
 object Scentry {
 

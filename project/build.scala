@@ -2,6 +2,8 @@ import sbt._
 import Keys._
 
 object OAuth2ServerBuild extends Build {
-  val root = Project("oauth2-server", file("."))
+  val dispatchLiftJson =
+         uri("git://github.com/mojolly/dispatch-lift-json")
+  val root = Project("oauth2-server", file(".")) dependsOn(dispatchLiftJson)
 }
 

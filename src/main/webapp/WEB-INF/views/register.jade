@@ -7,18 +7,7 @@
 form.form-horizontal(method="post" action="/register")
   fieldset
     legend Register an account
-    div{ :class => {if (errors.exists(_.field == "login")) "error control-group" else "control-group"} }
-      label.control-label(for="login") Login:
-      div.controls
-        input#login.input-xlarge(type="text" name="login" placeholder="Login" value= login)
-    div{ :class => {if (errors.exists(_.field == "email")) "error control-group" else "control-group"} }
-      label.control-label(for="email") Email address:
-      div.controls
-        input#email.input-xlarge(type="text" name="email" placeholder="Email address" value= email)
-    div{ :class => {if (errors.exists(_.field == "name")) "error control-group" else "control-group"} }
-      label.control-label(for="name") Name:
-      div.controls
-        input#name.input-xlarge(type="text" name="name" placeholder="Name" value= name)
+    - render("/shared/user_fields.jade", Map("errors" -> errors, "email" -> email, "login" -> login, "name" -> name))
     div{ :class => {if (errors.exists(_.field == "password")) "error control-group" else "control-group"} }
       label.control-label(for="password") Password:
       div.controls
