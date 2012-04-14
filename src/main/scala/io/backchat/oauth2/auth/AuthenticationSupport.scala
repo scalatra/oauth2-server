@@ -154,7 +154,6 @@ trait AuthenticationSupport[UserClass >: Null <: AppUser[_]] extends ScentrySupp
   }
 
   def unauthenticated() = {
-
     format match {
       case "json" ⇒ scentry.strategies("resource_owner_basic").unauthenticated()
       case _ ⇒
@@ -168,7 +167,7 @@ trait AuthenticationSupport[UserClass >: Null <: AppUser[_]] extends ScentrySupp
   def redirectAuthenticated() = redirect(session.get(scentryConfig.returnToKey).map(_.toString) | scentryConfig.returnTo)
 
   def loggedIn(authenticated: UserClass, message: String) = {
-    scentry.user = authenticated
+    if (userOption.isEmpty) scentry.user = authenticated
     flash("success") = message
     redirectAuthenticated()
   }

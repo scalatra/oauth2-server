@@ -6,23 +6,6 @@ import org.specs2.matcher.{ Expectable, Matcher }
 import scalaz._
 import Scalaz._
 
-trait OAuth2ServerSpecification extends Specification with NoTimeConversions with NotNullStrings {
-  private[this] def q(a: Any) = "'" + a.notNull + "'"
-  def beSuccess[T] = new BeSuccessMatcher
-
-  def beSuccess[T](t: ⇒ T) = new Matcher[Validation[_, T]] {
-    def apply[S <: Validation[_, T]](value: Expectable[S]) = {
-      val expected = t
-      result(value.value == Success(expected),
-        value.description + " is Success with value " + q(expected),
-        value.description + " is not Success with value " + q(expected),
-        value)
-    }
-  }
-
-  def beFailure = beSuccess.not
-}
-
 /**
  * Utility methods to replace a null String with "null"
  *
@@ -98,4 +81,22 @@ class BeSuccessMatcher extends Matcher[Validation[_, _]] {
   def apply[S <: Validation[_, _]](v: Expectable[S]) = {
     Matcher.result(v.value.isSuccess, v.description + " is success", v.description + " is failure", v)
   }
+}
+
+trait OAuth2ServerSpecification extends Specification with NoTimeConversions with NotNullStrings {
+
+  private[this] def q(a: Any) = "'" + a.notNull + "'"
+  def beSuccess[T] = new BeSuccessMatcher
+
+  def beSuccess[T](t: ⇒ T) = new Matcher[Validation[_, T]] {
+    def apply[S <: Validation[_, T]](value: Expectable[S]) = {
+      val expected = t
+      result(value.value == Success(expected),
+        value.description + " is Success with value " + q(expected),
+        value.description + " is not Success with value " + q(expected),
+        value)
+    }
+  }
+
+  def beFailure = beSuccess.not
 }

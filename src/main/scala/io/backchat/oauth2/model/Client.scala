@@ -14,7 +14,7 @@ case class Client(
     secret: String,
     profile: String,
     displayName: String,
-    @EnumAs(strategy = EnumStrategy.BY_VALUE) authorizationType: AuthorizationType.Value,
+    authorizationType: AuthorizationType.Value,
     @Key("_id") id: ObjectId = new ObjectId(),
     scope: List[String] = Nil,
     redirectUri: Option[String],

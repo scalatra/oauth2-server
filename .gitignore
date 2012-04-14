@@ -67,3 +67,4 @@ src/main/javascript/**/*.js
 src/main/javascript/*.js
 src/main/javascript/**/*.jsm
 src/main/javascript/*.jsm
+.cache

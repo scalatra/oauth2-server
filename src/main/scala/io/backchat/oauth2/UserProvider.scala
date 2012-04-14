@@ -51,3 +51,5 @@ trait ForgotPasswordProvider[UserClass <: AppUser[_]] {
 trait AuthenticatedChangePasswordProvider[UserClass <: AppUser[_]] {
   def changePassword(owner: UserClass, oldPassword: String, password: String, passwordConfirmation: String): Validation[Error, UserClass]
 }
+
+trait OAuthUserProvider
