@@ -112,11 +112,11 @@ object OAuth2Imports extends InflectorImports with com.mongodb.casbah.Imports wi
   }
   implicit def doubleMult(f: Double) = new DoubleMult(f)
 
-  implicit def dateTimeOrdered(dt: DateTime) = {
-    new Ordered[DateTime] {
-      def compare(that: DateTime) = dt.compareTo(dt)
-    }
-  }
+  //  implicit def dateTimeOrdered(dt: DateTime) = {
+  //    new Ordered[DateTime] {
+  //      def compare(that: DateTime) = dt.compareTo(dt)
+  //    }
+  //  }
 
   implicit def string2RicherString(s: String) = new OAuthString(s)
   implicit def jvalue2RicherJValue(j: JValue) = new OAuthJValue(j)

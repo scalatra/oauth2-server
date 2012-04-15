@@ -98,5 +98,5 @@ trait OAuth2ServerSpecification extends Specification with NoTimeConversions wit
     }
   }
 
-  def beFailure = beSuccess.not
+  def beFailure[T] = beSuccess[T].not
 }

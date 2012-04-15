@@ -24,11 +24,12 @@ class ResourceOwnerSpec extends AkkaSpecification { def is = sequential ^
           "too short password" ! registration.failsRegistrationTooShortPassword ^
           "pasword confirmation mismatch" ! registration.failsRegistrationPasswordMismatch ^
           "a combination of all of the above" !  registration.failsRegistrationAll ^ bt ^
-      "register the owner if all validations pass" ! registration.registersOwner ^ bt ^ bt ^
+      "register the owner if all validations pass" ! registration.registersOwner ^
+      "owner is unconfirmed on registration" ! registration.ownerIsUnconfirmed ^ bt ^ bt ^
     "when activating" ^
-      "activate the user if the correct token is given" ! pending ^
-      "return an already confirmed error when the user is already active" ! pending ^
-      "return an invalid token error if the token doesn't exist" ! pending ^ bt ^
+      "activate the user if the correct token is given" ! activation.activatesCorrectToken ^
+      "return an already confirmed error when the user is already active" ! activation.alreadyConfirmed ^
+      "return an invalid token error if the token doesn't exist" ! activation.invalidTokenError ^ bt ^
     "when logging in" ^
       "log a user in by login/password" ! loggingIn.logsUserIn ^
       "log a user in by remember token" ! pending ^
@@ -46,6 +47,7 @@ class ResourceOwnerSpec extends AkkaSpecification { def is = sequential ^
 
   def registration = new RegistrationSpecContext
   def loggingIn = new LoginSpecContext
+  def activation = new ActivationSpecContext
 
   trait ResourceOwnerSpecContextBase extends After {
     val conn = MongoConnection()
@@ -57,6 +59,28 @@ class ResourceOwnerSpec extends AkkaSpecification { def is = sequential ^
       conn.close()
     }
 
+  }
+
+  class ActivationSpecContext extends ResourceOwnerSpecContextBase {
+    val registered = dao.register("tommy".some, "tommy@hiltfiger.no".some, "Tommy Hiltfiger".some, "blah123".some, "blah123".some).toOption.get
+
+    def activatesCorrectToken = this {
+      val res = dao.confirm(registered.confirmation.token)
+      (res must beSuccess[ResourceOwner]) and {
+        val retr = dao.findByLoginOrEmail(registered.login).get
+        retr.isConfirmed must beTrue
+      }
+    }
+
+    def alreadyConfirmed = this {
+      dao.confirm(registered.confirmation.token)
+      val res = dao.confirm(registered.confirmation.token)
+      res must beFailure[AlreadyConfirmed]
+    }
+
+    def invalidTokenError = this {
+      dao.confirm("plain wrong") must beFailure[InvalidToken]
+    }
   }
 
   class LoginSpecContext extends ResourceOwnerSpecContextBase {
@@ -119,7 +143,6 @@ class ResourceOwnerSpec extends AkkaSpecification { def is = sequential ^
     }
 
     def registersOwner = this {
-      val dao = new ResourceOwnerDao(coll)
       val res = dao.register("tommy".some, "tommy@hiltfiger.no".some, "Tommy Hiltfiger".some, "blah123".some, "blah123".some)
       res.isSuccess must beTrue and {
         val owner = res.toOption.get
@@ -127,6 +150,14 @@ class ResourceOwnerSpec extends AkkaSpecification { def is = sequential ^
         (owner.email must_== "tommy@hiltfiger.no") and
         (owner.name must_== "Tommy Hiltfiger") and
         (owner.password.isMatch("blah123") must beTrue)
+      }
+    }
+
+    def ownerIsUnconfirmed = this {
+      val res = dao.register("tommy".some, "tommy@hiltfiger.no".some, "Tommy Hiltfiger".some, "blah123".some, "blah123".some)
+      res.isSuccess must beTrue and {
+        val owner = res.toOption.get
+        (owner.isConfirmed must beFalse)
       }
     }
 
