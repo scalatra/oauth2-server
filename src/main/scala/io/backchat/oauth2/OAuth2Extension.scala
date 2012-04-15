@@ -103,6 +103,8 @@ class OAuth2Extension(system: ExtendedActorSystem) extends Extension {
 
   val web = WebConfig(
     cfg.getString(confKey("web.guiUrl")),
+    cfg.getString(confKey("web.appUrl")),
+    cfg.getString(confKey("web.domain")),
     cfg.getString(confKey("web.host")),
     cfg.getInt(confKey("web.port")),
     cfg.getBoolean(confKey("web.sslRequired")),
