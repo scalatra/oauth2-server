@@ -9,17 +9,18 @@ import model.{ MailSender, SmtpConfig, MailMessage }
 import scalaz._
 import Scalaz._
 import javax.mail.Message.RecipientType
+import javax.mail.PasswordAuthentication
 
 class SmtpTransport(val config: SmtpConfig) extends MailTransport {
 
+  private class PwdAuthenticator extends javax.mail.Authenticator {
+    override def getPasswordAuthentication = new PasswordAuthentication(~config.user, ~config.password)
+  }
   protected val props = new Properties
   props.setProperty("mail.transport.protocol", "smtp")
   props.setProperty("mail.smtp.host", config.host)
   props.setProperty("mail.smtp.port", config.port.toString)
-  if (config.authRequired) {
-    props.setProperty("mail.smtp.user", ~config.user)
-    props.setProperty("mail.smtp.password", ~config.password)
-  }
+  props.put("mail.smtp.auth", config.authRequired.toString)
 
   protected def createMimeMessage(message: MailMessage, session: Session) = {
     val mailMsg = new MimeMessage(session)
@@ -57,7 +58,12 @@ class SmtpTransport(val config: SmtpConfig) extends MailTransport {
     mc.addMailcap("message/rfc822;; x-java-content-handler=com.sun.mail.handlers.message_rfc822")
     CommandMap.setDefaultCommandMap(mc)
 
-    val mailSession = Session.getInstance(props)
+    val mailSession = {
+      if (config.authRequired) {
+        val auth = new PwdAuthenticator
+        Session.getInstance(props, auth)
+      } else Session.getInstance(props)
+    }
     val transport = mailSession.getTransport("smtp")
 
     val mailMsg = createMimeMessage(message, mailSession)
