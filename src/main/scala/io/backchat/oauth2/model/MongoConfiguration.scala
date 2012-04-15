@@ -22,11 +22,14 @@ case class MongoConfiguration(uri: URI) {
   logger.info("Connecting to mongodb with: %s" format uri.toASCIIString())
 
   private val userInfo: Option[(String, String)] = {
-    uri.getUserInfo.blankOption map { uif =>
+    uri.getUserInfo.blankOption map { uif ⇒
       val Array(user, secret) = if (uif.indexOf(":") > -1) (uif.toString split ':') else Array(uif, "")
       user -> secret
     }
   }
+
+  logger.info("the uri userinfo: " + uri.getUserInfo)
+  logger.info("the parsed info: " + userInfo.toString)
   def isAuthenticated = uri.getUserInfo.blankOption.isDefined
 
   var _db: MongoDB = null
@@ -47,13 +50,11 @@ case class MongoConfiguration(uri: URI) {
     _db = null
   }
 
-
-
   def db = synchronized {
     if (_db == null) {
-      val db = connection(uri.getPath)
+      val db = connection(uri.getPath.substring(1))
       userInfo foreach {
-        case (user, pass) => db.authenticate(user, pass)
+        case (user, pass) ⇒ db.authenticate(user, pass)
       }
       _db = db
     }

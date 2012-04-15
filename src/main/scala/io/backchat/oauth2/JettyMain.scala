@@ -39,7 +39,7 @@ object JettyMain {
     connector setMaxIdleTime 90.seconds.toMillis.toInt
     connector setSoLingerTime 0
     connector setReuseAddress true
-//    connector setThreadPool new ExecutorThreadPool(Executors.newCachedThreadPool())
+    //    connector setThreadPool new ExecutorThreadPool(Executors.newCachedThreadPool())
     server addConnector connector
 
     val webApp = new WebAppContext
