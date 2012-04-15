@@ -188,7 +188,7 @@ class AccountDao(collection: MongoCollection)(implicit system: ActorSystem)
 
   def findUserById(id: String) = findOneByID(new ObjectId(id))
 
-  def findByLinkedAccount(provider: String, id: String) = findOne(Map("provider" -> provider, "id" -> id))
+  def findByLinkedAccount(provider: String, id: String) = findOne(Map("linkedOAuthAccounts.provider" -> provider, "linkedOAuthAccounts.id" -> id))
 
   def loginFromRemember(token: String): Validation[Error, Account] = {
     val key = fieldNames.remembered + "." + fieldNames.token
