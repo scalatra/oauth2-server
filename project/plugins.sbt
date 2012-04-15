@@ -21,3 +21,7 @@ addSbtPlugin("com.typesafe.startscript" % "xsbt-start-script-plugin" % "0.5.1")
 libraryDependencies <+= sbtVersion(v => "com.mojolly.scalate" %% "xsbt-scalate-generator" % (v + "-0.1.6"))
 
 externalResolvers <<= resolvers map { Resolver.withDefaultResolvers(_, scalaTools = false) }
+
+libraryDependencies += "ro.isdc.wro4j"          % "wro4j-core"         % "1.4.5" exclude("log4j", "log4j") exclude("org.slf4j", "slf4j-log4j12")
+
+libraryDependencies += "ro.isdc.wro4j"          % "wro4j-extensions"   % "1.4.5" exclude("log4j", "log4j") exclude("org.slf4j", "slf4j-log4j12")

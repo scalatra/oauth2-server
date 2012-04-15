@@ -9,12 +9,13 @@ trait LoadBalancedSslRequirement extends Handler with LoadBalancerPing { self: S
 
   implicit protected def system: ActorSystem
 
-  abstract override def handle(req: RequestT, res: ResponseT) {
+  abstract override def handle(req: this.RequestT, res: this.ResponseT) {
     if (OAuth2Extension(system).web.sslRequired && !this.isHttps && !req.pathInfo.contains("eb_ping")) {
       val oldUri = req.uri
       val url = new URI("https", oldUri.getAuthority, oldUri.getPath, oldUri.getQuery, oldUri.getFragment).toASCIIString
       res.status = ResponseStatus(301)
       res.headers(HttpHeaders.LOCATION) = url
+      res.outputStream.close()
     } else {
       super.handle(req, res)
     }
