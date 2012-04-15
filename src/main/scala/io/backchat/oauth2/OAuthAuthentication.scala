@@ -3,7 +3,6 @@ package io.backchat.oauth2
 import auth.{ OAuthToken, ScribeAuthSupport }
 import akka.actor.ActorSystem
 import model.{ BCryptPassword, ResourceOwner }
-import org.scalatra.{ CookieSupport, FlashMapSupport, ScalatraServlet }
 import dispatch._
 import dispatch.oauth._
 import dispatch.liftjson.Js._
@@ -14,6 +13,7 @@ import org.apache.commons.codec.binary.Hex
 import OAuth2Imports._
 import org.scribe.builder.api.{ TwitterApi, FacebookApi }
 import net.liftweb.json._
+import org.scalatra.{ CookieOptions, CookieSupport, FlashMapSupport, ScalatraServlet }
 
 class FacebookApiCalls(accessToken: OAuthToken)(implicit formats: Formats) {
   private val urlBase = "https://graph.facebook.com/"
@@ -38,10 +38,23 @@ class TwitterApiCalls(accessToken: OAuthToken, provider: OAuthProvider)(implicit
 
 class OAuthAuthentication(implicit system: ActorSystem)
     extends ScalatraServlet with FlashMapSupport with CookieSupport with ScribeAuthSupport[ResourceOwner] {
+  //  case class CookieOptions(
+  //          domain  : String  = "",
+  //          path    : String  = "",
+  //          maxAge  : Int     = -1,
+  //          secure  : Boolean = false,
+  //          comment : String  = "",
+  //          httpOnly: Boolean = false,
+  //          encoding: String  = "UTF-8")
 
   val oauth = OAuth2Extension(system)
   protected val authProvider = oauth.userProvider
   implicit val jsonFormats: Formats = new OAuth2Formats
+  protected val authCookieOptions = CookieOptions(
+    domain = (if (oauth.web.domain == ".localhost") "localhost" else oauth.web.domain),
+    path = "/",
+    secure = oauth.web.sslRequired,
+    httpOnly = true)
 
   before() {
     val facebookProvider = oauth.providers("facebook") // requires scope email at least for facebook
@@ -96,7 +109,7 @@ class OAuthAuthentication(implicit system: ActorSystem)
   }
 
   private[this] def callbackUrlFormat = {
-    oauth.web.appUrl + urlWithContextPath("/auth/%s/callback")
+    oauth.web.appUrl + urlWithContextPath("auth/%s/callback")
   }
 
   /**

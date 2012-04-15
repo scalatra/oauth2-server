@@ -11,7 +11,8 @@ import java.util.concurrent.ConcurrentHashMap
 import scala.collection.JavaConverters._
 import org.scalatra._
 import scentry.{ ScentrySupport, ScentryStrategy }
-import scentry.ScentryAuthStore.HttpOnlyCookieAuthStore
+import model.{ SimpleError }
+import scentry.ScentryAuthStore.{ CookieAuthStore }
 
 object OAuthToken {
   def apply(scribeToken: org.scribe.model.Token): OAuthToken = OAuthToken(scribeToken.getToken, scribeToken.getSecret)
@@ -43,16 +44,22 @@ trait ScribeAuthSupport[UserClass >: Null <: AppUser[_]] extends ScentrySupport[
 
   protected def sslRequired: Boolean = true
 
-  def registerOAuthService(name: String, service: ⇒ OAuthService)(findOrCreateUser: OAuthToken ⇒ Validation[model.Error, UserClass]) = {
+  def registerOAuthService(name: String, service: OAuthService)(findOrCreateUser: OAuthToken ⇒ Validation[model.Error, UserClass]) = {
     val nm = name
+    val fn = findOrCreateUser
     val ctxt = new ScribeAuthStrategyContext[UserClass] {
       lazy val oauthService = service
       val name = nm
       val app = thisApp
       def findOrCreateUser(accessToken: OAuthToken) = {
-        logger debug "finding or creating user for: %s".format(accessToken)
         session("oauth.accessToken") = accessToken
-        findOrCreateUser(accessToken)
+        try {
+          fn(accessToken)
+        } catch {
+          case e ⇒
+            e.printStackTrace()
+            SimpleError("Couldn't fetch the access token").fail[UserClass]
+        }
       }
     }
     oauthServicesRegistry += name -> ctxt
@@ -82,7 +89,7 @@ trait ScribeAuthSupport[UserClass >: Null <: AppUser[_]] extends ScentrySupport[
     logger debug "Registered strategies: %s".format(scentry.strategies.keys.mkString(", "))
     scentry.authenticate(params("provider"))
     logger debug "After authenticating: %s".format(userOption)
-    userOption.fold(u ⇒ loggedIn(u.login + " logged in from " + params("provider") + "."), unauthenticated())
+    userOption.fold(u ⇒ loggedIn(u.login + " logged in from " + params("provider") + "."), halt(401, "Unauthenticated"))
   }
 
   /**
@@ -94,8 +101,10 @@ trait ScribeAuthSupport[UserClass >: Null <: AppUser[_]] extends ScentrySupport[
     }
   }
 
+  protected def authCookieOptions: CookieOptions
+
   override protected def configureScentry {
-    scentry.store = new HttpOnlyCookieAuthStore(this, sslRequired)
+    scentry.store = new CookieAuthStore(this, authCookieOptions)
   }
 
   def unauthenticated() {
@@ -143,7 +152,7 @@ class ScribeAuthStrategy[UserClass >: Null <: AppUser[_]](context: ScribeAuthStr
   }
 
   override def unauthenticated() {
-    app.unauthenticated()
+    //    app.unauthenticated()
   }
 
   def authenticate(): Option[UserClass] = {

@@ -40,7 +40,7 @@ object OAuth2Extension extends ExtensionId[OAuth2Extension] with ExtensionIdProv
 }
 
 case class OAuthProvider(name: String, clientId: String, clientSecret: String, scope: List[String] = Nil) {
-  def service[SvcType <: Api: Manifest](urlFormat: ⇒ String) = {
+  def service[SvcType <: Api: Manifest](urlFormat: String) = {
     val b = (new ServiceBuilder
       provider manifest[SvcType].erasure.asSubclass(classOf[Api])
       apiKey clientId

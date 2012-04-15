@@ -9,9 +9,9 @@ import scalaz._
 import Scalaz._
 import model.{ ValidationError }
 import org.scalatra.scalate.{ ScalatraRenderContext, ScalateSupport }
-import org.scalatra.{ ApiFormats, FlashMapSupport, CookieSupport }
 import scentry._
-import scentry.ScentryAuthStore.HttpOnlyCookieAuthStore
+import scentry.ScentryAuthStore.{ CookieAuthStore }
+import org.scalatra.{ CookieOptions, ApiFormats, FlashMapSupport, CookieSupport }
 
 class OAuthScentryConfig extends ScentryConfig
 
@@ -136,7 +136,12 @@ trait AuthenticationSupport[UserClass >: Null <: AppUser[_]] extends ScentrySupp
    * Registers authentication strategies.
    */
   override protected def configureScentry {
-    scentry.store = new HttpOnlyCookieAuthStore(self, oauth.web.sslRequired)
+    val authCookieOptions = CookieOptions(
+      domain = (if (oauth.web.domain == ".localhost") "localhost" else oauth.web.domain),
+      path = "/",
+      secure = oauth.web.sslRequired,
+      httpOnly = true)
+    scentry.store = new CookieAuthStore(self, authCookieOptions)
     scentry.unauthenticated {
       unauthenticated()
     }
