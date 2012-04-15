@@ -93,10 +93,7 @@ class OAuthAuthentication(implicit system: ActorSystem)
   }
 
   private[this] def callbackUrlFormat = {
-    "http%s://%s%s".format(
-      if (oauth.web.sslRequired) "s" else "",
-      oauth.web.domainWithPort,
-      urlWithContextPath("%s/callback"))
+    oauth.web.appUrl + urlWithContextPath("%s/callback")
   }
 
   /**
@@ -107,12 +104,8 @@ class OAuthAuthentication(implicit system: ActorSystem)
    * @return the full URL
    */
   protected def buildFullUrl(path: String) = {
-    if (path.startsWith("http")) path else {
-      "http%s://%s%s".format(
-        if (oauth.web.sslRequired || this.isHttps) "s" else "",
-        oauth.web.domainWithPort,
-        this.url(path))
-    }
+    if (path.startsWith("http")) path
+    else oauth.web.appUrl + url(path)
   }
 
 }
