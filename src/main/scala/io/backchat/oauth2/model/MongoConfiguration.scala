@@ -5,6 +5,8 @@ import OAuth2Imports._
 import scala.util.control.Exception.ignoring
 import com.mongodb.casbah.commons.conversions.scala.{ DeregisterJodaTimeConversionHelpers, RegisterJodaTimeConversionHelpers }
 import com.mongodb.casbah.MongoURI
+import com.mongodb.ServerAddress
+import java.net.URI
 
 //case class MongoConfiguration(
 //    host: String,
@@ -13,17 +15,26 @@ import com.mongodb.casbah.MongoURI
 //    user: Option[String] = None,
 //    password: Option[String] = None) {
 object MongoConfiguration {
-  def apply(uri: String): MongoConfiguration = MongoConfiguration(MongoURI(uri))
+  def apply(uri: String): MongoConfiguration = MongoConfiguration(new URI(uri))
 }
-case class MongoConfiguration(uri: MongoURI) {
+case class MongoConfiguration(uri: URI) {
 
-  logger.info("Connecting to mongodb with: %s" format uri.toString())
-  def isAuthenticated = uri.username.blankOption.isDefined
+  logger.info("Connecting to mongodb with: %s" format uri.toASCIIString())
+
+  private val userInfo: Option[(String, String)] = {
+    uri.getUserInfo.blankOption map { uif =>
+      val Array(user, secret) = if (uif.indexOf(":") > -1) (uif.toString split ':') else Array(uif, "")
+      user -> secret
+    }
+  }
+  def isAuthenticated = uri.getUserInfo.blankOption.isDefined
+
   var _db: MongoDB = null
   var _conn: MongoConnection = null
+
   def connection = synchronized {
     if (_conn == null) {
-      _conn = uri.connect
+      _conn = MongoConnection(uri.getHost, uri.getPort)
       RegisterJodaTimeConversionHelpers()
     }
     _conn
@@ -36,10 +47,14 @@ case class MongoConfiguration(uri: MongoURI) {
     _db = null
   }
 
+
+
   def db = synchronized {
     if (_db == null) {
-      val db = uri.connectDB
-      uri.username.blankOption foreach { u ⇒ db.authenticate(u, uri.password.toString) }
+      val db = connection(uri.getPath)
+      userInfo foreach {
+        case (user, pass) => db.authenticate(user, pass)
+      }
       _db = db
     }
     _db
