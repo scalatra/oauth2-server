@@ -38,9 +38,9 @@ class ResourceOwnerSpec extends AkkaSpecification { def is = sequential ^
       "increases login failure count if the user account was valid" ! loggingIn.increasesLoginFailureCount ^
       "increases login success, resets failure count on successful login" ! loggingIn.increasesLoginSuccessCount ^ bt ^
     "when resetting" ^
-      "resets the password for valid input" ! pending ^
-      "returns invalid token error" ! pending ^
-      "resets login failure count and reset token on successful login" ! pending ^
+      "resets the password for valid input" ! passwordReset.resetsPassword ^
+      "returns invalid token error" ! passwordReset.invalidTokenError ^
+      "resets login failure count and reset token on successful login" ! passwordReset.resetsFailureCountAndTokenOnLogin ^
   end
 
   RegisterJodaTimeConversionHelpers()
@@ -48,6 +48,7 @@ class ResourceOwnerSpec extends AkkaSpecification { def is = sequential ^
   def registration = new RegistrationSpecContext
   def loggingIn = new LoginSpecContext
   def activation = new ActivationSpecContext
+  def passwordReset = new ResetPasswordSpecContext
 
   trait ResourceOwnerSpecContextBase extends After {
     val conn = MongoConnection()
@@ -57,6 +58,28 @@ class ResourceOwnerSpec extends AkkaSpecification { def is = sequential ^
 
     def after = {
       conn.close()
+    }
+
+  }
+
+  class ResetPasswordSpecContext extends ResourceOwnerSpecContextBase {
+    val registered = dao.register("tommy".some, "tommy@hiltfiger.no".some, "Tommy Hiltfiger".some, "blah123".some, "blah123".some).toOption.get
+    val toReset = dao.forgot(registered.login.some).toOption.get
+
+    def resetsPassword = this {
+      dao.resetPassword(toReset.reset.token, "blah124", "blah124") must beSuccess[ResourceOwner]
+    }
+
+    def resetsFailureCountAndTokenOnLogin = this {
+      dao.rememberedPassword(toReset, "127.0.0.1")
+      val owner = dao.findByLoginOrEmail("tommy").toOption.get.get
+      (owner.reset.token must_!= toReset.reset.token) and {
+        owner.stats.loginSuccess must be_>(0)
+      }
+    }
+
+    def invalidTokenError = this {
+      dao.resetPassword("plain wrong", "blah124", "blah124") must beFailure[InvalidToken]
     }
 
   }

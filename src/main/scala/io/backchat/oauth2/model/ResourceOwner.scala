@@ -259,12 +259,9 @@ class ResourceOwnerDao(collection: MongoCollection)(implicit system: ActorSystem
     val key = fieldNames.confirmation + "." + fieldNames.token
     validations.tokenRequired("confirmation", token) flatMap { tok ⇒
       findOne(Map(key -> tok)) map { owner ⇒
-        println("1. confirmed? %s at %s".format(owner.isConfirmed, owner.confirmedAt.toString(Iso8601DateNoMillis)))
         if (!owner.isConfirmed) {
           val upd = owner.copy(confirmedAt = DateTime.now)
-          println("2. confirmed? %s at %s".format(upd.isConfirmed, upd.confirmedAt.toString(Iso8601DateNoMillis)))
           save(upd)
-          println("3. confirmed? %s at %s".format(upd.isConfirmed, upd.confirmedAt.toString(Iso8601DateNoMillis)))
           upd.success[Error]
         } else AlreadyConfirmed().fail
       } getOrElse InvalidToken().fail
