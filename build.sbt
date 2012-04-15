@@ -58,6 +58,8 @@ resolvers += "sonatype oss snapshots" at "https://oss.sonatype.org/content/repos
 
 resolvers += Classpaths.typesafeResolver
 
+resolvers += "Typesafe Releases" at "http://repo.typesafe.com/typesafe/releases/"
+
 testOptions += Tests.Setup( () => System.setProperty("akka.mode", "test") )
 
 testOptions += Tests.Argument(TestFrameworks.Specs2, "console", "junitxml")
@@ -171,4 +173,4 @@ buildInfoPackage := "io.backchat.oauth2"
 
 seq(StartScriptPlugin.startScriptForClassesSettings: _*)
 
-//externalResolvers <<= resolvers map { Resolver.withDefaultResolvers(_, scalaTools = false) }
+externalResolvers <<= resolvers map { Resolver.withDefaultResolvers(_, scalaTools = false) }
