@@ -32,11 +32,11 @@ class ResourceOwnerSpec extends AkkaSpecification { def is = sequential ^
       "return an invalid token error if the token doesn't exist" ! activation.invalidTokenError ^ bt ^
     "when logging in" ^
       "log a user in by login/password" ! loggingIn.logsUserIn ^
-      "log a user in by remember token" ! pending ^
-      "generate a new remember token" ! pending ^
-      "fails for invalid credentials" ! pending ^
-      "increases login failure count if the user account was valid" ! pending ^
-      "increases login success, resets failure count on successful login" ! pending ^ bt ^
+      "log a user in by remember token" ! loggingIn.logsUserInFromRemember ^
+      "generate a new remember token" ! loggingIn.generatesRememberToken ^
+      "fails for invalid credentials" ! loggingIn.failsForInvalidCredentials ^
+      "increases login failure count if the user account was valid" ! loggingIn.increasesLoginFailureCount ^
+      "increases login success, resets failure count on successful login" ! loggingIn.increasesLoginSuccessCount ^ bt ^
     "when resetting" ^
       "resets the password for valid input" ! pending ^
       "returns invalid token error" ! pending ^
@@ -85,9 +85,31 @@ class ResourceOwnerSpec extends AkkaSpecification { def is = sequential ^
 
   class LoginSpecContext extends ResourceOwnerSpecContextBase {
 
+    val registered = dao.register("tommy".some, "tommy@hiltfiger.no".some, "Tommy Hiltfiger".some, "blah123".some, "blah123".some).toOption.get
     def logsUserIn = this {
-      dao.register("tommy".some, "tommy@hiltfiger.no".some, "Tommy Hiltfiger".some, "blah123".some, "blah123".some)
       dao.login("tommy", "blah123", "127.0.0.1") must beSuccess[ResourceOwner]
+    }
+    def logsUserInFromRemember = this {
+      val tok = dao.remember(registered).toOption.get
+      dao.loginFromRemember(tok) must beSuccess[ResourceOwner]
+    }
+    def generatesRememberToken = this {
+      dao.remember(registered) must beSuccess[String]
+    }
+    def failsForInvalidCredentials = this {
+      dao.login("tommy", "wrong", "127.0.0.1") must beFailure[Error]
+    }
+    def increasesLoginFailureCount = this {
+      dao.login("tommy", "wrong", "127.0.0.1")
+      val usr = dao.findByLoginOrEmail("tommy").toOption.get.get
+      usr.stats.loginFailures must be_>(0)
+    }
+    def increasesLoginSuccessCount = this {
+      dao.login("tommy", "blah123", "127.0.0.1") must beSuccess[ResourceOwner]
+      val usr = dao.findByLoginOrEmail("tommy").toOption.get.get
+      (usr.stats.loginFailures must be_==(0)) and {
+        usr.stats.loginSuccess must be_>(0)
+      }
     }
 
   }

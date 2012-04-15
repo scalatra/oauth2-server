@@ -103,13 +103,24 @@ case class AuthStats(
     currentSignInIp: String = "",
     previousSignInIp: String = "",
     currentSignInAt: DateTime = MinDate,
-    previousSignInAt: DateTime = MinDate) {
+    lastFailureAt: DateTime = MinDate,
+    previousSignInAt: DateTime = MinDate,
+    loginFailures: Int = 0,
+    loginSuccess: Int = 0) {
   def tick(ip: String) =
     copy(
       currentSignInIp = ip,
       previousSignInIp = currentSignInIp,
       currentSignInAt = DateTime.now,
-      previousSignInAt = currentSignInAt)
+      previousSignInAt = currentSignInAt,
+      loginSuccess = (loginSuccess + 1),
+      loginFailures = 0,
+      lastFailureAt = MinDate)
+
+  def tickFailures =
+    copy(
+      loginFailures = (loginFailures + 1),
+      lastFailureAt = DateTime.now)
 }
 
 case class ResourceOwner(
@@ -148,9 +159,10 @@ class ResourceOwnerDao(collection: MongoCollection)(implicit system: ActorSystem
 
   def login(loginOrEmail: String, password: String, ipAddress: String): Validation[Error, ResourceOwner] = {
     val usrOpt = findByLoginOrEmail(loginOrEmail)
-
-    (usrOpt
-      filter (_.password.isMatch(password))
+    val verifiedPass = usrOpt filter (_.password.isMatch(password))
+    if (verifiedPass.isEmpty && usrOpt.isDefined)
+      usrOpt foreach (u ⇒ save(u.copy(stats = u.stats.tickFailures)))
+    (verifiedPass
       map (loggedIn(_, ipAddress).success)).getOrElse(SimpleError("Login/password don't match.").fail)
   }
 
