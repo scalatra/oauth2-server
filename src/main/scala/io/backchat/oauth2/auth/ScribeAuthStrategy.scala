@@ -43,10 +43,10 @@ trait ScribeAuthSupport[UserClass >: Null <: AppUser[_]] extends ScentrySupport[
 
   protected def sslRequired: Boolean = true
 
-  def registerOAuthService(name: String, service: OAuthService)(findOrCreateUser: OAuthToken ⇒ Validation[model.Error, UserClass]) = {
+  def registerOAuthService(name: String, service: ⇒ OAuthService)(findOrCreateUser: OAuthToken ⇒ Validation[model.Error, UserClass]) = {
     val nm = name
     val ctxt = new ScribeAuthStrategyContext[UserClass] {
-      val oauthService = service
+      lazy val oauthService = service
       val name = nm
       val app = thisApp
       def findOrCreateUser(accessToken: OAuthToken) = {

@@ -40,8 +40,7 @@ object OAuth2Extension extends ExtensionId[OAuth2Extension] with ExtensionIdProv
 }
 
 case class OAuthProvider(name: String, clientId: String, clientSecret: String, scope: List[String] = Nil) {
-  def service[SvcType <: Api: Manifest](urlFormat: String) = {
-    logger info "Building oauth service provider with %s and callback url".format(this, urlFormat)
+  def service[SvcType <: Api: Manifest](urlFormat: ⇒ String) = {
     val b = (new ServiceBuilder
       provider manifest[SvcType].erasure.asSubclass(classOf[Api])
       apiKey clientId
@@ -76,13 +75,6 @@ class OAuth2Extension(system: ExtendedActorSystem) extends Extension {
     cc
   }
   private[this] def key(value: String) = confKey("mongo.%s" format value)
-
-  //  val mongo = MongoConfiguration(
-  //    cfg.getString(key("host")),
-  //    cfg.getInt(key("port")),
-  //    cfg.getString(key("database")),
-  //    cfg.getString(key("user")).blankOption,
-  //    cfg.getString(key("password")).blankOption)
 
   val mongo = {
     MongoConfiguration(cfg.getString(key("uri")))

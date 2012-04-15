@@ -3,19 +3,17 @@ package io.backchat.oauth2
 import auth.{ OAuthToken, ScribeAuthSupport }
 import akka.actor.ActorSystem
 import model.{ BCryptPassword, ResourceOwner }
-import org.scalatra.{ SessionSupport, CookieSupport, FlashMapSupport, ScalatraServlet }
-import scentry.ScentrySupport
-import org.scribe.builder.ServiceBuilder
+import org.scalatra.{ CookieSupport, FlashMapSupport, ScalatraServlet }
 import dispatch._
 import dispatch.oauth._
 import dispatch.liftjson.Js._
-import net.liftweb.json._
 import scalaz._
 import Scalaz._
 import java.security.SecureRandom
 import org.apache.commons.codec.binary.Hex
 import OAuth2Imports._
 import org.scribe.builder.api.{ TwitterApi, FacebookApi }
+import net.liftweb.json._
 
 class FacebookApiCalls(accessToken: OAuthToken)(implicit formats: Formats) {
   private val urlBase = "https://graph.facebook.com/"
@@ -43,33 +41,31 @@ class OAuthAuthentication(implicit system: ActorSystem)
 
   val oauth = OAuth2Extension(system)
   protected val authProvider = oauth.userProvider
-  implicit val jsonFormats: Formats = DefaultFormats
+  implicit val jsonFormats: Formats = new OAuth2Formats
 
-  val facebookProvider = oauth.providers("facebook") // requires scope email at least for facebook
-  val facebookService = facebookProvider.service[FacebookApi](callbackUrlFormat)
+  before() {
+    val facebookProvider = oauth.providers("facebook") // requires scope email at least for facebook
+    registerOAuthService(facebookProvider.name, facebookProvider.service[FacebookApi](callbackUrlFormat)) { token ⇒
+      val fbUser = new FacebookApiCalls(token).getProfile()
+      val fbEmail = (fbUser \ "email").extract[String]
+      val foundUser = authProvider.findByLoginOrEmail(fbEmail)
+      (foundUser getOrElse {
+        val usr = ResourceOwner(
+          login = (fbUser \ "username").extract[String],
+          email = fbEmail,
+          name = (fbUser \ "name").extract[String],
+          password = BCryptPassword(randomPassword).encrypted,
+          confirmedAt = DateTime.now)
+        authProvider.loggedIn(usr, request.remoteAddress)
+      }).success[model.Error]
+    }
 
-  registerOAuthService(facebookProvider.name, facebookService) { token ⇒
-    val fbUser = new FacebookApiCalls(token).getProfile()
-    val fbEmail = (fbUser \ "email").extract[String]
-    val foundUser = authProvider.findByLoginOrEmail(fbEmail)
-    (foundUser getOrElse {
-      val usr = ResourceOwner(
-        login = (fbUser \ "username").extract[String],
-        email = fbEmail,
-        name = (fbUser \ "name").extract[String],
-        password = BCryptPassword(randomPassword).encrypted,
-        confirmedAt = DateTime.now)
-      authProvider.loggedIn(usr, request.remoteAddress)
-    }).success[model.Error]
-  }
+    val twitterProvider = oauth.providers("twitter")
+    registerOAuthService(twitterProvider.name, twitterProvider.service[TwitterApi](callbackUrlFormat)) { token ⇒
+      val twitterUser = new TwitterApiCalls(token, twitterProvider).getProfile()
 
-  val twitterProvider = oauth.providers("twitter")
-  val twitterService = twitterProvider.service[TwitterApi](callbackUrlFormat)
-
-  registerOAuthService(twitterProvider.name, twitterService) { token ⇒
-    val twitterUser = new TwitterApiCalls(token, twitterProvider).getProfile()
-
-    null
+      null
+    }
   }
 
   private[this] def randomPassword = {
