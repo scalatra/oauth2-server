@@ -7,7 +7,7 @@
 form.form-horizontal(method="post" action="/register")
   fieldset
     legend Register an account
-    - render("/shared/user_fields.jade", Map("errors" -> errors, "email" -> email, "login" -> login, "name" -> name))
+    - render("shared/user_fields.jade", Map("errors" -> errors, "email" -> email, "login" -> login, "name" -> name))
     div{ :class => {if (errors.exists(_.field == "password")) "error control-group" else "control-group"} }
       label.control-label(for="password") Password:
       div.controls

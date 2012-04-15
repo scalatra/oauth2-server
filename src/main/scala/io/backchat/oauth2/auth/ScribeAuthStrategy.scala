@@ -78,16 +78,8 @@ trait ScribeAuthSupport[UserClass >: Null <: AppUser[_]] extends ScentrySupport[
   get("/:provider/callback") {
     logger debug "Got an authorization callback"
     logger debug "Request params: %s".format(multiParams)
-    val stratOpt = scentry.strategies.get(params("provider"))
-    stratOpt.fold(
-      strat ⇒ {
-        strat.beforeAuthenticate
-        strat.authenticate() foreach { u ⇒
-          scentry.user = u
-          strat.afterAuthenticate(params("provider"), u)
-        }
-      },
-      halt(404, "Unknown provider"))
+    logger debug "Registered strategies: %s".format(scentry.strategies.keys.mkString(", "))
+    scentry.authenticate(params("provider"))
     logger debug "After authenticating: %s".format(userOption)
     userOption.fold(u ⇒ loggedIn(u.login + " logged in from " + params("provider") + "."), unauthenticated())
   }
@@ -95,11 +87,14 @@ trait ScribeAuthSupport[UserClass >: Null <: AppUser[_]] extends ScentrySupport[
   /**
    * Registers authentication strategies.
    */
+  override protected def registerAuthStrategies {
+    oauthServicesRegistry foreach {
+      case (k, v) ⇒ scentry.registerStrategy(k, _ ⇒ new ScribeAuthStrategy(v))
+    }
+  }
+
   override protected def configureScentry {
     scentry.store = new HttpOnlyCookieAuthStore(this, sslRequired)
-    scentry.unauthenticated {
-      unauthenticated()
-    }
   }
 
   def unauthenticated() {
