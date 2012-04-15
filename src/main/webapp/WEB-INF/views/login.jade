@@ -24,5 +24,7 @@ form.form-horizontal(method="post" action="/login")
       #fb-login.fb_button(style='background-position: left -166px')
         a.fb_button_medium(href='/auth/facebook')
           span#fb_login_text.fb_button_text Connect with Facebook
+      a#twitter-login(href='/auth/twitter')
+        img(src="https://si0.twimg.com/images/dev/buttons/sign-in-with-twitter-d.png")
           
 script(src='http://static.ak.fbcdn.net/connect/en_US/core.js')

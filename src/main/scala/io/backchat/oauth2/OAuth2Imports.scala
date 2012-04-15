@@ -9,7 +9,7 @@ import akka.util._
 import java.util.concurrent.TimeUnit
 import org.joda.time._
 import format.DateTimeFormatter
-import io.backchat.inflector.InflectorImports
+import mojolly.inflector.InflectorImports
 import net.liftweb.json.JsonAST.JValue
 
 object OAuth2Imports extends InflectorImports with com.mongodb.casbah.Imports with commons.Imports with query.Imports {

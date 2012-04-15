@@ -76,13 +76,11 @@ class OAuth2Extension(system: ExtendedActorSystem) extends Extension {
   }
   private[this] def key(value: String) = confKey("mongo.%s" format value)
 
-  val mongo = {
-    MongoConfiguration(cfg.getString(key("uri")))
-  }
+  val mongo = MongoConfiguration(cfg.getString(key("uri")))
 
   val defaultFormats: Formats = new OAuth2Formats
 
-  lazy val userProvider = new ResourceOwnerDao(mongo.db("resource_owners"))(system)
+  lazy val userProvider = new AccountDao(mongo.db("resource_owners"))(system)
   lazy val clients = new ClientDao(mongo.db("clients"))(system)
 
   val smtp = new SmtpTransport(SmtpConfig(

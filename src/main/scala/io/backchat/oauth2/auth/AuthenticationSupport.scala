@@ -11,7 +11,7 @@ import model.{ ValidationError }
 import org.scalatra.scalate.{ ScalatraRenderContext, ScalateSupport }
 import scentry._
 import scentry.ScentryAuthStore.{ CookieAuthStore }
-import org.scalatra.{ CookieOptions, ApiFormats, FlashMapSupport, CookieSupport }
+import org.scalatra._
 
 class OAuthScentryConfig extends ScentryConfig
 
@@ -117,7 +117,7 @@ trait ForgotPasswordAuthSupport[UserClass >: Null <: AppUser[_]] { self: Servlet
 
 }
 
-trait AuthenticationSupport[UserClass >: Null <: AppUser[_]] extends ScentrySupport[UserClass] with ScalateSupport { self: ServletBase with CookieSupport with FlashMapSupport with ApiFormats ⇒
+trait AuthenticationSupport[UserClass >: Null <: AppUser[_]] extends ScentrySupport[UserClass] with ScalateSupport { self: ScalatraBase with SessionSupport with FlashMapSupport ⇒
 
   protected def fromSession = { case id: String ⇒ authProvider.findUserById(id).orNull }
   protected def toSession = { case usr: AppUser[_] ⇒ usr.idString }
@@ -129,8 +129,58 @@ trait AuthenticationSupport[UserClass >: Null <: AppUser[_]] extends ScentrySupp
   type AuthProvider = UserProvider[UserClass] with ForgotPasswordProvider[UserClass] with RememberMeProvider[UserClass]
 
   implicit override protected def user = scentry.user
-  protected def oauth: OAuth2Extension
   protected def authProvider: AuthProvider
+
+  def redirectIfAuthenticated() = if (isAuthenticated) redirectAuthenticated()
+
+  def redirectAuthenticated() = redirect(session.get(scentryConfig.returnToKey).map(_.toString) | scentryConfig.returnTo)
+
+  def loggedIn(authenticated: UserClass, message: String) = {
+    if (userOption.isEmpty) scentry.user = authenticated
+    flash("success") = message
+    redirectAuthenticated()
+  }
+
+  override protected def createTemplateEngine(config: ConfigT) = {
+    val engine = super.createTemplateEngine(config)
+    engine.bindings :::= List(
+      Binding("userOption", "Option[%s]".format(userManifest.erasure.getName), defaultValue = "None".some),
+      Binding("user", userManifest.erasure.getName, defaultValue = "null".some),
+      Binding("isAnonymous", "Boolean", defaultValue = "true".some),
+      Binding("isAuthenticated", "Boolean", defaultValue = "false".some))
+
+    engine
+  }
+
+  override protected def createRenderContext(req: HttpServletRequest, resp: HttpServletResponse, out: PrintWriter) = {
+    val ctx = super.createRenderContext(req, resp, out).asInstanceOf[ScalatraRenderContext]
+    ctx.attributes.update("userOption", userOption)
+    ctx.attributes.update("user", user)
+    ctx.attributes.update("isAnonymous", isAnonymous)
+    ctx.attributes.update("isAuthenticated", isAuthenticated)
+    ctx.attributes.update("session", ctx.session)
+    ctx.attributes.update("sessionOption", ctx.sessionOption)
+    ctx.attributes.update("flash", ctx.flash)
+    ctx.attributes.update("params", ctx.params)
+    ctx.attributes.update("multiParams", ctx.multiParams)
+    ctx.attributes.getOrUpdate("title", "OAuth2 Server")
+    ctx
+  }
+
+  /**
+   * Builds a full URL from the given relative path. Takes the port configuration, https, ... into account
+   *
+   * @param path a relative path
+   *
+   * @return the full URL
+   */
+  protected def buildFullUrl(path: String): String
+
+}
+
+trait DefaultAuthenticationSupport[UserClass >: Null <: AppUser[_]] extends AuthenticationSupport[UserClass] { self: ScalatraBase with SessionSupport with CookieSupport with FlashMapSupport with ApiFormats ⇒
+
+  protected def oauth: OAuth2Extension
 
   /**
    * Registers authentication strategies.
@@ -166,49 +216,5 @@ trait AuthenticationSupport[UserClass >: Null <: AppUser[_]] extends ScentrySupp
         redirect(scentryConfig.failureUrl)
     }
   }
-
-  def redirectIfAuthenticated() = if (isAuthenticated) redirectAuthenticated()
-
-  def redirectAuthenticated() = redirect(session.get(scentryConfig.returnToKey).map(_.toString) | scentryConfig.returnTo)
-
-  def loggedIn(authenticated: UserClass, message: String) = {
-    if (userOption.isEmpty) scentry.user = authenticated
-    flash("success") = message
-    redirectAuthenticated()
-  }
-
-  override protected def createTemplateEngine(config: ConfigT) = {
-    val engine = super.createTemplateEngine(config)
-    engine.bindings :::= List(
-      Binding("userOption", "Option[%s]".format(userManifest.erasure.getName), defaultValue = "None".some),
-      Binding("user", userManifest.erasure.getName, defaultValue = "null".some),
-      Binding("isAnonymous", "Boolean", defaultValue = "true".some),
-      Binding("isAuthenticated", "Boolean", defaultValue = "false".some))
-
-    engine
-  }
-
-  override protected def createRenderContext(req: HttpServletRequest, resp: HttpServletResponse, out: PrintWriter) = {
-    val ctx = super.createRenderContext(req, resp, out).asInstanceOf[ScalatraRenderContext]
-    ctx.attributes.update("userOption", userOption)
-    ctx.attributes.update("user", user)
-    ctx.attributes.update("isAnonymous", isAnonymous)
-    ctx.attributes.update("isAuthenticated", isAuthenticated)
-    ctx.attributes.update("session", ctx.session)
-    ctx.attributes.update("sessionOption", ctx.sessionOption)
-    ctx.attributes.update("flash", ctx.flash)
-    ctx.attributes.update("params", ctx.params)
-    ctx.attributes.update("multiParams", ctx.multiParams)
-    ctx
-  }
-
-  /**
-   * Builds a full URL from the given relative path. Takes the port configuration, https, ... into account
-   *
-   * @param path a relative path
-   *
-   * @return the full URL
-   */
-  protected def buildFullUrl(path: String): String
 
 }

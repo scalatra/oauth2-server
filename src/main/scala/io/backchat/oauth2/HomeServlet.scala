@@ -5,7 +5,7 @@ import akka.actor.ActorSystem
 
 class HomeServlet(implicit protected val system: ActorSystem)
     extends OAuth2ServerBaseApp
-    with AuthenticationApp[ResourceOwner] {
+    with AuthenticationApp[Account] {
 
   before("/") {
     if (isAnonymous) scentry.authenticate("remember_me")

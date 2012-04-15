@@ -28,6 +28,7 @@ libraryDependencies ++= Seq(
   "org.scalatra"           % "scalatra-scalate"   % "2.1.0-SNAPSHOT",
   "org.scalatra"           % "scalatra-lift-json" % "2.1.0-SNAPSHOT",
   "org.scalatra"           % "scalatra-swagger"   % "2.1.0-SNAPSHOT",
+  "io.backchat.inflector" %% "scala-inflector"    % "1.3.3",
   "net.databinder"        %% "dispatch-http"      % "0.8.7",
   "net.databinder"        %% "dispatch-oauth"     % "0.8.7",
   "org.clapper"            % "scalasti_2.9.1"     % "0.5.8",
@@ -155,8 +156,8 @@ scalateBindings ++= Seq(
   Binding("sessionOption", "scala.Option[org.scalatra.Session]"),
   Binding("params", "scala.collection.Map[String, String]"),
   Binding("multiParams", "org.scalatra.MultiParams"),
-  Binding("userOption", "Option[ResourceOwner]", defaultValue = "None"),
-  Binding("user", "ResourceOwner", defaultValue = "null"),
+  Binding("userOption", "Option[Account]", defaultValue = "None"),
+  Binding("user", "Account", defaultValue = "null"),
   Binding("isAnonymous", "Boolean", defaultValue = "true"),
   Binding("isAuthenticated", "Boolean", defaultValue = "false"))
 

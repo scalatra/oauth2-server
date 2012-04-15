@@ -1,7 +1,7 @@
 package io.backchat.oauth2
 
-import io.backchat.oauth2.auth.{ ForgotPasswordAuthSupport, PasswordAuthSupport, AuthenticationSupport }
-import model.ResourceOwner
+import auth.{ DefaultAuthenticationSupport, ForgotPasswordAuthSupport, PasswordAuthSupport, AuthenticationSupport }
+import model.Account
 import org.scalatra.scalate.ScalateSupport
 import akka.actor.ActorSystem
 import org.scalatra.servlet.ServletBase
@@ -17,7 +17,7 @@ import java.io.PrintWriter
 trait AuthenticationApp[UserClass >: Null <: AppUser[_]]
     extends PasswordAuthSupport[UserClass]
     with ForgotPasswordAuthSupport[UserClass] {
-  self: ServletBase with ApiFormats with FlashMapSupport with CookieSupport with ScalateSupport with AuthenticationSupport[UserClass] ⇒
+  self: ServletBase with ApiFormats with FlashMapSupport with CookieSupport with ScalateSupport with DefaultAuthenticationSupport[UserClass] ⇒
 
 }
 
@@ -56,14 +56,14 @@ trait OAuth2ServerBaseApp extends ScalatraServlet
     with ScalateSupport
     with CORSSupport
     with LoadBalancedSslRequirement
-    with AuthenticationSupport[ResourceOwner] {
+    with DefaultAuthenticationSupport[Account] {
 
   implicit protected def system: ActorSystem
   override protected implicit def jsonFormats: Formats = new OAuth2Formats
 
   val oauth = OAuth2Extension(system)
 
-  protected val userManifest = manifest[ResourceOwner]
+  protected val userManifest = manifest[Account]
 
   protected lazy val authProvider = oauth.userProvider
 

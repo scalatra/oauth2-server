@@ -13,6 +13,11 @@ import org.scalatra._
 import scentry.{ ScentrySupport, ScentryStrategy }
 import model.{ SimpleError }
 import scentry.ScentryAuthStore.{ CookieAuthStore }
+import org.fusesource.scalate.Binding
+import javax.servlet.http.{ HttpServletResponse, HttpServletRequest }
+import java.io.PrintWriter
+import org.scalatra.scalate.{ ScalatraRenderContext, ScalateSupport }
+import org.scribe.builder.ServiceBuilder
 
 object OAuthToken {
   def apply(scribeToken: org.scribe.model.Token): OAuthToken = OAuthToken(scribeToken.getToken, scribeToken.getSecret)
@@ -27,18 +32,9 @@ trait ScribeAuthStrategyContext[UserClass >: Null <: AppUser[_]] {
   def findOrCreateUser(accessToken: OAuthToken): Validation[model.Error, UserClass]
 }
 
-trait ScribeAuthSupport[UserClass >: Null <: AppUser[_]] extends ScentrySupport[UserClass] { self: ScalatraBase with SessionSupport with FlashMapSupport ⇒
+trait ScribeAuthSupport[UserClass >: Null <: AppUser[_]] extends AuthenticationSupport[UserClass] { self: ScalatraBase with SessionSupport with FlashMapSupport ⇒
 
   private[this] val oauthServicesRegistry = new ConcurrentHashMap[String, ScribeAuthStrategyContext[UserClass]].asScala
-
-  protected def fromSession = { case id: String ⇒ authProvider.findUserById(id).orNull }
-  protected def toSession = { case usr: AppUser[_] ⇒ usr.idString }
-
-  type ScentryConfiguration = OAuthScentryConfig
-  protected val scentryConfig = new OAuthScentryConfig
-
-  type AuthProvider = UserProvider[UserClass]
-  protected def authProvider: AuthProvider
 
   private[this] val thisApp = this
 
@@ -80,13 +76,38 @@ trait ScribeAuthSupport[UserClass >: Null <: AppUser[_]] extends ScentrySupport[
       }
     } foreach redirect
 
-    halt(400, "Couldn't get a authorization url for oauth provider: %s" format params("provider"))
+    flash("error") = "Couldn't get a authorization url for oauth provider: %s" format params("provider")
+    unauthenticated()
   }
 
   get("/:provider/callback") {
     scentry.authenticate(params("provider"))
-    userOption.fold(u ⇒ loggedIn(u.login + " logged in from " + params("provider") + "."), halt(401, "Unauthenticated"))
+    userOption.fold(
+      u ⇒ {
+        authProvider.validate(u).fold(
+          errs ⇒ {
+            contentType = "text/html"
+            jade("incomplete_oauth", "errors" -> errs.list, "login" -> u.login, "email" -> u.email, "name" -> u.name)
+          },
+          uu ⇒ loggedIn(uu, uu.login + " logged in from " + params("provider") + "."))
+
+      },
+      unauthenticated())
   }
+
+  post("/:provider/callback") {
+    if (isAnonymous) unauthenticated()
+    else {
+      trySavingCompletedProfile().fold(
+        errs ⇒ {
+          contentType = "text/html"
+          jade("incomplete_oauth", "errors" -> errs.list)
+        },
+        u ⇒ loggedIn(u, u.login + " logged in from " + params("provider") + "."))
+    }
+  }
+
+  protected def trySavingCompletedProfile(): ValidationNEL[model.Error, UserClass]
 
   /**
    * Registers authentication strategies.
@@ -106,15 +127,6 @@ trait ScribeAuthSupport[UserClass >: Null <: AppUser[_]] extends ScentrySupport[
   def unauthenticated() {
     session(scentryConfig.returnToKey) = request.uri.toASCIIString
     redirect(scentryConfig.failureUrl)
-  }
-
-  protected def redirectIfAuthenticated() = if (isAuthenticated) redirectAuthenticated()
-
-  protected def redirectAuthenticated() = redirect(session.get(scentryConfig.returnToKey).map(_.toString) | scentryConfig.returnTo)
-
-  protected def loggedIn(message: String) {
-    flash("success") = message
-    redirectAuthenticated()
   }
 
 }
@@ -151,18 +163,14 @@ class ScribeAuthStrategy[UserClass >: Null <: AppUser[_]](context: ScribeAuthStr
     //    app.unauthenticated()
   }
 
-  def authenticate(): Option[UserClass] = {
-    val authed = (allCatch withApply logError) {
+  def authenticate(): Option[UserClass] =
+    (allCatch withApply logError) {
       val reqToken = app.params.get("oauth_token").flatMap(requestTokens.get)
       reqToken foreach (requestTokens -= _.getToken)
       val verif = verifier
-      logger.debug("About to fetch access token, the verifier: %s, the request token: %s".format(verif, reqToken))
       val accessToken = OAuthToken(context.oauthService.getAccessToken(reqToken.orNull, new Verifier(verif)))
       context.findOrCreateUser(accessToken).toOption
     }
-    logger debug "Created user: %s".format(authed)
-    authed
-  }
 
   private[this] def logError(ex: Throwable): Option[UserClass] = {
     logger.error("There was a problem authenticating with " + name, ex)

@@ -2,10 +2,10 @@ package io.backchat.oauth2
 
 import auth.{ OAuthToken, ScribeAuthSupport }
 import akka.actor.ActorSystem
-import model.{ BCryptPassword, ResourceOwner }
 import dispatch._
 import dispatch.oauth._
 import dispatch.liftjson.Js._
+import model.{LinkedOAuthAccount, BCryptPassword, Account}
 import scalaz._
 import Scalaz._
 import java.security.SecureRandom
@@ -32,16 +32,19 @@ class TwitterApiCalls(accessToken: OAuthToken, provider: OAuthProvider)(implicit
   private val urlBase = "https://api.twitter.com/1/"
 
   def getProfile(id: Option[Int] = None): JValue = {
-    Http(url(urlBase + "/account/verify_credentials.json") <@ (consumer, token) ># identity)
+    Http(url(urlBase) / "account/verify_credentials.json" <@ (consumer, token) ># identity)
   }
 }
 
 class OAuthAuthentication(implicit system: ActorSystem)
-    extends ScalatraServlet with FlashMapSupport with CookieSupport with ScribeAuthSupport[ResourceOwner] {
+    extends ScalatraServlet with FlashMapSupport with CookieSupport with ScribeAuthSupport[Account] {
 
   val oauth = OAuth2Extension(system)
   protected val authProvider = oauth.userProvider
   implicit val jsonFormats: Formats = new OAuth2Formats
+
+  protected val userManifest = manifest[Account]
+
   protected val authCookieOptions = CookieOptions(
     domain = (if (oauth.web.domain == ".localhost") "localhost" else oauth.web.domain),
     path = "/",
@@ -54,30 +57,37 @@ class OAuthAuthentication(implicit system: ActorSystem)
       val fbUser = new FacebookApiCalls(token).getProfile()
       val fbEmail = (fbUser \ "email").extract[String]
       val foundUser = authProvider.findByLoginOrEmail(fbEmail)
-      (foundUser getOrElse {
-        val usr = ResourceOwner(
+      val usr = (foundUser getOrElse {
+        Account(
           login = (fbUser \ "username").extract[String],
           email = fbEmail,
           name = (fbUser \ "name").extract[String],
-          password = BCryptPassword(randomPassword).encrypted,
+          password = BCryptPassword.random,
           confirmedAt = DateTime.now)
-        authProvider.loggedIn(usr, request.remoteAddress)
-      }).success[model.Error]
+      })
+      val linkedAccounts = (LinkedOAuthAccount("facebook", (fbUser \ "username").extract[String]) :: usr.linkedOAuthAccounts).distinct
+      usr.copy(linkedOAuthAccounts = linkedAccounts).success[model.Error]
     }
 
     val twitterProvider = oauth.providers("twitter")
     registerOAuthService(twitterProvider.name, twitterProvider.service[TwitterApi](callbackUrlFormat)) { token ⇒
       val twitterUser = new TwitterApiCalls(token, twitterProvider).getProfile()
-
-      null
+      val owner = Account(
+        login = (twitterUser \ "screen_name").extract[String],
+        email = "",
+        name = (twitterUser \ "name").extract[String],
+        password = BCryptPassword.random,
+        confirmedAt = DateTime.now)
+      authProvider save owner
+      owner.success[model.Error]
     }
   }
 
-  private[this] def randomPassword = {
-    val rand = new SecureRandom
-    val pwdBytes = Array.ofDim[Byte](8)
-    rand.nextBytes(pwdBytes)
-    Hex.encodeHexString(pwdBytes)
+  protected def trySavingCompletedProfile() = {
+    val usr = user.copy(login = ~params.get("login"), email = ~params.get("email"), name = ~params.get("name"))
+    val validated = authProvider.validate(usr)
+    validated foreach authProvider.save
+    validated
   }
 
   private[this] def urlWithContextPath(path: String, params: Iterable[(String, Any)] = Iterable.empty): String = {

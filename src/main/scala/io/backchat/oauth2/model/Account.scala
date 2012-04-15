@@ -97,7 +97,16 @@ object BCryptPassword {
     toMatch.salted ? BCrypt.checkpw(candidate, toMatch.pwd) | isMatch(candidate, toMatch.pwd)
 
   def isMatch(candidate: String, toMatch: String): Boolean = { candidate == toMatch }
+
+  def random = {
+    val rand = new SecureRandom
+    val pwdBytes = Array.ofDim[Byte](8)
+    rand.nextBytes(pwdBytes)
+    BCryptPassword.hash(Hex.encodeHexString(pwdBytes))
+  }
 }
+
+case class LinkedOAuthAccount(provider: String, id: String)
 
 case class AuthStats(
     currentSignInIp: String = "",
@@ -123,7 +132,7 @@ case class AuthStats(
       lastFailureAt = DateTime.now)
 }
 
-case class ResourceOwner(
+case class Account(
     login: String,
     email: String,
     name: String,
@@ -133,6 +142,7 @@ case class ResourceOwner(
     confirmation: Token = Token(),
     reset: Token = Token(),
     stats: AuthStats = AuthStats(),
+    linkedOAuthAccounts: List[LinkedOAuthAccount] = Nil,
     confirmedAt: DateTime = MinDate,
     resetAt: DateTime = MinDate,
     createdAt: DateTime = DateTime.now,
@@ -142,12 +152,12 @@ case class ResourceOwner(
   val idString = id.toString
 }
 
-class ResourceOwnerDao(collection: MongoCollection)(implicit system: ActorSystem)
-    extends SalatDAO[ResourceOwner, ObjectId](collection = collection)
-    with UserProvider[ResourceOwner]
-    with RememberMeProvider[ResourceOwner]
-    with ForgotPasswordProvider[ResourceOwner]
-    with AuthenticatedChangePasswordProvider[ResourceOwner] {
+class AccountDao(collection: MongoCollection)(implicit system: ActorSystem)
+    extends SalatDAO[Account, ObjectId](collection = collection)
+    with UserProvider[Account]
+    with RememberMeProvider[Account]
+    with ForgotPasswordProvider[Account]
+    with AuthenticatedChangePasswordProvider[Account] {
 
   private[this] val oauth = OAuth2Extension(system)
   collection.ensureIndex(Map("login" -> 1, "email" -> 1), "login_email_idx", true)
@@ -156,8 +166,9 @@ class ResourceOwnerDao(collection: MongoCollection)(implicit system: ActorSystem
   collection.ensureIndex(Map("confirmation.token" -> 1), "confirmation_token_idx")
   collection.ensureIndex(Map("reset.token" -> 1), "reset_token_idx")
   collection.ensureIndex(Map("remembered.token" -> 1), "remembered_token_idx")
+  collection.ensureIndex(Map("linkedOAuthAccounts.provider" -> 1, "linkedOAuthAccounts.id"-> 1), "linked_oauth_accounts_idx", true)
 
-  def login(loginOrEmail: String, password: String, ipAddress: String): Validation[Error, ResourceOwner] = {
+  def login(loginOrEmail: String, password: String, ipAddress: String): Validation[Error, Account] = {
     val usrOpt = findByLoginOrEmail(loginOrEmail)
     val verifiedPass = usrOpt filter (_.password.isMatch(password))
     if (verifiedPass.isEmpty && usrOpt.isDefined)
@@ -166,32 +177,34 @@ class ResourceOwnerDao(collection: MongoCollection)(implicit system: ActorSystem
       map (loggedIn(_, ipAddress).success)).getOrElse(SimpleError("Login/password don't match.").fail)
   }
 
-  def loggedIn(owner: ResourceOwner, ipAddress: String): ResourceOwner = {
+  def loggedIn(owner: Account, ipAddress: String): Account = {
     val ticked = owner.copy(stats = owner.stats.tick(ipAddress))
     save(ticked)
     ticked
   }
 
-  def findByLoginOrEmail(loginOrEmail: String): Option[ResourceOwner] =
+  def findByLoginOrEmail(loginOrEmail: String): Option[Account] =
     findOne($or(fieldNames.login -> loginOrEmail, fieldNames.email -> loginOrEmail))
 
   def findUserById(id: String) = findOneByID(new ObjectId(id))
 
-  def loginFromRemember(token: String): Validation[Error, ResourceOwner] = {
+  def findByLinkedAccount(provider: String, id: String) = findOne(Map("provider" -> provider, "id" -> id))
+
+  def loginFromRemember(token: String): Validation[Error, Account] = {
     val key = fieldNames.remembered + "." + fieldNames.token
     (findOne(Map(key -> token))
       some (_.success[Error])
-      none InvalidToken().fail[ResourceOwner])
+      none InvalidToken().fail[Account])
   }
 
-  def remember(owner: ResourceOwner): Validation[Error, String] =
+  def remember(owner: Account): Validation[Error, String] =
     allCatch.withApply(e ⇒ SimpleError(e.getMessage).fail) {
       val token = Token()
       save(owner.copy(remembered = token))
       token.token.success
     }
 
-  def rememberedPassword(owner: ResourceOwner, ipAddress: String): ResourceOwner = {
+  def rememberedPassword(owner: Account, ipAddress: String): Account = {
     loggedIn(owner.copy(reset = Token()), ipAddress)
   }
 
@@ -230,7 +243,7 @@ class ResourceOwnerDao(collection: MongoCollection)(implicit system: ActorSystem
     def tokenRequired(tokenType: String, token: String): Validation[Error, String] =
       nonEmptyString(tokenType.toLowerCase + "." + fieldNames.token, token)
 
-    def validPassword(owner: ResourceOwner, password: String): Validation[Error, ResourceOwner] =
+    def validPassword(owner: Account, password: String): Validation[Error, Account] =
       if (owner.password.isMatch(password)) owner.success
       else SimpleError("The username/password combination doesn not match").fail
 
@@ -241,13 +254,13 @@ class ResourceOwnerDao(collection: MongoCollection)(implicit system: ActorSystem
     email: Option[String],
     name: Option[String],
     password: Option[String],
-    passwordConfirmation: Option[String]): ValidationNEL[Error, ResourceOwner] = {
-    val newOwner: ValidationNEL[Error, ResourceOwner] = (validations.login(~login).liftFailNel
+    passwordConfirmation: Option[String]): ValidationNEL[Error, Account] = {
+    val newOwner: ValidationNEL[Error, Account] = (validations.login(~login).liftFailNel
       |@| validations.email(~email).liftFailNel
       |@| validations.name(~name).liftFailNel
       |@| (validations
         passwordWithConfirmation (~password, ~passwordConfirmation)
-        map (BCryptPassword(_).encrypted)).liftFailNel) { ResourceOwner(_, _, _, _) }
+        map (BCryptPassword(_).encrypted)).liftFailNel) { Account(_, _, _, _) }
 
     newOwner foreach { o ⇒
       save(o)
@@ -256,16 +269,16 @@ class ResourceOwnerDao(collection: MongoCollection)(implicit system: ActorSystem
     newOwner
   }
 
-  private type Factory = (String, String, String) ⇒ ResourceOwner
+  private type Factory = (String, String, String) ⇒ Account
 
-  def validate(owner: ResourceOwner) = {
+  def validate(owner: Account): ValidationNEL[Error, Account] = {
     val factory: Factory = owner.copy(_, _, _)
     (validations.login(owner.login).liftFailNel
       |@| validations.email(owner.email).liftFailNel
       |@| validations.name(owner.name).liftFailNel)(factory)
   }
 
-  def confirm(token: String): Validation[Error, ResourceOwner] = {
+  def confirm(token: String): Validation[Error, Account] = {
     val key = fieldNames.confirmation + "." + fieldNames.token
     validations.tokenRequired("confirmation", token) flatMap { tok ⇒
       findOne(Map(key -> tok)) map { owner ⇒
@@ -278,7 +291,7 @@ class ResourceOwnerDao(collection: MongoCollection)(implicit system: ActorSystem
     }
   }
 
-  def forgot(loginOrEmail: Option[String]): Validation[Error, ResourceOwner] = {
+  def forgot(loginOrEmail: Option[String]): Validation[Error, Account] = {
     Validations.nonEmptyString(fieldNames.login, ~loginOrEmail) flatMap { loe ⇒
       findByLoginOrEmail(loe) map { owner ⇒
         val updated = owner.copy(reset = Token(), resetAt = MinDate)
@@ -289,13 +302,13 @@ class ResourceOwnerDao(collection: MongoCollection)(implicit system: ActorSystem
     }
   }
 
-  def resetPassword(token: String, password: String, passwordConfirmation: String): ValidationNEL[Error, ResourceOwner] = {
-    val r: ValidationNEL[Error, Validation[Error, ResourceOwner]] = (validations.tokenRequired("reset", token).liftFailNel
+  def resetPassword(token: String, password: String, passwordConfirmation: String): ValidationNEL[Error, Account] = {
+    val r: ValidationNEL[Error, Validation[Error, Account]] = (validations.tokenRequired("reset", token).liftFailNel
       |@| validations.passwordWithConfirmation(password, passwordConfirmation).liftFailNel)(doReset _)
     (r fold (_.fail, _.liftFailNel))
   }
 
-  def changePassword(owner: ResourceOwner, oldPassword: String, password: String, passwordConfirmation: String): Validation[Error, ResourceOwner] = {
+  def changePassword(owner: Account, oldPassword: String, password: String, passwordConfirmation: String): Validation[Error, Account] = {
     for {
       o ← validations.validPassword(owner, oldPassword)
       pwd ← validations.passwordWithConfirmation(password, passwordConfirmation)
@@ -306,10 +319,10 @@ class ResourceOwnerDao(collection: MongoCollection)(implicit system: ActorSystem
     }
   }
 
-  private def doReset(token: String, password: String): Validation[Error, ResourceOwner] = {
+  private def doReset(token: String, password: String): Validation[Error, Account] = {
     val key = fieldNames.reset + "." + fieldNames.token
     findOne(Map(key -> token)) map { owner ⇒
-      owner.isReset ? (InvalidToken(): Error).fail[ResourceOwner] | {
+      owner.isReset ? (InvalidToken(): Error).fail[Account] | {
         val upd = owner.copy(password = BCryptPassword(password).encrypted, resetAt = DateTime.now, reset = Token())
         save(upd)
         upd.success[Error]
@@ -317,7 +330,7 @@ class ResourceOwnerDao(collection: MongoCollection)(implicit system: ActorSystem
     } getOrElse InvalidToken().fail
   }
 
-  override def save(t: ResourceOwner, wc: WriteConcern) {
+  override def save(t: Account, wc: WriteConcern) {
     super.save(t.copy(updatedAt = DateTime.now), wc)
   }
 

@@ -8,7 +8,7 @@ import Scalaz._
 import com.mongodb.casbah.commons.conversions.scala.RegisterJodaTimeConversionHelpers
 import org.specs2.specification.After
 
-class ResourceOwnerSpec extends AkkaSpecification { def is = sequential ^
+class AccountSpec extends AkkaSpecification { def is = sequential ^
   "A resource owner dao should" ^
     "when registering" ^
       "validate a user for registration" ^
@@ -50,11 +50,11 @@ class ResourceOwnerSpec extends AkkaSpecification { def is = sequential ^
   def activation = new ActivationSpecContext
   def passwordReset = new ResetPasswordSpecContext
 
-  trait ResourceOwnerSpecContextBase extends After {
+  trait AccountSpecContextBase extends After {
     val conn = MongoConnection()
     val coll = conn("oauth_server_test")("resource_owner")
     coll.drop()
-    val dao = new ResourceOwnerDao(coll)
+    val dao = new AccountDao(coll)
 
     def after = {
       conn.close()
@@ -62,12 +62,12 @@ class ResourceOwnerSpec extends AkkaSpecification { def is = sequential ^
 
   }
 
-  class ResetPasswordSpecContext extends ResourceOwnerSpecContextBase {
+  class ResetPasswordSpecContext extends AccountSpecContextBase {
     val registered = dao.register("tommy".some, "tommy@hiltfiger.no".some, "Tommy Hiltfiger".some, "blah123".some, "blah123".some).toOption.get
     val toReset = dao.forgot(registered.login.some).toOption.get
 
     def resetsPassword = this {
-      dao.resetPassword(toReset.reset.token, "blah124", "blah124") must beSuccess[ResourceOwner]
+      dao.resetPassword(toReset.reset.token, "blah124", "blah124") must beSuccess[Account]
     }
 
     def resetsFailureCountAndTokenOnLogin = this {
@@ -84,12 +84,12 @@ class ResourceOwnerSpec extends AkkaSpecification { def is = sequential ^
 
   }
 
-  class ActivationSpecContext extends ResourceOwnerSpecContextBase {
+  class ActivationSpecContext extends AccountSpecContextBase {
     val registered = dao.register("tommy".some, "tommy@hiltfiger.no".some, "Tommy Hiltfiger".some, "blah123".some, "blah123".some).toOption.get
 
     def activatesCorrectToken = this {
       val res = dao.confirm(registered.confirmation.token)
-      (res must beSuccess[ResourceOwner]) and {
+      (res must beSuccess[Account]) and {
         val retr = dao.findByLoginOrEmail(registered.login).get
         retr.isConfirmed must beTrue
       }
@@ -106,15 +106,15 @@ class ResourceOwnerSpec extends AkkaSpecification { def is = sequential ^
     }
   }
 
-  class LoginSpecContext extends ResourceOwnerSpecContextBase {
+  class LoginSpecContext extends AccountSpecContextBase {
 
     val registered = dao.register("tommy".some, "tommy@hiltfiger.no".some, "Tommy Hiltfiger".some, "blah123".some, "blah123".some).toOption.get
     def logsUserIn = this {
-      dao.login("tommy", "blah123", "127.0.0.1") must beSuccess[ResourceOwner]
+      dao.login("tommy", "blah123", "127.0.0.1") must beSuccess[Account]
     }
     def logsUserInFromRemember = this {
       val tok = dao.remember(registered).toOption.get
-      dao.loginFromRemember(tok) must beSuccess[ResourceOwner]
+      dao.loginFromRemember(tok) must beSuccess[Account]
     }
     def generatesRememberToken = this {
       dao.remember(registered) must beSuccess[String]
@@ -128,7 +128,7 @@ class ResourceOwnerSpec extends AkkaSpecification { def is = sequential ^
       usr.stats.loginFailures must be_>(0)
     }
     def increasesLoginSuccessCount = this {
-      dao.login("tommy", "blah123", "127.0.0.1") must beSuccess[ResourceOwner]
+      dao.login("tommy", "blah123", "127.0.0.1") must beSuccess[Account]
       val usr = dao.findByLoginOrEmail("tommy").toOption.get.get
       (usr.stats.loginFailures must be_==(0)) and {
         usr.stats.loginSuccess must be_>(0)
@@ -137,7 +137,7 @@ class ResourceOwnerSpec extends AkkaSpecification { def is = sequential ^
 
   }
 
-  class RegistrationSpecContext extends ResourceOwnerSpecContextBase {
+  class RegistrationSpecContext extends AccountSpecContextBase {
 
     def failsRegistrationDuplicateLogin = this {
       dao.register("tommy".some, "tommy@hiltfiger.no".some, "Tommy Hiltfiger".some, "blah123".some, "blah123".some)

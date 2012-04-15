@@ -35,6 +35,7 @@ trait UserProvider[UserClass <: AppUser[_]] {
     password: Option[String],
     passwordConfirmation: Option[String]): ValidationNEL[Error, UserClass]
   def confirm(token: String): Validation[Error, UserClass]
+  def validate(user: UserClass): ValidationNEL[Error, UserClass]
 }
 
 trait RememberMeProvider[UserClass <: AppUser[_]] {
