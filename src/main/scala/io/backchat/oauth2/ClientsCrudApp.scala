@@ -43,7 +43,7 @@ class ClientsCrudApp(implicit protected val system: ActorSystem) extends OAuth2S
         scope = multiParams("scope").toList,
         redirectUri = params.get("redirect_uri"),
         link = params.get("link"))
-      val saved = oauth.clients.validateClient(update)
+      val saved = oauth.clients.validate(update)
       saved foreach oauth.clients.save
       saved.fold(
         errs ⇒ jade("edit", templateData("errors" -> errs.list, "client" -> client, "id" -> params("id")): _*),
@@ -64,7 +64,7 @@ class ClientsCrudApp(implicit protected val system: ActorSystem) extends OAuth2S
       redirectUri = params.get("redirect_uri"),
       link = params.get("link"))
 
-    val validated = oauth.clients.validateClient(client)
+    val validated = oauth.clients.validate(client)
     validated foreach oauth.clients.save
     validated.fold(
       errs ⇒ jade("clients/new", templateData("errors" -> errs.list, "client" -> client): _*),

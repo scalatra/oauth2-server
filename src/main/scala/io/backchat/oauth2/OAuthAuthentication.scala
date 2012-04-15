@@ -38,14 +38,6 @@ class TwitterApiCalls(accessToken: OAuthToken, provider: OAuthProvider)(implicit
 
 class OAuthAuthentication(implicit system: ActorSystem)
     extends ScalatraServlet with FlashMapSupport with CookieSupport with ScribeAuthSupport[ResourceOwner] {
-  //  case class CookieOptions(
-  //          domain  : String  = "",
-  //          path    : String  = "",
-  //          maxAge  : Int     = -1,
-  //          secure  : Boolean = false,
-  //          comment : String  = "",
-  //          httpOnly: Boolean = false,
-  //          encoding: String  = "UTF-8")
 
   val oauth = OAuth2Extension(system)
   protected val authProvider = oauth.userProvider

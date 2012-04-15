@@ -84,11 +84,7 @@ trait ScribeAuthSupport[UserClass >: Null <: AppUser[_]] extends ScentrySupport[
   }
 
   get("/:provider/callback") {
-    logger debug "Got an authorization callback"
-    logger debug "Request params: %s".format(multiParams)
-    logger debug "Registered strategies: %s".format(scentry.strategies.keys.mkString(", "))
     scentry.authenticate(params("provider"))
-    logger debug "After authenticating: %s".format(userOption)
     userOption.fold(u ⇒ loggedIn(u.login + " logged in from " + params("provider") + "."), halt(401, "Unauthenticated"))
   }
 

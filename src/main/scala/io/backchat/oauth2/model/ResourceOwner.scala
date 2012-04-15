@@ -248,11 +248,21 @@ class ResourceOwnerDao(collection: MongoCollection)(implicit system: ActorSystem
       |@| (validations
         passwordWithConfirmation (~password, ~passwordConfirmation)
         map (BCryptPassword(_).encrypted)).liftFailNel) { ResourceOwner(_, _, _, _) }
+
     newOwner foreach { o ⇒
       save(o)
       if (!oauth.isTest) oauth.smtp.send(MailMessage(ConfirmationMail(o.name, o.login, o.email, o.confirmation.token)))
     }
     newOwner
+  }
+
+  private type Factory = (String, String, String) ⇒ ResourceOwner
+
+  def validate(owner: ResourceOwner) = {
+    val factory: Factory = owner.copy(_, _, _)
+    (validations.login(owner.login).liftFailNel
+      |@| validations.email(owner.email).liftFailNel
+      |@| validations.name(owner.name).liftFailNel)(factory)
   }
 
   def confirm(token: String): Validation[Error, ResourceOwner] = {

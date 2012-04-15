@@ -61,7 +61,7 @@ class ClientDao(collection: MongoCollection)(implicit system: ActorSystem)
   }
   private type Factory = (String, String, AuthorizationType.Value, List[String], Option[String], Option[String]) ⇒ Client
 
-  def validateClient(client: Client) = {
+  def validate(client: Client) = {
     val factory: Factory = client.copy(client.secret, _, _, _, client.id, _, _, _)
     buildClient(client.profile, client.displayName, client.authorizationType.toString, client.scope, client.redirectUri, client.link)(factory)
   }

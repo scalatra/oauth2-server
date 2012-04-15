@@ -46,7 +46,7 @@ object Validations {
       (allCatch opt {
         val u = URI.create(url).normalize()
         !absolute || u.isAbsolute
-      }).isDefined
+      }).isDefined && (!OAuth2Extension.isProduction || UrlValidator.getInstance().isValid(url))
     }
     new PredicateValidator[String](fieldName, validator, "%s must be a valid url.").validate(value)
   }
