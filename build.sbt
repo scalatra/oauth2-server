@@ -171,4 +171,4 @@ buildInfoPackage := "io.backchat.oauth2"
 
 seq(StartScriptPlugin.startScriptForClassesSettings: _*)
 
-externalResolvers <<= resolvers map { Resolver.withDefaultResolvers(_, scalaTools = false) }
+//externalResolvers <<= resolvers map { Resolver.withDefaultResolvers(_, scalaTools = false) }
