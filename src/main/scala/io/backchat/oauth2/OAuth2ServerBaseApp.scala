@@ -137,7 +137,7 @@ trait OAuth2ServerBaseApp extends ScalatraServlet
     }
     val pairs = params map { case (key, value) ⇒ key.urlEncode + "=" + value.toString.urlEncode }
     val queryString = if (pairs.isEmpty) "" else pairs.mkString("?", "&", "")
-    addSessionId(newPath + queryString)
+    addSessionId((newPath.startsWith("/") ? newPath.substring(1) | newPath) + queryString)
   }
 
   private def ensureSlash(candidate: String) = {

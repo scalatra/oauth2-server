@@ -38,13 +38,17 @@ object OAuth2Extension extends ExtensionId[OAuth2Extension] with ExtensionIdProv
 }
 
 case class OAuthProvider(name: String, clientId: String, clientSecret: String, scope: List[String] = Nil) {
-  def service[SvcType <: Api: Manifest](urlFormat: String) =
-    (new ServiceBuilder
+  def service[SvcType <: Api: Manifest](urlFormat: String) = {
+    logger info "Building oauth service provider with %s and callback url".format(this, urlFormat)
+    val b = (new ServiceBuilder
       provider manifest[SvcType].erasure.asSubclass(classOf[Api])
       apiKey clientId
       apiSecret clientSecret
-      callback urlFormat.format(name)
-      scope scope.mkString(",") build)
+      callback urlFormat.format(name))
+    if (scope.nonEmpty)
+      b.scope(scope.mkString(","))
+    b.build()
+  }
 
 }
 
@@ -109,8 +113,8 @@ class OAuth2Extension(system: ExtendedActorSystem) extends Extension {
   }
   val providers = new {
     def apply(key: String): OAuthProvider = {
-      val v = cfg.getConfig(provPath)
-      val scope = if (cfg.hasPath("scope")) v.getStringList("scope").asScala.toList else Nil
+      val v = cfg.getConfig(provPath + "." + key)
+      val scope = v.getStringList("scope").asScala.toList
       OAuthProvider(key, v.getString("clientId"), v.getString("clientSecret"), scope)
     }
   }

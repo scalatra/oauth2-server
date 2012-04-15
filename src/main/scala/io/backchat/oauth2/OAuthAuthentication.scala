@@ -45,32 +45,34 @@ class OAuthAuthentication(implicit system: ActorSystem)
   protected val authProvider = oauth.userProvider
   implicit val jsonFormats: Formats = DefaultFormats
 
-  val facebookProvider = oauth.providers("facebook") // requires scope email at least for facebook
-  val facebookService = facebookProvider.service[FacebookApi](callbackUrlFormat)
+  override protected def registerAuthStrategies {
+    val facebookProvider = oauth.providers("facebook") // requires scope email at least for facebook
+    val facebookService = facebookProvider.service[FacebookApi](callbackUrlFormat)
 
-  registerOAuthService(facebookProvider.name, facebookService) { token ⇒
-    val fbUser = new FacebookApiCalls(token).getProfile()
-    val fbEmail = (fbUser \ "email").extract[String]
-    val foundUser = authProvider.findByLoginOrEmail(fbEmail)
-    (foundUser getOrElse {
-      val usr = ResourceOwner(
-        login = (fbUser \ "username").extract[String],
-        email = fbEmail,
-        name = (fbUser \ "name").extract[String],
-        password = BCryptPassword(randomPassword).encrypted,
-        confirmedAt = DateTime.now)
-      authProvider.loggedIn(usr, request.remoteAddress)
-      usr
-    }).success[model.Error]
-  }
+    registerOAuthService(facebookProvider.name, facebookService) { token ⇒
+      val fbUser = new FacebookApiCalls(token).getProfile()
+      val fbEmail = (fbUser \ "email").extract[String]
+      val foundUser = authProvider.findByLoginOrEmail(fbEmail)
+      (foundUser getOrElse {
+        val usr = ResourceOwner(
+          login = (fbUser \ "username").extract[String],
+          email = fbEmail,
+          name = (fbUser \ "name").extract[String],
+          password = BCryptPassword(randomPassword).encrypted,
+          confirmedAt = DateTime.now)
+        authProvider.loggedIn(usr, request.remoteAddress)
+        usr
+      }).success[model.Error]
+    }
 
-  val twitterProvider = oauth.providers("twitter")
-  val twitterService = twitterProvider.service[TwitterApi](callbackUrlFormat)
+    val twitterProvider = oauth.providers("twitter")
+    val twitterService = twitterProvider.service[TwitterApi](callbackUrlFormat)
 
-  registerOAuthService(twitterProvider.name, twitterService) { token ⇒
-    val twitterUser = new TwitterApiCalls(token, twitterProvider).getProfile()
+    registerOAuthService(twitterProvider.name, twitterService) { token ⇒
+      val twitterUser = new TwitterApiCalls(token, twitterProvider).getProfile()
 
-    null
+      null
+    }
   }
 
   private[this] def randomPassword = {
@@ -80,7 +82,22 @@ class OAuthAuthentication(implicit system: ActorSystem)
     Hex.encodeHexString(pwdBytes)
   }
 
-  private[this] def callbackUrlFormat = buildFullUrl("%s/callback")
+  private[this] def urlWithContextPath(path: String, params: Iterable[(String, Any)] = Iterable.empty): String = {
+    val newPath = path match {
+      case x if x.startsWith("/") ⇒ contextPath + path
+      case _                      ⇒ path
+    }
+    val pairs = params map { case (key, value) ⇒ key.urlEncode + "=" + value.toString.urlEncode }
+    val queryString = if (pairs.isEmpty) "" else pairs.mkString("?", "&", "")
+    newPath + queryString
+  }
+
+  private[this] def callbackUrlFormat = {
+    "http%s://%s%s".format(
+      if (oauth.web.sslRequired) "s" else "",
+      oauth.web.domainWithPort,
+      urlWithContextPath("%s/callback"))
+  }
 
   /**
    * Builds a full URL from the given relative path. Takes into account the port configuration, https, ...
