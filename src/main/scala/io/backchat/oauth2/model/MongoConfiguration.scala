@@ -17,6 +17,7 @@ object MongoConfiguration {
 }
 case class MongoConfiguration(uri: MongoURI) {
 
+  logger.info("Connecting to mongodb with: %s" format uri.toString())
   def isAuthenticated = uri.username.blankOption.isDefined
   var _db: MongoDB = null
   var _conn: MongoConnection = null

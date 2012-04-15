@@ -70,11 +70,8 @@ class OAuth2Extension(system: ExtendedActorSystem) extends Extension {
   private[this] val cfg = {
     val c = system.settings.config
     val cc = if (c.hasPath(environment)) {
-      println("we have an environment specific config")
       c.getConfig(environment).withFallback(c)
     } else c
-    println("a config setting for this env: ")
-    println(cc.getString("test-value"))
     cc.checkValid(ConfigFactory.defaultReference, "backchat")
     cc
   }
@@ -87,7 +84,9 @@ class OAuth2Extension(system: ExtendedActorSystem) extends Extension {
   //    cfg.getString(key("user")).blankOption,
   //    cfg.getString(key("password")).blankOption)
 
-  val mongo = MongoConfiguration(key("uri"))
+  val mongo = {
+    MongoConfiguration(cfg.getString(key("uri")))
+  }
 
   val defaultFormats: Formats = new OAuth2Formats
 
