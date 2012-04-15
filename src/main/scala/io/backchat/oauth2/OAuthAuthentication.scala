@@ -84,13 +84,23 @@ class OAuthAuthentication(implicit system: ActorSystem)
 
   private[this] def urlWithContextPath(path: String, params: Iterable[(String, Any)] = Iterable.empty): String = {
     val newPath = path match {
-      case x if x.startsWith("/") ⇒ contextPath + path
-      case _                      ⇒ path
+      case x if x.startsWith("/") ⇒ ensureSlash(contextPath) + ensureSlash(path)
+      case _                      ⇒ ensureSlash(routeBasePath) + ensureSlash(path)
     }
     val pairs = params map { case (key, value) ⇒ key.urlEncode + "=" + value.toString.urlEncode }
     val queryString = if (pairs.isEmpty) "" else pairs.mkString("?", "&", "")
+    println("The url with context path: %s" format newPath)
     newPath + queryString
   }
+
+  private def ensureSlash(candidate: String) = {
+      (candidate.startsWith("/"), candidate.endsWith("/")) match {
+        case (true, true)   ⇒ candidate.dropRight(1)
+        case (true, false)  ⇒ candidate
+        case (false, true)  ⇒ "/" + candidate.dropRight(1)
+        case (false, false) ⇒ "/" + candidate
+      }
+    }
 
   private[this] def callbackUrlFormat = {
     oauth.web.appUrl + urlWithContextPath("%s/callback")

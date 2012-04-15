@@ -75,12 +75,6 @@ trait OAuth2ServerBaseApp extends ScalatraServlet
    * @return the full URL
    */
   protected def buildFullUrl(path: String) = {
-//    if (path.startsWith("http")) path else {
-//      "http%s://%s%s".format(
-//        if (oauth.web.sslRequired || this.isHttps) "s" else "",
-//        oauth.web.domainWithPort,
-//        url(path))
-//    }
     if (path.startsWith("http")) path
     else oauth.web.appUrl + url(path)
   }
