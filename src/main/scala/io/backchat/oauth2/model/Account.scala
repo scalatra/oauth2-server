@@ -166,7 +166,7 @@ class AccountDao(collection: MongoCollection)(implicit system: ActorSystem)
   collection.ensureIndex(Map("confirmation.token" -> 1), "confirmation_token_idx")
   collection.ensureIndex(Map("reset.token" -> 1), "reset_token_idx")
   collection.ensureIndex(Map("remembered.token" -> 1), "remembered_token_idx")
-  collection.ensureIndex(Map("linkedOAuthAccounts.provider" -> 1, "linkedOAuthAccounts.id"-> 1), "linked_oauth_accounts_idx", true)
+  collection.ensureIndex(Map("linkedOAuthAccounts.provider" -> 1, "linkedOAuthAccounts.id" -> 1), "linked_oauth_accounts_idx", true)
 
   def login(loginOrEmail: String, password: String, ipAddress: String): Validation[Error, Account] = {
     val usrOpt = findByLoginOrEmail(loginOrEmail)

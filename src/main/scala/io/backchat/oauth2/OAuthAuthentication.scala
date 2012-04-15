@@ -5,7 +5,7 @@ import akka.actor.ActorSystem
 import dispatch._
 import dispatch.oauth._
 import dispatch.liftjson.Js._
-import model.{LinkedOAuthAccount, BCryptPassword, Account}
+import model.{ LinkedOAuthAccount, BCryptPassword, Account }
 import scalaz._
 import Scalaz._
 import java.security.SecureRandom
@@ -14,6 +14,7 @@ import OAuth2Imports._
 import org.scribe.builder.api.{ TwitterApi, FacebookApi }
 import net.liftweb.json._
 import org.scalatra.{ CookieOptions, CookieSupport, FlashMapSupport, ScalatraServlet }
+import annotation.tailrec
 
 class FacebookApiCalls(accessToken: OAuthToken)(implicit formats: Formats) {
   private val urlBase = "https://graph.facebook.com/"
@@ -52,34 +53,43 @@ class OAuthAuthentication(implicit system: ActorSystem)
     httpOnly = true)
 
   before() {
-    val facebookProvider = oauth.providers("facebook") // requires scope email at least for facebook
+
+    @tailrec
+    def createName(nameVal: String, appendix: Int): String = {
+      val proposal = if (appendix > 0) nameVal + "_" + appendix.toString else nameVal
+      if (authProvider.count(Map("login" -> proposal)) > 0) createName(nameVal, (appendix + 1)) else proposal
+    }
+
+    val facebookProvider = oauth.providers("facebook") // requires at least scope email for facebook
     registerOAuthService(facebookProvider.name, facebookProvider.service[FacebookApi](callbackUrlFormat)) { token ⇒
       val fbUser = new FacebookApiCalls(token).getProfile()
       val fbEmail = (fbUser \ "email").extract[String]
-      val foundUser = authProvider.findByLoginOrEmail(fbEmail)
+      val fbUsername = (fbUser \ "username").extract[String]
+      val foundUser = authProvider.findByLoginOrEmail(fbEmail) orElse authProvider.findByLinkedAccount(facebookProvider.name, fbUsername)
       val usr = (foundUser getOrElse {
         Account(
-          login = (fbUser \ "username").extract[String],
+          login = createName(fbUsername, 0),
           email = fbEmail,
           name = (fbUser \ "name").extract[String],
           password = BCryptPassword.random,
           confirmedAt = DateTime.now)
       })
       val linkedAccounts = (LinkedOAuthAccount("facebook", (fbUser \ "username").extract[String]) :: usr.linkedOAuthAccounts).distinct
-      usr.copy(linkedOAuthAccounts = linkedAccounts).success[model.Error]
+      authProvider.loggedIn(usr.copy(linkedOAuthAccounts = linkedAccounts), request.remoteAddress).success[model.Error]
     }
 
     val twitterProvider = oauth.providers("twitter")
     registerOAuthService(twitterProvider.name, twitterProvider.service[TwitterApi](callbackUrlFormat)) { token ⇒
       val twitterUser = new TwitterApiCalls(token, twitterProvider).getProfile()
-      val owner = Account(
-        login = (twitterUser \ "screen_name").extract[String],
+      val twLogin = (twitterUser \ "screen_name").extract[String]
+      val owner = authProvider.findByLinkedAccount(twitterProvider.name, twLogin) getOrElse Account(
+        login = createName(twLogin, 0),
         email = "",
         name = (twitterUser \ "name").extract[String],
         password = BCryptPassword.random,
         confirmedAt = DateTime.now)
-      authProvider save owner
-      owner.success[model.Error]
+      val linkedAccounts = (LinkedOAuthAccount("twitter", twLogin) :: owner.linkedOAuthAccounts).distinct
+      authProvider.loggedIn(owner.copy(linkedOAuthAccounts = linkedAccounts), request.remoteAddress).success[model.Error]
     }
   }
 
