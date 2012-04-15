@@ -50,6 +50,7 @@ trait ScribeAuthSupport[UserClass >: Null <: AppUser[_]] extends ScentrySupport[
       val name = nm
       val app = thisApp
       def findOrCreateUser(accessToken: OAuthToken) = {
+        logger debug "finding or creating user for: %s".format(accessToken)
         session("oauth.accessToken") = accessToken
         findOrCreateUser(accessToken)
       }
@@ -149,7 +150,9 @@ class ScribeAuthStrategy[UserClass >: Null <: AppUser[_]](context: ScribeAuthStr
     val authed = (allCatch withApply logError) {
       val reqToken = app.params.get("oauth_token").flatMap(requestTokens.get)
       reqToken foreach (requestTokens -= _.getToken)
-      val accessToken = OAuthToken(context.oauthService.getAccessToken(reqToken.orNull, new Verifier(verifier)))
+      val verif = verifier
+      logger.debug("About to fetch access token, the verifier: %s, the request token: %s".format(verif, reqToken))
+      val accessToken = OAuthToken(context.oauthService.getAccessToken(reqToken.orNull, new Verifier(verif)))
       context.findOrCreateUser(accessToken).toOption
     }
     logger debug "Created user: %s".format(authed)

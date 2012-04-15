@@ -100,7 +100,7 @@ class OAuthAuthentication(implicit system: ActorSystem)
   }
 
   private[this] def callbackUrlFormat = {
-    oauth.web.appUrl + urlWithContextPath("%s/callback")
+    oauth.web.appUrl + urlWithContextPath("/auth/%s/callback")
   }
 
   /**
