@@ -8,6 +8,8 @@ import OAuth2Imports._
 import collection.JavaConverters._
 import org.scribe.builder.ServiceBuilder
 import org.scribe.builder.api.{ Api, FacebookApi }
+import com.typesafe.config.{ ConfigFactory, Config }
+import com.mongodb.casbah.MongoURI
 
 object OAuth2Extension extends ExtensionId[OAuth2Extension] with ExtensionIdProvider {
   def lookup() = OAuth2Extension
@@ -65,15 +67,27 @@ class OAuth2Extension(system: ExtendedActorSystem) extends Extension {
   def isTest = isEnvironment(Test)
   def isEnvironment(env: String) = environment equalsIgnoreCase env
 
-  private[this] val cfg = system.settings.config
+  private[this] val cfg = {
+    val c = system.settings.config
+    val cc = if (c.hasPath(environment)) {
+      println("we have an environment specific config")
+      c.getConfig(environment).withFallback(c)
+    } else c
+    println("a config setting for this env: ")
+    println(cc.getString("test-value"))
+    cc.checkValid(ConfigFactory.defaultReference, "backchat")
+    cc
+  }
   private[this] def key(value: String) = confKey("mongo.%s" format value)
 
-  val mongo = MongoConfiguration(
-    cfg.getString(key("host")),
-    cfg.getInt(key("port")),
-    cfg.getString(key("database")),
-    cfg.getString(key("user")).blankOption,
-    cfg.getString(key("password")).blankOption)
+  //  val mongo = MongoConfiguration(
+  //    cfg.getString(key("host")),
+  //    cfg.getInt(key("port")),
+  //    cfg.getString(key("database")),
+  //    cfg.getString(key("user")).blankOption,
+  //    cfg.getString(key("password")).blankOption)
+
+  val mongo = MongoConfiguration(key("uri"))
 
   val defaultFormats: Formats = new OAuth2Formats
 

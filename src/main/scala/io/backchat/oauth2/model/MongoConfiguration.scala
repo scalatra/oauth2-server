@@ -4,21 +4,25 @@ package model
 import OAuth2Imports._
 import scala.util.control.Exception.ignoring
 import com.mongodb.casbah.commons.conversions.scala.{ DeregisterJodaTimeConversionHelpers, RegisterJodaTimeConversionHelpers }
+import com.mongodb.casbah.MongoURI
 
-case class MongoConfiguration(
-    host: String,
-    port: Int,
-    database: String,
-    user: Option[String] = None,
-    password: Option[String] = None) {
+//case class MongoConfiguration(
+//    host: String,
+//    port: Int,
+//    database: String,
+//    user: Option[String] = None,
+//    password: Option[String] = None) {
+object MongoConfiguration {
+  def apply(uri: String): MongoConfiguration = MongoConfiguration(MongoURI(uri))
+}
+case class MongoConfiguration(uri: MongoURI) {
 
-  def isAuthenticated = user.isDefined
-
+  def isAuthenticated = uri.username.blankOption.isDefined
   var _db: MongoDB = null
   var _conn: MongoConnection = null
   def connection = synchronized {
     if (_conn == null) {
-      _conn = MongoConnection(host, port)
+      _conn = uri.connect
       RegisterJodaTimeConversionHelpers()
     }
     _conn
@@ -33,8 +37,8 @@ case class MongoConfiguration(
 
   def db = synchronized {
     if (_db == null) {
-      val db = connection(database)
-      user foreach { u ⇒ db.authenticate(u, password getOrElse "") }
+      val db = uri.connectDB
+      uri.username.blankOption foreach { u ⇒ db.authenticate(u, uri.password.toString) }
       _db = db
     }
     _db

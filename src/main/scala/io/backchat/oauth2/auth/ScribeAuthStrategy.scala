@@ -28,7 +28,7 @@ trait ScribeAuthStrategyContext[UserClass >: Null <: AppUser[_]] {
 
 trait ScribeAuthSupport[UserClass >: Null <: AppUser[_]] extends ScentrySupport[UserClass] { self: ScalatraBase with SessionSupport with FlashMapSupport ⇒
 
-  private[this] val oauthServicesRegistry = new ConcurrentHashMap[String, OAuthService].asScala
+  private[this] val oauthServicesRegistry = new ConcurrentHashMap[String, ScribeAuthStrategyContext[UserClass]].asScala
 
   protected def fromSession = { case id: String ⇒ authProvider.findUserById(id).orNull }
   protected def toSession = { case usr: AppUser[_] ⇒ usr.idString }
@@ -45,7 +45,7 @@ trait ScribeAuthSupport[UserClass >: Null <: AppUser[_]] extends ScentrySupport[
 
   def registerOAuthService(name: String, service: OAuthService)(findOrCreateUser: OAuthToken ⇒ Validation[model.Error, UserClass]) = {
     val nm = name
-    scentry.registerStrategy(name, _ ⇒ new ScribeAuthStrategy[UserClass](new ScribeAuthStrategyContext[UserClass] {
+    val ctxt = new ScribeAuthStrategyContext[UserClass] {
       val oauthService = service
       val name = nm
       val app = thisApp
@@ -53,21 +53,23 @@ trait ScribeAuthSupport[UserClass >: Null <: AppUser[_]] extends ScentrySupport[
         session("oauth.accessToken") = accessToken
         findOrCreateUser(accessToken)
       }
-    }))
-    oauthServicesRegistry += name -> service
+    }
+    oauthServicesRegistry += name -> ctxt
   }
 
   get("/:provider") {
     if (!oauthServicesRegistry.contains(params("provider"))) halt(404, "The provider [" + params("provider") + "] is not available.")
 
     oauthServicesRegistry get (params("provider")) flatMap {
-      case svc: OAuth10aServiceImpl ⇒
-        val tok = svc.getRequestToken
-        if (tok == null) halt(502, "Couldn't obtain a request token for " + params("provider"))
-        ScribeAuthStrategy.requestTokens(tok.getToken) = tok
-        svc.getAuthorizationUrl(tok).blankOption
+      _.oauthService match {
+        case svc: OAuth10aServiceImpl ⇒
+          val tok = svc.getRequestToken
+          if (tok == null) halt(502, "Couldn't obtain a request token for " + params("provider"))
+          ScribeAuthStrategy.requestTokens(tok.getToken) = tok
+          svc.getAuthorizationUrl(tok).blankOption
 
-      case svc ⇒ svc.getAuthorizationUrl(null).blankOption
+        case svc ⇒ svc.getAuthorizationUrl(null).blankOption
+      }
     } foreach redirect
 
     halt(400, "Couldn't get a authorization url for oauth provider: %s" format params("provider"))
