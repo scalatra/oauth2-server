@@ -61,7 +61,6 @@ class OAuthAuthentication(implicit system: ActorSystem)
           password = BCryptPassword(randomPassword).encrypted,
           confirmedAt = DateTime.now)
         authProvider.loggedIn(usr, request.remoteAddress)
-        usr
       }).success[model.Error]
     }
 
@@ -94,13 +93,13 @@ class OAuthAuthentication(implicit system: ActorSystem)
   }
 
   private def ensureSlash(candidate: String) = {
-      (candidate.startsWith("/"), candidate.endsWith("/")) match {
-        case (true, true)   ⇒ candidate.dropRight(1)
-        case (true, false)  ⇒ candidate
-        case (false, true)  ⇒ "/" + candidate.dropRight(1)
-        case (false, false) ⇒ "/" + candidate
-      }
+    (candidate.startsWith("/"), candidate.endsWith("/")) match {
+      case (true, true)   ⇒ candidate.dropRight(1)
+      case (true, false)  ⇒ candidate
+      case (false, true)  ⇒ "/" + candidate.dropRight(1)
+      case (false, false) ⇒ "/" + candidate
     }
+  }
 
   private[this] def callbackUrlFormat = {
     oauth.web.appUrl + urlWithContextPath("%s/callback")

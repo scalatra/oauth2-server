@@ -109,6 +109,7 @@ class Scentry[UserType <: AnyRef](
     ((List[(String, UserType)]() /: strategies) {
       case (acc, (nm, strat)) ⇒
         val r = if (acc.isEmpty && strat.isValid && (names.isEmpty || names.contains(nm))) {
+          logger.debug("Authenticating with: %s" format nm)
           runCallbacks(_.isValid) { _.beforeAuthenticate }
           strat.authenticate() match {
             case Some(usr) ⇒ (nm, usr) :: Nil

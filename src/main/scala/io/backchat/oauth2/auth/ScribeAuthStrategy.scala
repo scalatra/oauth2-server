@@ -76,7 +76,10 @@ trait ScribeAuthSupport[UserClass >: Null <: AppUser[_]] extends ScentrySupport[
   }
 
   get("/:provider/callback") {
+    logger debug "Got an authorization callback"
+    logger debug "Request params: %s".format(multiParams)
     scentry.authenticate(params("provider"))
+    logger debug "After authenticating: %s".format(userOption)
     userOption.fold(u ⇒ loggedIn(u.login + " logged in from " + params("provider") + "."), unauthenticated())
   }
 
@@ -138,13 +141,16 @@ class ScribeAuthStrategy[UserClass >: Null <: AppUser[_]](context: ScribeAuthStr
     app.unauthenticated()
   }
 
-  def authenticate(): Option[UserClass] =
-    (allCatch withApply logError) {
+  def authenticate(): Option[UserClass] = {
+    val authed = (allCatch withApply logError) {
       val reqToken = app.params.get("oauth_token").flatMap(requestTokens.get)
       reqToken foreach (requestTokens -= _.getToken)
       val accessToken = OAuthToken(context.oauthService.getAccessToken(reqToken.orNull, new Verifier(verifier)))
       context.findOrCreateUser(accessToken).toOption
     }
+    logger debug "Created user: %s".format(authed)
+    authed
+  }
 
   private[this] def logError(ex: Throwable): Option[UserClass] = {
     logger.error("There was a problem authenticating with " + name, ex)
