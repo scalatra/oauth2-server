@@ -76,10 +76,12 @@ object Validations {
     new PredicateValidator[String](
       fieldName, _.size >= min, "%s must be at least " + min.toString + " characters long.").validate(value)
 
-  def uniqueField[TResult](fieldName: String, value: ⇒ TResult, collection: MongoCollection): Validation[Error, TResult] = {
+  def uniqueField[TResult](fieldName: String, value: ⇒ TResult, collection: MongoCollection, currentItem: Option[ObjectId] = None): Validation[Error, TResult] = {
+    def q(s: TResult) = Map(fieldName -> s)
+    def newQ(s: TResult) = currentItem.fold(id ⇒ q(s) ++ Map("_id" -> ("$ne" -> id)), q(s))
     new PredicateValidator[TResult](
       fieldName,
-      s ⇒ collection.count(Map(fieldName -> s), Map(fieldName -> 1)) == 0,
+      s ⇒ collection.count(newQ(s), Map(fieldName -> 1)) == 0,
       "%s exists already.").validate(value)
   }
 

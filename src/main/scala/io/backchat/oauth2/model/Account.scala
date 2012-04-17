@@ -213,19 +213,19 @@ class AccountDao(collection: MongoCollection)(implicit system: ActorSystem)
 
     def name(name: String): Validation[Error, String] = nonEmptyString(fieldNames.name, name)
 
-    def login(login: String): Validation[Error, String] = {
+    def login(login: String, id: Option[ObjectId] = None): Validation[Error, String] = {
       for {
         a ← nonEmptyString(fieldNames.login, login)
         b ← validFormat(fieldNames.login, a, """^\w+([\.\w]*)*$""".r, "%s can only contain letters, numbers, underscores and dots.")
-        c ← uniqueField[String](fieldNames.login, b, collection)
+        c ← uniqueField[String](fieldNames.login, b, collection, id)
       } yield c
     }
 
-    def email(email: String): Validation[Error, String] =
+    def email(email: String, id: Option[ObjectId] = None): Validation[Error, String] =
       for {
         a ← nonEmptyString(fieldNames.email, email)
         b ← validEmail(fieldNames.email, a)
-        c ← uniqueField[String](fieldNames.email, b, collection)
+        c ← uniqueField[String](fieldNames.email, b, collection, id)
       } yield c
 
     def password(password: String): Validation[Error, String] =
@@ -273,8 +273,8 @@ class AccountDao(collection: MongoCollection)(implicit system: ActorSystem)
 
   def validate(owner: Account): ValidationNEL[Error, Account] = {
     val factory: Factory = owner.copy(_, _, _)
-    (validations.login(owner.login).liftFailNel
-      |@| validations.email(owner.email).liftFailNel
+    (validations.login(owner.login, owner.id.some).liftFailNel
+      |@| validations.email(owner.email, owner.id.some).liftFailNel
       |@| validations.name(owner.name).liftFailNel)(factory)
   }
 
