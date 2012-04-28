@@ -7,13 +7,11 @@ import akka.actor.ActorSystem
 import OAuth2Imports._
 import org.eclipse.jetty.util.thread.ExecutorThreadPool
 import java.util.concurrent.Executors
-import org.eclipse.jetty.annotations.{ MultiPartConfigAnnotationHandler, AnnotationConfiguration }
 import ro.isdc.wro.http.WroFilter
 import collection.JavaConverters._
-import org.eclipse.jetty.servlet.{ FilterMapping, FilterHolder, DefaultServlet, ServletHolder }
-import org.eclipse.jetty.plus.servlet.ServletHandler
 import ro.isdc.wro.model.resource.processor.impl.ExtensionsAwareProcessorDecorator
 import ro.isdc.wro.extensions.processor.js.CoffeeScriptProcessor
+import org.eclipse.jetty.servlet._
 
 object JettyMain {
 
@@ -46,7 +44,6 @@ object JettyMain {
 
     webApp setContextPath "/"
 
-    val ac = new AnnotationConfiguration()
     webApp setResourceBase oauth.web.public
     //    webApp setDescriptor (oauth.web.public + "/WEB-INF/web.xml")
     webApp setContextPath "/"
