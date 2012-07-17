@@ -22,12 +22,15 @@ object OAuth2Extension extends ExtensionId[OAuth2Extension] with ExtensionIdProv
   val Test = "test"
 
   private def readEnvironmentKey(failWith: String ⇒ Unit = _ ⇒ null) = {
-    (sys.env.get("AKKA_MODE") orElse sys.props.get("akka.mode")) getOrElse {
+    (envKey orElse propsKey) getOrElse {
       val inferred = "development"
       failWith("no environment found, defaulting to: " + inferred)
       inferred
     }
   }
+
+  private def envKey = sys.env.get("SCALATRA_MODE") orElse sys.env.get("AKKA_MODE")
+  private def propsKey = sys.props.get("scalatra.mode") orElse sys.props.get("akka.mode")
 
   val environment = readEnvironmentKey(System.err.println _)
 

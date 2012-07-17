@@ -31,19 +31,17 @@ libraryDependencies ++= Seq(
   "org.scalatra"            % "scalatra-lift-json" % "2.1.0-SNAPSHOT",
   "org.scalatra"            % "scalatra-swagger"   % "2.1.0-SNAPSHOT",
   "io.backchat.inflector"  %% "scala-inflector"    % "1.3.3",
-  // "ro.isdc.wro4j"           % "wro4j-core"         % "1.4.5" exclude("log4j", "log4j") exclude("org.slf4j", "slf4j-log4j12"),
-  // "ro.isdc.wro4j"           % "wro4j-extensions"   % "1.4.5" exclude("log4j", "log4j") exclude("org.slf4j", "slf4j-log4j12"),
-  "net.databinder"         %% "dispatch-http"      % "0.8.7",
-  "net.databinder"         %% "dispatch-oauth"     % "0.8.7",
+  "net.databinder"         %% "dispatch-http"      % "0.8.8",
+  "net.databinder"         %% "dispatch-oauth"     % "0.8.8",
   "org.clapper"             % "scalasti_2.9.1"     % "0.5.8",
   "org.mindrot"             % "jbcrypt"            % "0.3m",
-  "org.scribe"              % "scribe"             % "1.3.0",
+  "org.scribe"              % "scribe"             % "1.3.1",
   "javax.mail"              % "mail"               % "1.4.5",
   "commons-codec"           % "commons-codec"      % "1.6",
   "commons-validator"       % "commons-validator"  % "1.4.0",
   "org.scalaz"              % "scalaz-core_2.9.1"  % "6.0.4",
-  "com.typesafe.akka"       % "akka-actor"         % "2.0.1",
-  "com.typesafe.akka"       % "akka-testkit"       % "2.0.1"               % "test",
+  "com.typesafe.akka"       % "akka-actor"         % "2.0.2",
+  "com.typesafe.akka"       % "akka-testkit"       % "2.0.2"               % "test",
   "org.fusesource.scalate"  % "scalate-jruby"      % "1.5.3",
   "org.fusesource.scalate"  % "scalate-markdownj"  % "1.5.3",
   "org.scala-tools.time"    % "time_2.9.1"         % "0.5",
@@ -83,9 +81,9 @@ licenses := Seq(("MIT", url("https://github.com/backchat/oauth2-server/raw/HEAD/
 
 pomExtra <<= (pomExtra, name, description) {(pom, name, desc) => pom ++ Group(
   <scm>
-    <connection>scm:git:git://github.com/backchat/oauth2-server.git</connection>
-    <developerConnection>scm:git:git@github.com:backchat/oauth2-server.git</developerConnection>
-    <url>https://github.com/backchat/oauth2-server</url>
+    <connection>scm:git:git://github.com/casualjim/oauth2-server.git</connection>
+    <developerConnection>scm:git:git@github.com:casualjim/oauth2-server.git</developerConnection>
+    <url>https://github.com/casualjim/oauth2-server</url>
   </scm>
   <developers>
     <developer>
