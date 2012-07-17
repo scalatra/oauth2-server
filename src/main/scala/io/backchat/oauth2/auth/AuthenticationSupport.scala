@@ -1,21 +1,20 @@
 package io.backchat.oauth2
 package auth
 
-import org.scalatra.servlet.ServletBase
 import org.fusesource.scalate.Binding
 import javax.servlet.http.{ HttpServletResponse, HttpServletRequest }
 import java.io.PrintWriter
 import scalaz._
 import Scalaz._
-import model.{ ValidationError }
+import model.ValidationError
 import org.scalatra.scalate.{ ScalatraRenderContext, ScalateSupport }
-import scentry._
-import scentry.ScentryAuthStore.{ CookieAuthStore }
+import org.scalatra.auth._
+import ScentryAuthStore.CookieAuthStore
 import org.scalatra._
 
 class OAuthScentryConfig extends ScentryConfig
 
-trait PasswordAuthSupport[UserClass >: Null <: AppUser[_]] { self: ServletBase with FlashMapSupport with CookieSupport with AuthenticationSupport[UserClass] ⇒
+trait PasswordAuthSupport[UserClass >: Null <: AppUser[_]] { self: ScalatraBase with FlashMapSupport with CookieSupport with AuthenticationSupport[UserClass] ⇒
 
   get("/login") {
     redirectIfAuthenticated()
@@ -81,7 +80,7 @@ trait PasswordAuthSupport[UserClass >: Null <: AppUser[_]] { self: ServletBase w
   }
 }
 
-trait ForgotPasswordAuthSupport[UserClass >: Null <: AppUser[_]] { self: ServletBase with FlashMapSupport with AuthenticationSupport[UserClass] ⇒
+trait ForgotPasswordAuthSupport[UserClass >: Null <: AppUser[_]] { self: ScalatraBase with FlashMapSupport with AuthenticationSupport[UserClass] ⇒
   get("/forgot") {
     redirectIfAuthenticated()
     jade("forgot")

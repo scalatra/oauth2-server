@@ -9,7 +9,7 @@ import com.mongodb.casbah.commons.conversions.scala.RegisterJodaTimeConversionHe
 import org.specs2.specification.After
 
 class AccountSpec extends AkkaSpecification { def is = sequential ^
-  "A resource owner dao should" ^
+  "An account dao should" ^
     "when registering" ^
       "validate a user for registration" ^
         "fails validation for" ^

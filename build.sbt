@@ -11,7 +11,7 @@ version := "0.1.0-SNAPSHOT"
 
 scalaVersion := "2.9.1"
 
-javacOptions ++= Seq("-Xlint:unchecked", "-source", "1.7", "-Xlint:deprecation")
+javacOptions ++= Seq("-Xlint:unchecked", "-source", "1.7", "-target", "1.7", "-Xlint:deprecation")
 
 scalacOptions ++= Seq("-optimize", "-unchecked", "-deprecation", "-Xcheckinit", "-encoding", "utf8", "-P:continuations:enable")
 
@@ -22,6 +22,8 @@ libraryDependencies ++= Seq(
   compilerPlugin("org.scala-tools.sxr" % "sxr_2.9.0" % "0.2.7")
 )
 
+seq(webSettings:_*)
+
 libraryDependencies ++= Seq(
   "org.scalatra"            % "scalatra"           % "2.1.0-SNAPSHOT",
   "org.scalatra"            % "scalatra-auth"      % "2.1.0-SNAPSHOT",
@@ -29,13 +31,13 @@ libraryDependencies ++= Seq(
   "org.scalatra"            % "scalatra-lift-json" % "2.1.0-SNAPSHOT",
   "org.scalatra"            % "scalatra-swagger"   % "2.1.0-SNAPSHOT",
   "io.backchat.inflector"  %% "scala-inflector"    % "1.3.3",
+  // "ro.isdc.wro4j"           % "wro4j-core"         % "1.4.5" exclude("log4j", "log4j") exclude("org.slf4j", "slf4j-log4j12"),
+  // "ro.isdc.wro4j"           % "wro4j-extensions"   % "1.4.5" exclude("log4j", "log4j") exclude("org.slf4j", "slf4j-log4j12"),
   "net.databinder"         %% "dispatch-http"      % "0.8.7",
   "net.databinder"         %% "dispatch-oauth"     % "0.8.7",
   "org.clapper"             % "scalasti_2.9.1"     % "0.5.8",
   "org.mindrot"             % "jbcrypt"            % "0.3m",
   "org.scribe"              % "scribe"             % "1.3.0",
-  "ro.isdc.wro4j"           % "wro4j-core"         % "1.4.5" exclude("log4j", "log4j") exclude("org.slf4j", "slf4j-log4j12"),
-  "ro.isdc.wro4j"           % "wro4j-extensions"   % "1.4.5" exclude("log4j", "log4j") exclude("org.slf4j", "slf4j-log4j12"),
   "javax.mail"              % "mail"               % "1.4.5",
   "commons-codec"           % "commons-codec"      % "1.6",
   "commons-validator"       % "commons-validator"  % "1.4.0",
@@ -48,11 +50,11 @@ libraryDependencies ++= Seq(
   "org.scalatra"            % "scalatra-specs2"    % "2.1.0-SNAPSHOT"      % "test",
   "junit"                   % "junit"              % "4.10"                % "test",
   "ch.qos.logback"          % "logback-classic"    % "1.0.0",
-  "org.eclipse.jetty"       % "jetty-webapp"       % "8.1.3.v20120416",
+  "org.eclipse.jetty"       % "jetty-webapp"       % "8.1.3.v20120416"     % "compile;container",
   "org.eclipse.jetty"       % "test-jetty-servlet" % "8.1.3.v20120416"     % "test",
-  "org.eclipse.jetty.orbit" % "javax.servlet"      % "3.0.0.v201112011016" % "compile;test" artifacts(Artifact("javax.servlet", "orbit", "jar")),
-  "javax.servlet"           % "javax.servlet-api"  % "3.0.1"               % "compile;test",
-  "com.novus"               % "salat-core_2.9.1"   % "0.0.8-SNAPSHOT"
+  "org.eclipse.jetty.orbit" % "javax.servlet"      % "3.0.0.v201112011016" % "container;compile" artifacts(Artifact("javax.servlet", "orbit", "jar")),
+  "javax.servlet"           % "javax.servlet-api"  % "3.0.1"               % "container;compile",
+  "com.novus"              %% "salat"              % "1.9.0"
 )
 
 resolvers += "sonatype oss snapshots" at "https://oss.sonatype.org/content/repositories/snapshots/"
@@ -152,16 +154,14 @@ scalateImports ++= Seq(
 
 scalateBindings ++= Seq(
   Binding("flash", "scala.collection.Map[String, Any]", defaultValue = "Map.empty"),
-  Binding("session", "org.scalatra.Session"),
-  Binding("sessionOption", "scala.Option[org.scalatra.Session]"),
+  Binding("session", "org.scalatra.servlet.RichSession"),
+  Binding("sessionOption", "scala.Option[org.scalatra.servlet.RichSession]"),
   Binding("params", "scala.collection.Map[String, String]"),
   Binding("multiParams", "org.scalatra.MultiParams"),
   Binding("userOption", "Option[Account]", defaultValue = "None"),
   Binding("user", "Account", defaultValue = "null"),
   Binding("isAnonymous", "Boolean", defaultValue = "true"),
   Binding("isAuthenticated", "Boolean", defaultValue = "false"))
-
-watchSources <+= (sourceDirectory in Compile) map { _ / "webapp" }
 
 seq(buildInfoSettings: _*)
 
@@ -172,6 +172,27 @@ buildInfoKeys := Seq[Scoped](name, version, scalaVersion, sbtVersion)
 
 buildInfoPackage := "io.backchat.oauth2"
 
-seq(StartScriptPlugin.startScriptForClassesSettings: _*)
+seq(StartScriptPlugin.startScriptForWarSettings: _*)
 
 externalResolvers <<= resolvers map { Resolver.withDefaultResolvers(_, scalaTools = false) }
+
+seq(coffeeSettings: _*)
+
+(CoffeeKeys.iced in (Compile, CoffeeKeys.coffee)) := true
+
+(resourceManaged in (Compile, CoffeeKeys.coffee)) <<= (sourceDirectory in Compile)(_ / "javascript")
+
+sourceGenerators in Compile <+= (sourceDirectory in Compile) map { dir =>
+  val files = (dir / "javascript" ** "*.js") x relativeTo (dir / "javascript")
+  val tgt = dir / "javascript/app.jsm"
+  IO.write(tgt, files.map(_._2).mkString("", "\n", "\n"))
+  Seq.empty[File]
+}
+
+// watchSources <+= (sourceDirectory in Compile) map { _ / "coffee" }
+
+seq(closureSettings:_*)
+
+(sourceDirectory in (Compile, ClosureKeys.closure)) <<= (sourceDirectory in Compile)(_ / "javascript")
+
+(resourceManaged in (Compile, ClosureKeys.closure)) <<= (sourceDirectory in Compile)(_ / "webapp" / "js")

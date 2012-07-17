@@ -5,9 +5,9 @@ import model.Account
 import org.scalatra.scalate.ScalateSupport
 import akka.actor.ActorSystem
 import org.scalatra.servlet.ServletBase
-import javax.servlet.http.{ HttpServletResponse, HttpServletRequest }
+import javax.servlet.http.{ HttpServletRequestWrapper, HttpServletResponse, HttpServletRequest }
 import org.scalatra._
-import liftjson.LiftJsonRequestBody
+import liftjson.{ LiftJsonSupport, LiftJsonRequestBody }
 import scalaz._
 import Scalaz._
 import net.liftweb.json._
@@ -27,9 +27,9 @@ trait AuthenticationApp[UserClass >: Null <: AppUser[_]]
  * the `_method` parameter is treated as the request's method.
  */
 trait OAuth2MethodOverride extends Handler {
-  abstract override def handle(req: RequestT, res: ResponseT) {
+  abstract override def handle(req: HttpServletRequest, res: HttpServletResponse) {
     val req2 = req.requestMethod match {
-      case Post | Get ⇒ req.parameters.get(paramName) some (m ⇒ requestWithMethod(req, HttpMethod(m))) none req
+      case Post | Get ⇒ requestWithMethod(req, methodOverride(req))
       case _          ⇒ req
     }
     super.handle(req2, res)
@@ -42,19 +42,26 @@ trait OAuth2MethodOverride extends Handler {
    * For backward compatibility, we need to transform the underlying request
    * type to pass to the super handler.
    */
-  protected def requestWithMethod(req: RequestT, method: HttpMethod): RequestT
+  protected def requestWithMethod(req: HttpServletRequest, method: Option[String]): HttpServletRequest =
+    new HttpServletRequestWrapper(req) {
+      override def getMethod(): String =
+        method getOrElse req.getMethod
+    }
 
-  private val paramName = "_method"
+  private def methodOverride(req: HttpServletRequest) = {
+    import MethodOverride._
+    (req.parameters.get(ParamName) orElse req.headers.get(HeaderName))
+  }
 }
 
 trait OAuth2ServerBaseApp extends ScalatraServlet
     with OAuth2ResponseSupport
     with OAuth2MethodOverride
-    with LiftJsonRequestBody
+    with LiftJsonSupport
     with FlashMapSupport
     with CookieSupport
     with ScalateSupport
-    with CORSSupport
+    with CorsSupport
     with LoadBalancedSslRequirement
     with DefaultAuthenticationSupport[Account] {
 

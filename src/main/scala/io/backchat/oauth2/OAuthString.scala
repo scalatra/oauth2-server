@@ -1,6 +1,9 @@
 package io.backchat.oauth2
 
 import net.liftweb.json._
+import java.nio.charset.Charset
+import rl.UrlCodingUtils
+import mojolly.inflector.Inflector
 
 class OAuthString(s: String) {
   def blankOption = if (isBlank) None else Some(s)
@@ -13,8 +16,14 @@ class OAuthString(s: String) {
   def urlEncode: String = { // Encoding comforming to RFC 3986
     UrlCodingUtils.urlEncode(s)
   }
+  def urlEncode(charset: Charset): String = { // Encoding comforming to RFC 3986
+    UrlCodingUtils.urlEncode(s, charset)
+  }
   def formEncode: String = { // This gives the same output as java.net.URLEncoder
     UrlCodingUtils.urlEncode(s, spaceIsPlus = true)
+  }
+  def formEncode(charset: Charset): String = { // This gives the same output as java.net.URLEncoder
+    UrlCodingUtils.urlEncode(s, charset, spaceIsPlus = true)
   }
   def urlDecode: String = {
     UrlCodingUtils.urlDecode(s, plusIsSpace = false)
@@ -23,6 +32,15 @@ class OAuthString(s: String) {
   def formDecode: String = { // This gives the same output as java.net.URLDecoder
     UrlCodingUtils.urlDecode(s, plusIsSpace = true)
   }
+  def urlDecode(charset: Charset): String = {
+    UrlCodingUtils.urlDecode(s, charset, plusIsSpace = false)
+  }
+
+  def formDecode(charset: Charset): String = { // This gives the same output as java.net.URLDecoder
+    UrlCodingUtils.urlDecode(s, charset, plusIsSpace = true)
+  }
+
+  def %%(params: Map[String, String]) = Inflector.interpolate(s, params)
 }
 
 class OAuthJValue(json: JValue) {

@@ -186,7 +186,7 @@ class AccountDao(collection: MongoCollection)(implicit system: ActorSystem)
   def findByLoginOrEmail(loginOrEmail: String): Option[Account] =
     findOne($or(fieldNames.login -> loginOrEmail, fieldNames.email -> loginOrEmail))
 
-  def findUserById(id: String) = findOneByID(new ObjectId(id))
+  def findUserById(id: String) = findOneById(new ObjectId(id))
 
   def findByLinkedAccount(provider: String, id: String) = findOne(Map("linkedOAuthAccounts.provider" -> provider, "linkedOAuthAccounts.id" -> id))
 

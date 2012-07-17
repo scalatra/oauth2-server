@@ -10,9 +10,9 @@ import OAuth2Imports._
 import java.util.concurrent.ConcurrentHashMap
 import scala.collection.JavaConverters._
 import org.scalatra._
-import scentry.{ ScentrySupport, ScentryStrategy }
+import auth.{ ScentrySupport, ScentryStrategy }
 import model.{ SimpleError }
-import scentry.ScentryAuthStore.{ CookieAuthStore }
+import auth.ScentryAuthStore.{ CookieAuthStore }
 import org.fusesource.scalate.Binding
 import javax.servlet.http.{ HttpServletResponse, HttpServletRequest }
 import java.io.PrintWriter

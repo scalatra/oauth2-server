@@ -2,7 +2,7 @@ require 'rubygems'
 require 'rake/clean'
 
 $build_count = 0
-$target_directory = "target/webapp"
+$target_directory = "src/main/webapp"
 CLEAN.include($target_directory)
 
 #======================================================================

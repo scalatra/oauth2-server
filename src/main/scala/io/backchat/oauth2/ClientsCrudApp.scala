@@ -25,7 +25,7 @@ class ClientsCrudApp(implicit protected val system: ActorSystem) extends OAuth2S
   }
 
   get("/:id") {
-    oauth.clients.findOneByID(new ObjectId(params("id"))) map { client ⇒
+    oauth.clients.findOneById(new ObjectId(params("id"))) map { client ⇒
       jade("clients/edit", templateData("client" -> client): _*)
     } getOrElse halt(404, "No client exists")
   }
@@ -35,7 +35,7 @@ class ClientsCrudApp(implicit protected val system: ActorSystem) extends OAuth2S
   }
 
   post("/:id") {
-    (oauth.clients.findOneByID(new ObjectId(params("id"))) map { client ⇒
+    (oauth.clients.findOneById(new ObjectId(params("id"))) map { client ⇒
       val update = client.copy(
         profile = ~params.get("profile"),
         displayName = ~params.get("display_name"),

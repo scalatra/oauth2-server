@@ -6,11 +6,13 @@ import Scalaz._
 import java.util.Locale
 import org.joda.time._
 import format.ISODateTimeFormat
-import java.nio.charset.Charset
-import org.scalatra.{ Request, ScalatraBase }
+import org.scalatra.ScalatraBase
 import java.net.URI
+import scala.io.Codec
+import javax.servlet.http.HttpServletRequest
+import org.scalatra.servlet.ServletApiImplicits
 
-package object oauth2 {
+package object oauth2 extends ServletApiImplicits {
 
   import OAuth2Imports._
   val ENGLISH = Locale.ENGLISH
@@ -20,20 +22,20 @@ package object oauth2 {
 
   private[oauth2] implicit def uri2richerUri(uri: URI) = new OAuthUri(uri)
 
-  private[oauth2] implicit def request2oauthRequest(req: Request) = new OAuthRequest(req)
+  private[oauth2] implicit def request2oauthRequest(req: HttpServletRequest) = new OAuthRequest(req)
 
   private[oauth2] implicit def servletBase2RicherServletBase(base: ScalatraBase) = new {
     def remoteAddress = base.request.remoteAddress
 
     def isHttps = { // also respect load balancer version of the protocol
-      val h = base.request.headers.get("X-FORWARDED-PROTO").flatMap(_.blankOption)
-      base.request.isSecure || (h.isDefined && h.forall(_.toUpperCase(ENGLISH) == "HTTPS"))
+      def h = base.request.headers.get("X-FORWARDED-PROTO").flatMap(_.blankOption).map(_.toUpperCase(ENGLISH))
+      base.request.isSecure || h == Some("HTTPS")
     }
 
   }
 
-  val UTF_8 = "UTF-8"
-  val Utf8 = Charset.forName(UTF_8)
+  val UTF_8 = Codec.UTF8.name()
+  val Utf8 = Codec.UTF8
   val UTC_STR = "UTC"
   val UTC = DateTimeZone.UTC
 
@@ -43,4 +45,8 @@ package object oauth2 {
   val Iso8601DateNoMillis = ISODateTimeFormat.dateTimeNoMillis.withZone(UTC)
   val Iso8601Date = ISODateTimeFormat.dateTime.withZone(UTC)
 
+  val ActorSystemContextKey = "io.backchat.oauth2.ServerActorSystem"
+  val ActorSystemName = "oauth2server"
+
+  private[oauth2] def confKey(path: String) = "backchat.oauth2." + path
 }

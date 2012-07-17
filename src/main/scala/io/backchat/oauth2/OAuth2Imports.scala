@@ -11,8 +11,19 @@ import org.joda.time._
 import format.DateTimeFormatter
 import mojolly.inflector.InflectorImports
 import net.liftweb.json.JsonAST.JValue
+import query.dsl.FluidQueryBarewordOps
+import query.{ ValidDateOrNumericTypeHolder, ValidNumericTypeHolder, ValidDateTypeHolder, ValidBarewordExpressionArgTypeHolder }
 
-object OAuth2Imports extends InflectorImports with com.mongodb.casbah.Imports with commons.Imports with query.Imports {
+object OAuth2Imports
+    extends InflectorImports
+    with com.mongodb.casbah.Imports
+    with FluidQueryBarewordOps
+    with commons.Imports
+    with query.Imports
+    with ValidBarewordExpressionArgTypeHolder
+    with ValidDateTypeHolder
+    with ValidNumericTypeHolder
+    with ValidDateOrNumericTypeHolder {
 
   // All the code below is to avoid akka and scala time stepping on each others' durations
   // As a bonus there is a single import statement to add in every file instead of 5-6

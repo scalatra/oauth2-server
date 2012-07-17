@@ -4,7 +4,7 @@ package auth
 import org.scalatra.{ CookieSupport, CookieOptions, Cookie }
 import org.scalatra.ScalatraBase
 import scalaz._
-import scentry.ScentryStrategy
+import org.scalatra.auth.ScentryStrategy
 import OAuth2Imports._
 
 object RememberMeStrategy {
@@ -33,8 +33,8 @@ class RememberMeStrategy[UserClass <: AppUser[_]](
    */
   override def afterAuthenticate(winningStrategy: String, user: UserClass) = {
     logger debug "Executing after authenticate in remember me strategy with winning strategy [%s] and user [%s]".format(winningStrategy, user.login)
-    if (winningStrategy == 'remember_me ||
-      (winningStrategy == 'user_password && app.params.getOrElse("remember_me", "").asCheckboxBool)) {
+    if (winningStrategy == "remember_me" ||
+      (winningStrategy == "user_password" && app.params.getOrElse("remember_me", "").asCheckboxBool)) {
       logger debug "Remembering user [%s]".format(user.email)
       rememberMeProvider.remember(user) foreach { token ⇒
         logger info "Setting cookie for user [%s]".format(user.email)

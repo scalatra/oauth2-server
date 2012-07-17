@@ -1,13 +1,13 @@
 package io.backchat.oauth2
 
-import org.scalatra.Request
 import org.eclipse.jetty.http.HttpHeaders
 import net.iharder.Base64
 import scalaz._
 import Scalaz._
 import OAuth2Imports._
+import javax.servlet.http.HttpServletRequest
 
-class OAuthRequest(req: Request) {
+class OAuthRequest(req: HttpServletRequest) {
 
   private[this] def authorizationKey = req.headers.get(HttpHeaders.AUTHORIZATION).flatMap(_.blankOption)
   /**

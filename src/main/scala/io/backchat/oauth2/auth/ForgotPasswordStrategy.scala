@@ -1,7 +1,7 @@
 package io.backchat.oauth2
 package auth
 
-import scentry.ScentryStrategy
+import org.scalatra.auth.ScentryStrategy
 import org.scalatra.ScalatraBase
 import scalaz._
 import Scalaz._
@@ -14,7 +14,7 @@ class ForgotPasswordStrategy[UserClass <: AppUser[_]](protected val app: Scalatr
 
   override def afterAuthenticate(winningStrategy: String, user: UserClass) {
     println("after authtenticate " + getClass.getName)
-    if (winningStrategy == 'user_password)
+    if (winningStrategy == "user_password")
       forgotPasswordProvider.rememberedPassword(user, app.remoteAddress)
   }
 

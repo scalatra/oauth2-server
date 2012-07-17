@@ -1,7 +1,7 @@
 package io.backchat.oauth2
 package auth
 
-import scentry.ScentryStrategy
+import org.scalatra.auth.ScentryStrategy
 import scalaz._
 import Scalaz._
 import OAuth2Imports._

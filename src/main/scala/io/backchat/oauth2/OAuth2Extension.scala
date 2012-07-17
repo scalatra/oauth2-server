@@ -55,7 +55,6 @@ case class OAuthProvider(name: String, clientId: String, clientSecret: String, s
 
 class OAuth2Extension(system: ExtendedActorSystem) extends Extension {
 
-  import JettyMain.confKey
   import OAuth2Extension.{ Production, Development, Staging, Test }
 
   def environment = OAuth2Extension.environment

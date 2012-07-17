@@ -2,8 +2,7 @@ package io.backchat.oauth2
 package auth
 
 import org.scalatra.ScalatraBase
-import scentry.{ ScentryStrategy, ScentrySupport }
-import org.scalatra.servlet.ServletBase
+import org.scalatra.auth.{ ScentryStrategy, ScentrySupport }
 import OAuth2Imports._
 import model.{ fieldNames, Client, ClientDao }
 
