@@ -175,23 +175,23 @@ seq(StartScriptPlugin.startScriptForWarSettings: _*)
 
 externalResolvers <<= resolvers map { Resolver.withDefaultResolvers(_, scalaTools = false) }
 
-seq(coffeeSettings: _*)
+// seq(coffeeSettings: _*)
 
-(CoffeeKeys.iced in (Compile, CoffeeKeys.coffee)) := true
+// (CoffeeKeys.iced in (Compile, CoffeeKeys.coffee)) := true
 
-(resourceManaged in (Compile, CoffeeKeys.coffee)) <<= (sourceDirectory in Compile)(_ / "javascript")
+// (resourceManaged in (Compile, CoffeeKeys.coffee)) <<= (sourceDirectory in Compile)(_ / "javascript")
 
-sourceGenerators in Compile <+= (sourceDirectory in Compile) map { dir =>
-  val files = (dir / "javascript" ** "*.js") x relativeTo (dir / "javascript")
-  val tgt = dir / "javascript/app.jsm"
-  IO.write(tgt, files.map(_._2).mkString("", "\n", "\n"))
-  Seq.empty[File]
-}
+// sourceGenerators in Compile <+= (sourceDirectory in Compile) map { dir =>
+//   val files = (dir / "javascript" ** "*.js") x relativeTo (dir / "javascript")
+//   val tgt = dir / "javascript/app.jsm"
+//   IO.write(tgt, files.map(_._2).mkString("", "\n", "\n"))
+//   Seq.empty[File]
+// }
 
-// watchSources <+= (sourceDirectory in Compile) map { _ / "coffee" }
+// // watchSources <+= (sourceDirectory in Compile) map { _ / "coffee" }
 
-seq(closureSettings:_*)
+// seq(closureSettings:_*)
 
-(sourceDirectory in (Compile, ClosureKeys.closure)) <<= (sourceDirectory in Compile)(_ / "javascript")
+// (sourceDirectory in (Compile, ClosureKeys.closure)) <<= (sourceDirectory in Compile)(_ / "javascript")
 
-(resourceManaged in (Compile, ClosureKeys.closure)) <<= (sourceDirectory in Compile)(_ / "webapp" / "js")
+// (resourceManaged in (Compile, ClosureKeys.closure)) <<= (sourceDirectory in Compile)(_ / "webapp" / "js")
