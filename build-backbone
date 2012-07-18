@@ -1,0 +1,3 @@
+#!/bin/sh
+
+node project/tools/r.js -o project/backbone.build.js
