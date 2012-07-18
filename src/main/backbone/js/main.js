@@ -17,9 +17,9 @@ require.config({
   },
 
   paths: {
-    underscore: 'lib/underscore/underscore',
-    backbone: 'lib/backbone/backbone',
-    text: 'lib/require/text',
+    "underscore": 'lib/underscore/underscore',
+    "backbone": 'lib/backbone/backbone',
+    "text": 'lib/require/text',
     "cs": "lib/require/cs",
     "jade": "lib/jade/jade",
     "coffee-script": "lib/coffee-script/coffee-script"

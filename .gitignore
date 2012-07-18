@@ -68,3 +68,8 @@ src/main/javascript/*.js
 src/main/javascript/**/*.jsm
 src/main/javascript/*.jsm
 .cache
+src/main/webapp/js
+src/main/webapp/css
+src/main/webapp/img
+src/main/webapp/build.txt
+src/main/webapp/index.html
