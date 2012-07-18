@@ -9,7 +9,7 @@ import org.scalatra.auth.ScentryStrategy
 import OAuth2Imports._
 
 object RememberMeStrategy {
-  val CookieKey = "backchat.oauth2.remember"
+  val CookieKey = "scalatra.oauth2.remember"
 }
 
 /**
