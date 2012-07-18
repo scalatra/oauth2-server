@@ -10,7 +10,7 @@ resolvers += Classpaths.typesafeResolver
 
 addSbtPlugin("com.typesafe.startscript" % "xsbt-start-script-plugin" % "0.5.2")
 
-addSbtPlugin("com.typesafe.sbtscalariform" % "sbtscalariform" % "0.5.0")
+addSbtPlugin("com.typesafe.sbtscalariform" % "sbtscalariform" % "0.4.0")
 
 addSbtPlugin("fi.jawsy.sbtplugins" %% "sbt-jrebel-plugin" % "0.9.0")
 
