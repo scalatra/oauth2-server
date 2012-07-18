@@ -3,7 +3,7 @@ import com.typesafe.startscript.StartScriptPlugin
 import scalariform.formatter.preferences._
 import com.mojolly.scalate.ScalatePlugin._
 
-organization := "io.backchat.oauth2"
+organization := "org.scalatra.oauth2"
 
 name := "oauth2-server"
 
@@ -47,7 +47,7 @@ libraryDependencies ++= Seq(
   "org.scala-tools.time"    % "time_2.9.1"         % "0.5",
   "org.scalatra"            % "scalatra-specs2"    % "2.1.0-SNAPSHOT"      % "test",
   "junit"                   % "junit"              % "4.10"                % "test",
-  "ch.qos.logback"          % "logback-classic"    % "1.0.0",
+  "ch.qos.logback"          % "logback-classic"    % "1.0.6",
   "org.eclipse.jetty"       % "jetty-webapp"       % "8.1.3.v20120416"     % "compile;container",
   "org.eclipse.jetty"       % "test-jetty-servlet" % "8.1.3.v20120416"     % "test",
   "org.eclipse.jetty.orbit" % "javax.servlet"      % "3.0.0.v201112011016" % "container;compile" artifacts(Artifact("javax.servlet", "orbit", "jar")),
@@ -73,17 +73,17 @@ seq(jrebelSettings: _*)
 
 jrebel.webLinks <+= (sourceDirectory in Compile)(_ / "webapp")
 
-homepage := Some(url("https://github.com/backchat/oauth2-server"))
+homepage := Some(url("https://github.com/scalatra/oauth2-server"))
 
 startYear := Some(2010)
 
-licenses := Seq(("MIT", url("https://github.com/backchat/oauth2-server/raw/HEAD/LICENSE")))
+licenses := Seq(("MIT", url("https://github.com/scalatra/oauth2-server/raw/HEAD/LICENSE")))
 
 pomExtra <<= (pomExtra, name, description) {(pom, name, desc) => pom ++ Group(
   <scm>
-    <connection>scm:git:git://github.com/casualjim/oauth2-server.git</connection>
-    <developerConnection>scm:git:git@github.com:casualjim/oauth2-server.git</developerConnection>
-    <url>https://github.com/casualjim/oauth2-server</url>
+    <connection>scm:git:git://github.com/scalatra/oauth2-server.git</connection>
+    <developerConnection>scm:git:git@github.com:scalatra/oauth2-server.git</developerConnection>
+    <url>https://github.com/scalatra/oauth2-server</url>
   </scm>
   <developers>
     <developer>
@@ -145,7 +145,7 @@ scalateTemplateDirectory in Compile <<= (baseDirectory) { _ / "src/main/webapp/W
 scalateImports ++= Seq(
   "import scalaz._",
   "import Scalaz._",
-  "import io.backchat.oauth2._",
+  "import org.scalatra.oauth2._",
   "import OAuth2Imports._",
   "import model._"
 )
@@ -168,7 +168,7 @@ sourceGenerators in Compile <+= buildInfo
 buildInfoKeys := Seq[Scoped](name, version, scalaVersion, sbtVersion)
 // buildInfoKeys := Seq[Scoped](name, version, scalaVersion, sbtVersion)
 
-buildInfoPackage := "io.backchat.oauth2"
+buildInfoPackage := "org.scalatra.oauth2"
 
 seq(StartScriptPlugin.startScriptForWarSettings: _*)
 
