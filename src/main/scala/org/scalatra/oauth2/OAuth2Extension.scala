@@ -74,7 +74,7 @@ class OAuth2Extension(system: ExtendedActorSystem) extends Extension {
     val cc = if (c.hasPath(environment)) {
       c.getConfig(environment).withFallback(c)
     } else c
-    cc.checkValid(ConfigFactory.defaultReference, "backchat")
+    cc.checkValid(ConfigFactory.defaultReference, "scalatra")
     cc
   }
   private[this] def key(value: String) = confKey("mongo.%s" format value)
