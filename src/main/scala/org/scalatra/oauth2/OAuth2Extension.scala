@@ -87,12 +87,12 @@ class OAuth2Extension(system: ExtendedActorSystem) extends Extension {
   lazy val clients = new ClientDao(mongo.db("clients"))(system)
 
   val smtp = new SmtpTransport(SmtpConfig(
-    cfg.getString("backchat.smtp.host"),
-    cfg.getInt("backchat.smtp.port"),
-    MailSender(cfg.getString("backchat.smtp.from.name"), cfg.getString("backchat.smtp.from.email")),
-    cfg.getString("backchat.smtp.user").blankOption,
-    cfg.getString("backchat.smtp.password").blankOption,
-    cfg.getBoolean("backchat.smtp.sslRequired")))
+    cfg.getString("scalatra.smtp.host"),
+    cfg.getInt("scalatra.smtp.port"),
+    MailSender(cfg.getString("scalatra.smtp.from.name"), cfg.getString("scalatra.smtp.from.email")),
+    cfg.getString("scalatra.smtp.user").blankOption,
+    cfg.getString("scalatra.smtp.password").blankOption,
+    cfg.getBoolean("scalatra.smtp.sslRequired")))
 
   val web = WebConfig(
     cfg.getString(confKey("web.guiUrl")),
@@ -112,7 +112,7 @@ class OAuth2Extension(system: ExtendedActorSystem) extends Extension {
       cfg.getBoolean(confKey("web.cors.allowCredentials")),
       cfg.getInt(confKey("web.cors.preflightMaxAge"))))
 
-  private[this] val provPath = "backchat.auth.providers"
+  private[this] val provPath = "scalatra.auth.providers"
 
   val permissions = {
     cfg.getConfigList(confKey("permissions")).asScala map { cc ⇒

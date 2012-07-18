@@ -30,6 +30,7 @@ libraryDependencies ++= Seq(
   "org.scalatra"            % "scalatra-scalate"   % "2.1.0-SNAPSHOT",
   "org.scalatra"            % "scalatra-lift-json" % "2.1.0-SNAPSHOT",
   "org.scalatra"            % "scalatra-swagger"   % "2.1.0-SNAPSHOT",
+  "org.scalatra"            % "scalatra-slf4j"     % "2.1.0-SNAPSHOT",
   "io.backchat.inflector"  %% "scala-inflector"    % "1.3.3",
   "net.databinder"         %% "dispatch-http"      % "0.8.8",
   "net.databinder"         %% "dispatch-oauth"     % "0.8.8",
