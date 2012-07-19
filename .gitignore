@@ -73,3 +73,5 @@ src/main/webapp/css
 src/main/webapp/img
 src/main/webapp/build.txt
 src/main/webapp/index.html
+node_modules
+src/main/webapp/app.html

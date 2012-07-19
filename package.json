@@ -19,6 +19,6 @@
     "url": "https://github.com/scalatra/oauth2-server/issues"
   },
   "dependencies": {
-    "node-static"
+    "node-static": ""
   }
 }

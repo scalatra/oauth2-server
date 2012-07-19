@@ -1,0 +1,4 @@
+#!/bin/sh
+
+rm -rf src/main/webapp/{css,img,js,app.html,index.html}
+node project/tools/r.js -o $1

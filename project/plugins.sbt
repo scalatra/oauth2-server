@@ -24,3 +24,7 @@ externalResolvers <<= resolvers map { Resolver.withDefaultResolvers(_, scalaTool
 
 libraryDependencies <+= sbtVersion(v => "com.github.siasia" %% "xsbt-web-plugin" % (v+"-0.2.11.1"))
 
+libraryDependencies ++= Seq(
+        "org.mozilla" % "rhino" % "1.7R4",
+        "com.google.javascript" % "closure-compiler" % "r2079",
+        "net.liftweb" %% "lift-json" % "2.4")

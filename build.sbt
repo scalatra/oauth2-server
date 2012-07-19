@@ -175,6 +175,8 @@ seq(StartScriptPlugin.startScriptForWarSettings: _*)
 
 externalResolvers <<= resolvers map { Resolver.withDefaultResolvers(_, scalaTools = false) }
 
+seq(requireJsSettings: _*)
+
 // seq(coffeeSettings: _*)
 
 // (CoffeeKeys.iced in (Compile, CoffeeKeys.coffee)) := true

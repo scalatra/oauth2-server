@@ -1,8 +1,7 @@
 ({
-    appDir: "../src/main/backbone",
+    appDir: "../src/main/requirejs",
     baseUrl: "js",
     dir: "../src/main/webapp",
-    mainConfigFile: '../src/main/backbone/js/main.js',
     uglify: {
       ascii_only: true,
       max_line_length: 1000
@@ -13,7 +12,14 @@
         excludeJade: true
     },
     paths: {
-      "jquery": "empty:"
+      "jquery": "empty:",
+      "underscore": 'lib/underscore/underscore',
+      "backbone": 'lib/backbone/backbone',
+      "text": 'lib/require/text',
+      "cs": "lib/require/cs",
+      "jade": "lib/jade/jade",
+      "coffee-script": "lib/coffee-script/coffee-script"
+
     },
     keepBuildDir: true,
     stubModules: ['cs', 'jade'],
