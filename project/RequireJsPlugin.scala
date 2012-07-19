@@ -1,35 +1,116 @@
 import sbt._
 import Keys._
+import net.liftweb.json._
+import JsonDSL._
 
 /*_*/
 object RequireJsPlugin extends Plugin {
   object RequireJsKeys {
-    val requirejs = TaskKey[Seq[File]]("require-js", "Compile and optimize script source files.")
-    val buildProfile = SettingKey[File]("require-js-build-profile", "The build profile for the require.js optimizer.")
+    val optimize = TaskKey[Seq[File]]("optimize", "Compile and optimize script source files.")
+    val createBuildProfile = TaskKey[File]("create-build-profile", "Generate the build profile to use when generating sources")
+    val requireJs = TaskKey[Seq[File]]("require-js", "Compile and optimize script source files and deploy to the webapp.")
+    val buildProfileFile = SettingKey[File]("build-profile-file", "The build profile base file for the require.js optimizer.")
+    val buildProfile = SettingKey[JValue]("build-profile", "The build profile for the require.js optimizer.")
+    val buildProfileGenerated = SettingKey[File]("build-profile-generated", "The generated build profile for the require.js optimizer")
+    val webApp = SettingKey[File]("webapp-dir", "The directory to copy the files to.")
+    val baseUrl = SettingKey[String]("base-url", "The base url for the require js script files")
+    val mainConfigFile = SettingKey[Option[File]]("main-config-file", "The main config file for require-js")
   }
 
   import RequireJsKeys._
 
-  private def optimizeTask = (baseDirectory in requirejs,  buildProfile in requirejs, streams) map { (base, bp, log) =>
-    ("project/build-backbone " + bp.getAbsolutePath) ! log.log
-    Seq.empty[File]
+  private def optimizeTask =
+    (target in requireJs,
+     includeFilter in requireJs,
+     excludeFilter in requireJs,
+     createBuildProfile in requireJs, streams) map { (tgt, incl, excl, bp, log) =>
+      val t = tgt.getAbsoluteFile
+      if (!t.exists()) IO.createDirectory(t.getAbsoluteFile)
+      ("project/build-backbone " + bp.getAbsolutePath) ! log.log
+      tgt.descendentsExcept(incl, excl).get
+    }
+
+  private def cleanBuildCache(buildCache: File, fallback: Seq[File], webapp: File) {
+    if (!buildCache.exists()) {
+      IO.delete(fallback filter (_.exists()))
+    } else {
+      IO.delete(IO.readLines(buildCache) filterNot(_ == webapp.getAbsolutePath) map file)
+    }
   }
 
-  def requireJsSettingsIn(c: Configuration): Seq[Setting[_]] =
+  private def copyToWebApp =
+    (optimize in requireJs, target in requireJs, webApp in requireJs) map { (files, tgt, webapp) =>
+      val buildCache = (tgt / ".." / "requirejs.files.txt").getAbsoluteFile
+      val toCopy = files x rebase(tgt.getAbsoluteFile, webapp.getAbsoluteFile)
+      val copiedFiles = toCopy.map(_._2.getAbsoluteFile).filterNot(_.getPath == webapp.getAbsolutePath)
+      cleanBuildCache(buildCache, copiedFiles, webapp)
+      copyAndCacheResult(toCopy, buildCache, webapp.getAbsoluteFile)
+      copiedFiles
+    }
+
+
+  def copyAndCacheResult(toCopy: scala.Seq[(File, File)], buildCache: File, webapp: File) {
+    IO.copy(toCopy, overwrite = true)
+    IO.writeLines(buildCache, toCopy.map(_._2.getAbsolutePath).filterNot(_ == webapp.getAbsolutePath))
+  }
+
+  def generateBuildProfile =
+    (buildProfileFile in requireJs,
+     buildProfile in requireJs,
+     buildProfileGenerated in requireJs,
+     baseUrl in requireJs,
+     mainConfigFile in requireJs,
+     sourceDirectory in requireJs,
+     target in requireJs,
+     streams) map { (bpf, bp, gen, bd, mc, src, tgt, s) =>
+      val txt = IO.read(bpf)
+      val n = if (txt.startsWith("(")) txt.substring(1) else txt
+      val b = if (n.trim().endsWith(")")) n.substring(0, n.length - 1) else n
+      val fileJson = if (bpf.exists) Some(parse(b)) else None
+      val merged = fileJson map (_ merge bp) getOrElse bp
+      val json = merged merge (
+        ("appDir" -> src.getAbsolutePath) ~
+        ("baseUrl" -> bd) ~
+        ("dir" -> IO.relativize(gen.getParentFile, tgt.getAbsoluteFile).getOrElse("oh no"))
+      )
+      val oj = mc map (m => json merge (("mainConfigFile" -> m.getAbsolutePath): JValue)) getOrElse json
+      IO.write(gen, "(%s)\n" format pretty(render(oj)), append = false)
+      gen
+    }
+
+  private def requireJsSettingsIn(c: Configuration): Seq[Setting[_]] =
     inConfig(c)(requireJsSettings0 ++ Seq(
-      sourceDirectory in requirejs <<= (sourceDirectory in c)(_ / "requirejs"),
-      buildProfile in requirejs <<= (baseDirectory in c)(_ / "project" / "requirejs.build.js"),
-      watchSources in requirejs <<= (unmanagedSources in requirejs)
+      webApp in requireJs <<= (sourceDirectory in c)(_ / "webapp"),
+      sourceDirectory in requireJs <<= (sourceDirectory in c)(_ / "requirejs"),
+      buildProfileFile in requireJs <<= (baseDirectory in c)(_ / "project" / "requirejs.build.js"),
+      buildProfile in requireJs := JObject(Nil),
+      buildProfileGenerated in requireJs <<= (target in c)(_ / "requirejs.build.js"),
+      target in requireJs <<= (target in c)(_ / "requirejs"),
+      baseUrl in requireJs := "js",
+      mainConfigFile in requireJs <<= (sourceDirectory in requireJs, baseUrl in requireJs)((a, b) => Some(a / b / "main.js")),
+      includeFilter in requireJs := "*",
+      excludeFilter in requireJs := "build.txt" || (".*" - ".") || "_*" || HiddenFileFilter,
+      watchSources in requireJs <<= (unmanagedSources in requireJs)
     )) ++ Seq(
-      watchSources <++= (unmanagedSources in requirejs in c),
-      compile in c <<= (compile in c).dependsOn(requirejs in c)
+      watchSources <++= (unmanagedSources in requireJs in c),
+      compile in c <<= (compile in c).dependsOn(requireJs in c)
     )
+
+  private def cleanTask =
+    (target in requireJs, webApp in requireJs, sourceDirectory in requireJs, unmanagedSources in requireJs) map { (tgt, webapp, src, files) =>
+      val buildCache = (tgt / ".." / "requirejs.files.txt").getAbsoluteFile
+      val toDelete = files x rebase(src.getAbsoluteFile, webapp.getAbsoluteFile)
+      cleanBuildCache(buildCache, toDelete.map(_._2.getAbsoluteFile), webapp)
+    }
 
   def requireJsSettings: Seq[Setting[_]] = requireJsSettingsIn(Compile) ++ requireJsSettingsIn(Test)
 
-  def requireJsSettings0: Seq[Setting[_]] = Seq(
-    unmanagedSources in requirejs <<= (sourceDirectory in requirejs, streams) map { (dir, _) => dir.get },
-    requirejs <<= optimizeTask
+  private def requireJsSettings0: Seq[Setting[_]] = Seq(
+    unmanagedSources in requireJs <<= (sourceDirectory in requireJs, streams) map { (dir, _) => dir.get },
+    createBuildProfile in requireJs <<= generateBuildProfile,
+    optimize in requireJs <<= optimizeTask,
+    clean in requireJs <<= cleanTask,
+    requireJs <<= copyToWebApp
   )
 }
 /*_*/
