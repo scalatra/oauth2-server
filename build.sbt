@@ -3,6 +3,9 @@ import com.typesafe.startscript.StartScriptPlugin
 import scalariform.formatter.preferences._
 import com.mojolly.scalate.ScalatePlugin._
 
+import net.liftweb.json._
+import JsonDSL._
+
 organization := "org.scalatra.oauth2"
 
 name := "oauth2-server"
@@ -176,6 +179,14 @@ seq(StartScriptPlugin.startScriptForWarSettings: _*)
 externalResolvers <<= resolvers map { Resolver.withDefaultResolvers(_, scalaTools = false) }
 
 seq(requireJsSettings: _*)
+
+RequireJsKeys.buildProfile in (Compile, RequireJsKeys.requireJs) := (
+  ("uglify" -> ("ascii_only" -> true)) ~
+  ("pragmasOnSave" -> ("excludeCoffeeScript" -> true) ~ ("excludeJade" -> true)) ~
+  ("paths" -> ("jquery" -> "empty:")) ~
+  ("stubModules" -> List("cs", "jade")) ~
+  ("modules" -> List[JValue](("name" -> "main") ~ ("exclude" -> List("coffee-script", "jade"))))
+)
 
 // seq(coffeeSettings: _*)
 

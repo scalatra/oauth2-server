@@ -7,6 +7,7 @@ import JsonDSL._
 object RequireJsPlugin extends Plugin {
   object RequireJsKeys {
     val optimize = TaskKey[Seq[File]]("optimize", "Compile and optimize script source files.")
+    val rjs = SettingKey[File]("rjs", "The r.js file to use for optimizing the source files.")
     val createBuildProfile = TaskKey[File]("create-build-profile", "Generate the build profile to use when generating sources")
     val requireJs = TaskKey[Seq[File]]("require-js", "Compile and optimize script source files and deploy to the webapp.")
     val buildProfileFile = SettingKey[File]("build-profile-file", "The build profile base file for the require.js optimizer.")
@@ -15,18 +16,22 @@ object RequireJsPlugin extends Plugin {
     val webApp = SettingKey[File]("webapp-dir", "The directory to copy the files to.")
     val baseUrl = SettingKey[String]("base-url", "The base url for the require js script files")
     val mainConfigFile = SettingKey[Option[File]]("main-config-file", "The main config file for require-js")
+    val nodeBin = SettingKey[String]("node-bin", "The location of the node binary")
   }
 
   import RequireJsKeys._
 
   private def optimizeTask =
     (target in requireJs,
+     rjs in requireJs,
+     nodeBin in requireJs,
      includeFilter in requireJs,
      excludeFilter in requireJs,
-     createBuildProfile in requireJs, streams) map { (tgt, incl, excl, bp, log) =>
+     createBuildProfile in requireJs, streams) map { (tgt, rjsf, node, incl, excl, bp, log) =>
       val t = tgt.getAbsoluteFile
       if (!t.exists()) IO.createDirectory(t.getAbsoluteFile)
-      ("project/build-backbone " + bp.getAbsolutePath) ! log.log
+      val cmd = node + " " + rjsf.getAbsolutePath + " -o " + bp.getAbsolutePath
+      cmd ! log.log
       tgt.descendentsExcept(incl, excl).get
     }
 
@@ -34,7 +39,7 @@ object RequireJsPlugin extends Plugin {
     if (!buildCache.exists()) {
       IO.delete(fallback filter (_.exists()))
     } else {
-      IO.delete(IO.readLines(buildCache) filterNot(_ == webapp.getAbsolutePath) map file)
+      IO.delete(IO.readLines(buildCache) filterNot (_ == webapp.getAbsolutePath) map file)
     }
   }
 
@@ -63,7 +68,7 @@ object RequireJsPlugin extends Plugin {
      sourceDirectory in requireJs,
      target in requireJs,
      streams) map { (bpf, bp, gen, bd, mc, src, tgt, s) =>
-      val txt = IO.read(bpf)
+      val txt = if (bpf.exists) IO.read(bpf) else ""
       val n = if (txt.startsWith("(")) txt.substring(1) else txt
       val b = if (n.trim().endsWith(")")) n.substring(0, n.length - 1) else n
       val fileJson = if (bpf.exists) Some(parse(b)) else None
@@ -71,7 +76,7 @@ object RequireJsPlugin extends Plugin {
       val json = merged merge (
         ("appDir" -> src.getAbsolutePath) ~
         ("baseUrl" -> bd) ~
-        ("dir" -> IO.relativize(gen.getParentFile, tgt.getAbsoluteFile).getOrElse("oh no"))
+        ("dir" -> IO.relativize(gen.getParentFile, tgt.getAbsoluteFile).getOrElse("requirejs"))
       )
       val oj = mc map (m => json merge (("mainConfigFile" -> m.getAbsolutePath): JValue)) getOrElse json
       IO.write(gen, "(%s)\n" format pretty(render(oj)), append = false)
@@ -82,8 +87,10 @@ object RequireJsPlugin extends Plugin {
     inConfig(c)(requireJsSettings0 ++ Seq(
       webApp in requireJs <<= (sourceDirectory in c)(_ / "webapp"),
       sourceDirectory in requireJs <<= (sourceDirectory in c)(_ / "requirejs"),
+      rjs in requireJs <<= (baseDirectory in c)(_ / "project" / "tools" / "r.js"),
+      nodeBin in requireJs := ("which node" !!).trim,
       buildProfileFile in requireJs <<= (baseDirectory in c)(_ / "project" / "requirejs.build.js"),
-      buildProfile in requireJs := JObject(Nil),
+      buildProfile in requireJs := JNothing,
       buildProfileGenerated in requireJs <<= (target in c)(_ / "requirejs.build.js"),
       target in requireJs <<= (target in c)(_ / "requirejs"),
       baseUrl in requireJs := "js",
@@ -112,5 +119,7 @@ object RequireJsPlugin extends Plugin {
     clean in requireJs <<= cleanTask,
     requireJs <<= copyToWebApp
   )
+
+
 }
 /*_*/
