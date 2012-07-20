@@ -4,6 +4,10 @@ import net.liftweb.json._
 import JsonDSL._
 
 /*_*/
+
+/**
+ * A Plugin to use requirejs from
+ */
 object RequireJsPlugin extends Plugin {
   object RequireJsKeys {
     val optimize = TaskKey[Seq[File]]("optimize", "Compile and optimize script source files.")
@@ -93,8 +97,8 @@ object RequireJsPlugin extends Plugin {
       buildProfile in requireJs := JNothing,
       buildProfileGenerated in requireJs <<= (target in c)(_ / "requirejs.build.js"),
       target in requireJs <<= (target in c)(_ / "requirejs"),
-      baseUrl in requireJs := "js",
-      mainConfigFile in requireJs <<= (sourceDirectory in requireJs, baseUrl in requireJs)((a, b) => Some(a / b / "main.js")),
+      baseUrl in requireJs := "scripts",
+      mainConfigFile in requireJs := None,
       includeFilter in requireJs := "*",
       excludeFilter in requireJs := "build.txt" || (".*" - ".") || "_*" || HiddenFileFilter,
       watchSources in requireJs <<= (unmanagedSources in requireJs)

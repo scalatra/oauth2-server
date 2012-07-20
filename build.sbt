@@ -2,7 +2,7 @@ import scala.xml.Group
 import com.typesafe.startscript.StartScriptPlugin
 import scalariform.formatter.preferences._
 import com.mojolly.scalate.ScalatePlugin._
-
+import RequireJsKeys._
 import net.liftweb.json._
 import JsonDSL._
 
@@ -180,13 +180,18 @@ externalResolvers <<= resolvers map { Resolver.withDefaultResolvers(_, scalaTool
 
 seq(requireJsSettings: _*)
 
-RequireJsKeys.buildProfile in (Compile, RequireJsKeys.requireJs) := (
+buildProfile in (Compile, requireJs) := (
   ("uglify" -> ("ascii_only" -> true)) ~
   ("pragmasOnSave" -> ("excludeCoffeeScript" -> true) ~ ("excludeJade" -> true)) ~
   ("paths" -> ("jquery" -> "empty:")) ~
   ("stubModules" -> List("cs", "jade")) ~
   ("modules" -> List[JValue](("name" -> "main") ~ ("exclude" -> List("coffee-script", "jade"))))
 )
+
+baseUrl in (Compile, requireJs) := "js"
+
+mainConfigFile in (Compile, requireJs) <<=
+  (sourceDirectory in (Compile, requireJs), baseUrl in (Compile, requireJs))((a, b) => Some(a / b / "main.js"))
 
 // seq(coffeeSettings: _*)
 
