@@ -94,7 +94,7 @@ trait OAuth2ServerBaseApp extends ScalatraServlet
 
   override protected def createRenderContext(req: HttpServletRequest, resp: HttpServletResponse, out: PrintWriter) = {
     val ctx = super.createRenderContext(req, resp, out)
-    ctx.attributes("title") = "Backchat OAuth2"
+    ctx.attributes("title") = "Scalatra OAuth2"
     ctx
   }
 
@@ -118,7 +118,7 @@ trait OAuth2ServerBaseApp extends ScalatraServlet
 
   override protected def contentTypeInferrer = inferFromFormats orElse inferFromJValue orElse super.contentTypeInferrer
 
-  override protected def renderPipeline = renderBackchatResponse orElse super.renderPipeline
+  override protected def renderPipeline = renderOAuth2Response orElse super.renderPipeline
 
   override protected def isScalateErrorPageEnabled = isDevelopmentMode
 

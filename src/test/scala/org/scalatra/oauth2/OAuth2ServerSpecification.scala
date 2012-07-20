@@ -1,4 +1,5 @@
-package org.scalatra.oauth2.model.tests
+package org.scalatra
+package oauth2
 
 import org.specs2.time.NoTimeConversions
 import org.specs2.Specification
@@ -11,7 +12,7 @@ import Scalaz._
  *
  * They also make sure that the toString or mkString methods don't throw exceptions when being evaluated
  */
-private[tests] trait NotNullStrings {
+private[oauth2] trait NotNullStrings {
 
   /**
    * try to evaluate an expression, returning a value T
@@ -72,7 +73,7 @@ private[tests] trait NotNullStrings {
   }
 
 }
-private[tests] object NotNullStrings extends NotNullStrings
+private[oauth2] object NotNullStrings extends NotNullStrings
 
 class BeSuccessMatcher extends Matcher[Validation[_, _]] {
   //  def apply[S <: Validation[_, _]](v: Expectable[S]) = {

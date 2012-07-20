@@ -19,21 +19,33 @@ require.config({
   paths: {
     "underscore": 'lib/underscore/underscore',
     "backbone": 'lib/backbone/backbone',
-    "text": 'lib/require/text',
     "cs": "lib/require/cs",
     "jade": "lib/jade/jade",
-    "coffee-script": "lib/coffee-script/coffee-script"
+    "coffee-script": "lib/coffee-script/coffee-script",
+    "bootstrap": "lib/bootstrap/bootstrap"
   }
 
 });
 
-require(['cs!views/app', 'cs!routers/router'], function( AppView, Workspace ){
+require(['cs!common'], function( Common ){
 
   // Initialize routing and start Backbone.history()
-  var TodoRouter = new Workspace;
+//  var TodoRouter = new Workspace;
+
+
   Backbone.history.start();
 
   // Initialize the application view
-  var app_view = new AppView;
+//  var app_view = new AppView;
 
+  // see http://www.slideshare.net/nzakas/enterprise-javascript-error-handling-presentation slide 46
+  window.onerror = function(msg, url, line) {
+    if (Common.DEBUG_MODE) {
+      return false;
+    } else {
+      // TODO: use atmosphere or plain websockets to log this stuff on the server
+      console.log(msg);
+      return true;
+    }
+  }
 });

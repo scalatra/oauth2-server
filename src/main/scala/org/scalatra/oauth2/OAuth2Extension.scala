@@ -85,6 +85,7 @@ class OAuth2Extension(system: ExtendedActorSystem) extends Extension {
 
   lazy val userProvider = new AccountDao(mongo.db("resource_owners"))(system)
   lazy val clients = new ClientDao(mongo.db("clients"))(system)
+  lazy val permissionDao = new PermissionDao(mongo.db("permissions"))(system)
 
   val smtp = new SmtpTransport(SmtpConfig(
     cfg.getString("scalatra.smtp.host"),

@@ -13,6 +13,7 @@ class PasswordStrategy[UserClass <: AppUser[_]](protected val app: ScalatraBase,
   override val name = "user_password"
 
   private def login = app.params.get("login") flatMap (_.blankOption)
+
   private def password = app.params.get("password") flatMap (_.blankOption)
 
   override def isValid = {
@@ -28,6 +29,7 @@ class PasswordStrategy[UserClass <: AppUser[_]](protected val app: ScalatraBase,
     usr.toOption
   }
 
+  /*
   override def beforeSetUser(user: UserClass) {
     println("before set user " + getClass.getName)
   }
@@ -59,6 +61,7 @@ class PasswordStrategy[UserClass <: AppUser[_]](protected val app: ScalatraBase,
   override def afterLogout(user: UserClass) {
     println("after logout " + getClass.getName)
   }
+*/
 
 }
 

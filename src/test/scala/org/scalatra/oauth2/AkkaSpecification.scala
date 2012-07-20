@@ -1,7 +1,5 @@
 package org.scalatra
 package oauth2
-package model
-package tests
 
 import akka.testkit._
 import org.specs2.specification._

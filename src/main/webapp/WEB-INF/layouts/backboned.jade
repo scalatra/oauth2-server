@@ -27,7 +27,7 @@ html
             ul.nav
               li
                 a(href="/") Home
-              - if (isAuthenticated) 
+              - if (isAuthenticated)
                 li.dropdown#clients-menu
                   a.dropdown-toggle(href="#clients-menu" data-toggle="dropdown")
                     | Clients
@@ -36,7 +36,7 @@ html
                     li
                       a(href="/clients") List
                       a(href="/clients/new") Create
-          div.nav-collapse.pull-right  
+          div.nav-collapse.pull-right
             ul.nav
               - if (isAnonymous)
                 li
@@ -73,6 +73,6 @@ html
       != body
 
 
-    script(src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js")
-    script(src="/scripts/lib/bootstrap/bootstrap.js" type="text/javascript")
+    script(data-main="scripts/main" src="/scripts/require-jquery.js")
+    script(src="/scripts/lib/bootstrap/bootstrap.js")
 

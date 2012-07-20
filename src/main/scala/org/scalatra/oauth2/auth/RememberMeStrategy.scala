@@ -57,7 +57,7 @@ class RememberMeStrategy[UserClass <: AppUser[_]](
           u.toOption
         }
         case _ ⇒ {
-          logger error "Logging user in from token failed"
+          logger info "Logging user in from token failed"
           None
         }
       }
@@ -72,9 +72,9 @@ class RememberMeStrategy[UserClass <: AppUser[_]](
     if (user != null)
       rememberMeProvider.remember(user)
     app.cookies.get(cookieKey) foreach { _ ⇒ app.cookies.update(cookieKey, null) }
-    logger info "Removed cookie for user [%s]".format(user.login)
+    logger debug "Removed cookie for user [%s]".format(user.login)
   }
-
+  /*
   override def beforeSetUser(user: UserClass) {
     println("before set user " + getClass.getName)
   }
@@ -97,7 +97,7 @@ class RememberMeStrategy[UserClass <: AppUser[_]](
 
   override def afterLogout(user: UserClass) {
     println("after logout " + getClass.getName)
-  }
+  }*/
 
 }
 

@@ -19,4 +19,32 @@ class PermissionDao(collection: MongoCollection)(implicit system: ActorSystem)
 
   oauth.permissions foreach save
 
+  object validate {
+
+    import Validations._
+
+    def name(name: String) = nonEmptyString(fieldNames.name, name)
+
+    private def uniqueCode(fieldName: String, value: ⇒ String, collection: MongoCollection): Validation[Error, String] = {
+      def q(s: String) = Map("_id" -> s)
+      new PredicateValidator[String](
+        fieldName,
+        s ⇒ collection.count(q(s), Map("_id" -> 1)) == 0,
+        "%s exists already.").validate(value)
+    }
+    def code(code: String) =
+      for {
+        nec ← nonEmptyString(fieldNames.code, code)
+        ff ← validFormat(fieldNames.code, nec, """^(\w+|-)([-\w]*)*$""".r, "%s can only contain letters, numbers, underscores and hyphens.")
+        uniq ← uniqueCode(fieldNames.code, ff, collection)
+      } yield uniq
+
+    /*_*/
+    def apply(perm: Permission): ValidationNEL[Error, Permission] = {
+      (code(perm.code).liftFailNel |@|
+        name(perm.name).liftFailNel) { (_, _) ⇒ perm }
+    }
+    /*_*/
+  }
+
 }

@@ -47,7 +47,7 @@ trait OAuth2ResponseSupport { self: ScalatraBase ⇒
     g.asCheckboxBool
   }
 
-  protected def renderBackchatResponse: PartialFunction[Any, Any] = {
+  protected def renderOAuth2Response: PartialFunction[Any, Any] = {
     case x: JValue ⇒ OAuth2Response(data = x)
     case x: OAuth2Response ⇒ {
       x.statusCode foreach { sc ⇒

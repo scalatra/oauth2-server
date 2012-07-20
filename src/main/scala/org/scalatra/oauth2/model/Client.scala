@@ -30,7 +30,7 @@ case class Client(
 class ClientDao(collection: MongoCollection)(implicit system: ActorSystem)
     extends SalatDAO[Client, ObjectId](collection = collection) {
 
-  object validations {
+  object validate {
     import Validations._
 
     def name(displayName: String) = nonEmptyString(fieldNames.displayName, displayName)
@@ -59,28 +59,31 @@ class ClientDao(collection: MongoCollection)(implicit system: ActorSystem)
 
     def authorizationType(authType: String) =
       enumValue(fieldNames.authorizationType, authType, AuthorizationType).map(AuthorizationType.withName)
+
+    def apply(client: Client) = {
+      val factory: Factory = client.copy(client.secret, _, _, _, client.id, _, _, _)
+      buildClient(client.profile, client.displayName, client.authorizationType.toString, client.scope, client.redirectUri, client.link)(factory)
+    }
+
+    /*_*/
+    private def buildClient(
+      profile: String,
+      displayName: String,
+      authType: String,
+      scopes: List[String],
+      redirectUri: Option[String],
+      link: Option[String])(factory: Factory): ValidationNEL[Error, Client] = {
+      ((validate.clientProfile(profile).liftFailNel)
+        |@| (validate.name(displayName).liftFailNel)
+        |@| (validate.authorizationType(authType).liftFailNel)
+        |@| (validate.scopes(scopes).liftFailNel)
+        |@| (validate.validRedirectUri(redirectUri).liftFailNel)
+        |@| (validate.validLink(link).liftFailNel))(factory)
+    }
+    /*_*/
+
   }
   private type Factory = (String, String, AuthorizationType.Value, List[String], Option[String], Option[String]) ⇒ Client
-
-  def validate(client: Client) = {
-    val factory: Factory = client.copy(client.secret, _, _, _, client.id, _, _, _)
-    buildClient(client.profile, client.displayName, client.authorizationType.toString, client.scope, client.redirectUri, client.link)(factory)
-  }
-
-  private def buildClient(
-    profile: String,
-    displayName: String,
-    authType: String,
-    scopes: List[String],
-    redirectUri: Option[String],
-    link: Option[String])(factory: Factory): ValidationNEL[Error, Client] = {
-    ((validations.clientProfile(profile).liftFailNel)
-      |@| (validations.name(displayName).liftFailNel)
-      |@| (validations.authorizationType(authType).liftFailNel)
-      |@| (validations.scopes(scopes).liftFailNel)
-      |@| (validations.validRedirectUri(redirectUri).liftFailNel)
-      |@| (validations.validLink(link).liftFailNel))(factory)
-  }
 
   def authorize(clientId: String, clientSecret: String) = { null }
 }

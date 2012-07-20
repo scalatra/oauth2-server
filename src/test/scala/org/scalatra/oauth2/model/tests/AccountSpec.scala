@@ -53,7 +53,7 @@ class AccountSpec extends AkkaSpecification { def is = sequential ^
 
   trait AccountSpecContextBase extends After {
     val conn = MongoConnection()
-    val coll = conn("oauth_server_test")("resource_owner")
+    val coll = conn("oauth_server_test")("account")
     coll.drop()
     val dao = new AccountDao(coll)
 

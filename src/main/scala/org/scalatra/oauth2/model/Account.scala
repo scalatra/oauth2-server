@@ -59,6 +59,7 @@ object fieldNames {
   val stats = "stats"
   val clientType = "clientType"
   val profile = "profile"
+  val code = "code"
 }
 
 case class Token(token: String, createdAt: DateTime = DateTime.now) extends AppToken {
@@ -248,8 +249,17 @@ class AccountDao(collection: MongoCollection)(implicit system: ActorSystem)
       if (owner.password.isMatch(password)) owner.success
       else SimpleError("The username/password combination doesn not match").fail
 
+    /*_*/
+    def apply(owner: Account): ValidationNEL[Error, Account] = {
+      val factory: Factory = owner.copy(_, _, _)
+      (login(owner.login, owner.id.some).liftFailNel
+        |@| email(owner.email, owner.id.some).liftFailNel
+        |@| name(owner.name).liftFailNel)(factory)
+    }
+    /*_*/
   }
 
+  /*_*/
   def register(
     login: Option[String],
     email: Option[String],
@@ -272,12 +282,9 @@ class AccountDao(collection: MongoCollection)(implicit system: ActorSystem)
 
   private type Factory = (String, String, String) ⇒ Account
 
-  def validate(owner: Account): ValidationNEL[Error, Account] = {
-    val factory: Factory = owner.copy(_, _, _)
-    (validations.login(owner.login, owner.id.some).liftFailNel
-      |@| validations.email(owner.email, owner.id.some).liftFailNel
-      |@| validations.name(owner.name).liftFailNel)(factory)
-  }
+  /*_*/
+
+  def validate(user: Account): Scalaz.ValidationNEL[Error, Account] = validations(user)
 
   def confirm(token: String): Validation[Error, Account] = {
     val key = fieldNames.confirmation + "." + fieldNames.token
@@ -303,11 +310,13 @@ class AccountDao(collection: MongoCollection)(implicit system: ActorSystem)
     }
   }
 
+  /*_*/
   def resetPassword(token: String, password: String, passwordConfirmation: String): ValidationNEL[Error, Account] = {
     val r: ValidationNEL[Error, Validation[Error, Account]] = (validations.tokenRequired("reset", token).liftFailNel
       |@| validations.passwordWithConfirmation(password, passwordConfirmation).liftFailNel)(doReset _)
     (r fold (_.fail, _.liftFailNel))
   }
+  /*_*/
 
   def changePassword(owner: Account, oldPassword: String, password: String, passwordConfirmation: String): Validation[Error, Account] = {
     for {

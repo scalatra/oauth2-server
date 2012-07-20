@@ -26,10 +26,13 @@ object OAuthToken {
 case class OAuthToken(token: String, secret: String)
 
 trait ScribeAuthStrategyContext[UserClass >: Null <: AppUser[_]] {
+
   def oauthService: OAuthService
+
   def name: String
 
   def app: ScalatraBase with FlashMapSupport with ScribeAuthSupport[UserClass]
+
   def findOrCreateUser(accessToken: OAuthToken): Validation[model.Error, UserClass]
 }
 
