@@ -188,8 +188,6 @@ buildProfile in (Compile, requireJs) := (
   ("modules" -> List[JValue](("name" -> "main") ~ ("exclude" -> List("coffee-script", "jade"))))
 )
 
-baseUrl in (Compile, requireJs) := "js"
-
 mainConfigFile in (Compile, requireJs) <<=
   (sourceDirectory in (Compile, requireJs), baseUrl in (Compile, requireJs))((a, b) => Some(a / b / "main.js"))
 
