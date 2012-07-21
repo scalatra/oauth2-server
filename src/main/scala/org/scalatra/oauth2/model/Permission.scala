@@ -10,11 +10,19 @@ import scalaz._
 import Scalaz._
 import OAuth2Imports._
 import akka.actor.ActorSystem
-import command.{ Validation, FieldValidation, FieldError }
+import command._
 import command.Validators.PredicateValidator
 import commands.CreatePermissionCommand
+import command.Validation
 
 case class Permission(@Key("_id") code: String, name: String, description: String, isSystem: Boolean = false)
+
+trait ModelCommand[TModel <: Product] { self: Command with ValidationSupport ⇒
+
+  def model: TModel
+}
+
+trait OAuth2ModelCommand[TModel <: Product] extends Command with ValidationSupport with ModelCommand[TModel]
 
 class PermissionDao(collection: MongoCollection)(implicit system: ActorSystem)
     extends SalatDAO[Permission, String](collection = collection) {
@@ -50,7 +58,9 @@ class PermissionDao(collection: MongoCollection)(implicit system: ActorSystem)
     /*_*/
   }
 
-  def create(cmd: CreatePermissionCommand): ValidationNEL[FieldError, Permission] = {
+  def create(cmd: CreatePermissionCommand): ValidationNEL[FieldError, Permission] = execute(cmd)
+
+  def execute(cmd: OAuth2ModelCommand[Permission]): ValidationNEL[FieldError, Permission] = {
     if (cmd.valid == Some(true)) {
       val model = cmd.model
       save(model)

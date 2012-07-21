@@ -3,12 +3,12 @@ package oauth2
 package commands
 
 import command._
-import model.{ Permission, fieldNames }
+import model.{OAuth2ModelCommand, Permission, fieldNames}
 import org.scalatra.oauth2.OAuth2Imports._
 import command.Validators.PredicateValidator
 import akka.actor.ActorSystem
 
-abstract class PermissionCommand extends Command with ValidationSupport with CommandValidators {
+abstract class PermissionCommand extends OAuth2ModelCommand[Permission] with CommandValidators {
 
   def code: ValidatedBinding[String]
   //  lazy val code = {
@@ -16,7 +16,7 @@ abstract class PermissionCommand extends Command with ValidationSupport with Com
   //    b validate (b.nonEmptyString orElse b.validFormat("""^(\w+|-)([-\w]*)*$""".r, "%s can only contain letters, numbers, underscores and hyphens."))
   //  }
   //
-  val name = bind[String](fieldNames.name) validate (nonEmptyString(fieldNames.name))
+  val name = bind[String](fieldNames.name).withBinding(b => b validate b.nonEmptyString)
 
   val description = bind[String](fieldNames.description)
 
