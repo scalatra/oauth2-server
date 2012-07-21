@@ -3,7 +3,7 @@ package oauth2
 
 import akka.actor.ActorSystem
 import commands.{ CreatePermissionCommand, PermissionCommand }
-import model.{ ApiError, OAuth2Response }
+import model.{OAuth2ModelCommand, ApiError, OAuth2Response}
 import OAuth2Imports._
 import net.liftweb.json._
 import command.{ ValidationError, Command, CommandSupport }
@@ -29,8 +29,8 @@ class PermissionsCrudApp(implicit protected val system: ActorSystem) extends OAu
   }
 
   post("/") {
-    val cmd = actorSystemCommand[CreatePermissionCommand]
-    oauth.permissionDao.create(cmd) match {
+    val cmd = oauth2Command[CreatePermissionCommand]
+    oauth.permissionDao.execute(cmd) match {
       case Success(perm) ⇒
         format match {
           case "json" | "xml" ⇒ OAuth2Response(Extraction.decompose(perm))
@@ -57,7 +57,7 @@ class PermissionsCrudApp(implicit protected val system: ActorSystem) extends OAu
    * For every command type, creation and binding is performed only once and then stored into
    * a request attribute.
    */
-  def actorSystemCommand[T <: Command](implicit mf: Manifest[T], system: ActorSystem): T = {
+  def oauth2Command[T <: OAuth2ModelCommand[_]](implicit mf: Manifest[T], system: ActorSystem): T = {
     commandOption[T] getOrElse {
       val newCommand = mf.erasure.getConstructor(classOf[ActorSystem]).newInstance(system).asInstanceOf[T]
       newCommand.doBinding(params)
