@@ -1,14 +1,18 @@
 package org.scalatra
 package oauth2
 
+import model.ApiErrorList
+import model.OAuth2Response
 import model.{ ApiErrorList, ApiError, OAuth2Response }
 import net.liftweb.json._
 import OAuth2Imports._
 import org.scalatra.{ ResponseStatus, ScalatraBase }
 import scalaz._
 import Scalaz._
+import net.liftweb.json.Xml._
+import scala.Some
 
-trait OAuth2ResponseSupport { self: ScalatraBase ⇒
+trait OAuth2ResponseSupport { self: ScalatraBase with ApiFormats ⇒
 
   def halt(bcResponse: OAuth2Response): Nothing = {
     halt(500, bcResponse.copy(statusCode = Some(500)), Map("Content-Type" -> "application/json"), "Bad request")
@@ -50,11 +54,17 @@ trait OAuth2ResponseSupport { self: ScalatraBase ⇒
   protected def renderOAuth2Response: PartialFunction[Any, Any] = {
     case x: JValue ⇒ OAuth2Response(data = x)
     case x: OAuth2Response ⇒ {
+      response.characterEncoding = UTF_8.some
       x.statusCode foreach { sc ⇒
         response.status = ResponseStatus(sc)
       }
       val r = includeStatusInResponse ? x.copy(statusCode = x.statusCode orElse status.some) | x.copy(statusCode = None)
-      Printer.compact(render(r.toJValue.snakizeKeys), response.writer)
+      if (format == "xml") {
+        contentType = "application/xml"
+        response.writer.println(toXml(r.toJValue.snakizeKeys).toString())
+      } else {
+        Printer.compact(render(r.toJValue.snakizeKeys), response.writer)
+      }
       ()
     }
     case x: ApiError ⇒ ApiErrorList(x :: Nil)

@@ -1,5 +1,5 @@
 import akka.actor.ActorSystem
-import org.scalatra.oauth2.{ OAuthAuthentication, ClientsCrudApp, HomeServlet, OAuth2Extension }
+import org.scalatra.oauth2._
 import javax.servlet.ServletContext
 import org.scalatra.LifeCycle
 import akka.util.duration._
@@ -14,6 +14,7 @@ class Scalatra extends LifeCycle {
 
     context mount (new HomeServlet, "/")
     context mount (new ClientsCrudApp, "/clients")
+    context mount (new PermissionsCrudApp, "/permissions")
     context mount (new OAuthAuthentication, "/auth")
   }
 

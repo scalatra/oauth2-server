@@ -188,6 +188,17 @@ buildProfile in (Compile, requireJs) := (
 mainConfigFile in (Compile, requireJs) <<=
   (sourceDirectory in (Compile, requireJs), baseUrl in (Compile, requireJs))((a, b) => Some(a / b / "main.js"))
 
+auxCompile in Compile <<= (auxCompile in Compile).dependsOn(requireJs in Compile)
+
+compile in Compile <<= (compile in Compile).dependsOn(requireJs in Compile)
+
+watchSources <++= (webApp in (Compile, requireJs)) map (d => (d / "WEB-INF" ** "*").get)
+
+
+
+
+//watchSources in Compile <<= (sourceDirectory in Compile in requireJs) map { d => (d ** "*").get }
+
 // seq(coffeeSettings: _*)
 
 // (CoffeeKeys.iced in (Compile, CoffeeKeys.coffee)) := true

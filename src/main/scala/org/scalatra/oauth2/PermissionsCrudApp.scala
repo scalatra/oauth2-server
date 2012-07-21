@@ -2,23 +2,23 @@ package org.scalatra
 package oauth2
 
 import akka.actor.ActorSystem
-import commands.{ CreatePermissionCommand, PermissionCommand }
-import model.{OAuth2ModelCommand, ApiError, OAuth2Response}
+import commands.{ PermissionCommand, UpdatePermissionCommand, CreatePermissionCommand }
+import model.{ OAuth2ModelCommand, Permission, ApiError, OAuth2Response }
 import OAuth2Imports._
 import net.liftweb.json._
-import command.{ ValidationError, Command, CommandSupport }
+import command.{ FieldError, ValidationError }
 import scalaz._
 import Scalaz._
 
-class PermissionsCrudApp(implicit protected val system: ActorSystem) extends OAuth2ServerBaseApp with CommandSupport {
+class PermissionsCrudApp(implicit protected val system: ActorSystem) extends OAuth2ServerBaseApp {
 
   before("/") {
     if (isAnonymous) scentry.authenticate("remember_me")
     if (isAnonymous && scentry.authenticate().isEmpty) unauthenticated()
   }
 
-  def page = params.getOrElse("page", "1").toInt max 1
-  def pageSize = params.getOrElse("pageSize", "20").toInt max 1
+  def page = ~params.getAs[Int]("page") max 1
+  def pageSize = ~params.getAs[Int]("pageSize") max 1
 
   get("/") {
     val clients = oauth.permissionDao.find(MongoDBObject()).limit(pageSize).skip((page - 1) * pageSize)
@@ -29,8 +29,24 @@ class PermissionsCrudApp(implicit protected val system: ActorSystem) extends OAu
   }
 
   post("/") {
-    val cmd = oauth2Command[CreatePermissionCommand]
-    oauth.permissionDao.execute(cmd) match {
+    executeCommand[CreatePermissionCommand]("addPermission")
+  }
+
+  put("/:id") {
+    executeCommand[UpdatePermissionCommand]("editPermission")
+  }
+
+  delete("/:id") {
+    oauth.permissionDao.removeById(params("id"))
+  }
+
+  private def executeCommand[T <: OAuth2ModelCommand[Permission]](clientRoute: String)(implicit mf: Manifest[T], system: ActorSystem) = {
+    val cmd = oauth2Command[T]
+    val res = oauth.permissionDao.execute(cmd)
+    renderCommandResult(res, cmd.model, clientRoute)
+  }
+  private def renderCommandResult(result: ValidationNEL[FieldError, Permission], model: Permission, clientRoute: String) = {
+    result match {
       case Success(perm) ⇒
         format match {
           case "json" | "xml" ⇒ OAuth2Response(Extraction.decompose(perm))
@@ -42,7 +58,6 @@ class PermissionsCrudApp(implicit protected val system: ActorSystem) extends OAu
           case e: ValidationError ⇒ ApiError(e.field, e.message)
           case e                  ⇒ ApiError(e.message)
         })
-        val model = cmd.model
         format match {
           case "json" | "xml" ⇒ OAuth2Response(Extraction.decompose(model), rr.list.map(_.toJValue))
           case _              ⇒ jade("permissions", "clientRoute" -> "addPermission", "permission" -> model, "errors" -> rr.list)
@@ -51,18 +66,4 @@ class PermissionsCrudApp(implicit protected val system: ActorSystem) extends OAu
     }
   }
 
-  /**
-   * Create and bind a [[org.scalatra.command.Command]] of the given type with the current Scalatra params.
-   *
-   * For every command type, creation and binding is performed only once and then stored into
-   * a request attribute.
-   */
-  def oauth2Command[T <: OAuth2ModelCommand[_]](implicit mf: Manifest[T], system: ActorSystem): T = {
-    commandOption[T] getOrElse {
-      val newCommand = mf.erasure.getConstructor(classOf[ActorSystem]).newInstance(system).asInstanceOf[T]
-      newCommand.doBinding(params)
-      request("_command_" + mf.erasure.getName) = newCommand
-      newCommand
-    }
-  }
 }

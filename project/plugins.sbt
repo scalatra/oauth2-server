@@ -20,7 +20,7 @@ addSbtPlugin("org.ensime" % "ensime-sbt-cmd" % "0.0.10")
 
 addSbtPlugin("com.eed3si9n" % "sbt-buildinfo" % "0.1.2")
 
-//addSbtPlugin("org.scalatra.requirejs" % "sbt-requirejs" % "0.0.1")
+//addSbtPlugin("org.scalatra.requirejs" % "sbt-requirejs" % "0.0.3")
 
 libraryDependencies <+= sbtVersion(v => "com.mojolly.scalate" %% "xsbt-scalate-generator" % (v + "-0.1.7"))
 

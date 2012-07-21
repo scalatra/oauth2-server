@@ -3,43 +3,46 @@ package oauth2
 package commands
 
 import command._
-import model.{OAuth2ModelCommand, Permission, fieldNames}
-import org.scalatra.oauth2.OAuth2Imports._
-import command.Validators.PredicateValidator
+import model.{ OAuth2ModelCommand, Permission, fieldNames }
 import akka.actor.ActorSystem
+import scalaz._
+import Scalaz._
+import model.Permission
 
-abstract class PermissionCommand extends OAuth2ModelCommand[Permission] with CommandValidators {
+abstract class PermissionCommand(implicit system: ActorSystem) extends OAuth2ModelCommand[Permission] with CommandValidators {
+
+  protected val oauth = OAuth2Extension(system)
 
   def code: ValidatedBinding[String]
-  //  lazy val code = {
-  //    val b = bind[String](fieldNames.code)
-  //    b validate (b.nonEmptyString orElse b.validFormat("""^(\w+|-)([-\w]*)*$""".r, "%s can only contain letters, numbers, underscores and hyphens."))
-  //  }
-  //
-  val name = bind[String](fieldNames.name).withBinding(b => b validate b.nonEmptyString)
+
+  val name = bind[String](fieldNames.name).withBinding(b ⇒ b validate b.nonEmptyString)
 
   val description = bind[String](fieldNames.description)
 
   val isSystem = bind[Boolean](fieldNames.isSystem)
 
+  def model = Permission(~code.converted, ~name.converted, ~description.converted, ~isSystem.converted)
 }
 
-class CreatePermissionCommand(implicit system: ActorSystem) extends PermissionCommand {
-
-  private val oauth = OAuth2Extension(system)
-
-  private[this] def uniqueCode(fieldName: String, collection: MongoCollection): Validator[String] = {
-    case Some(ss: String) ⇒
-      new PredicateValidator[String](
-        fieldName,
-        s ⇒ collection.count(Map("_id" -> ss), Map("_id" -> 1)) == 0,
-        "%s exists already.").validate(ss)
-  }
+class CreatePermissionCommand(implicit system: ActorSystem) extends PermissionCommand()(system) {
 
   val code = bind[String](fieldNames.code) validate {
-    case Some(s: String) ⇒ oauth.permissionDao.validate.code(s)
-    case None            ⇒ oauth.permissionDao.validate.code(null)
+    case s ⇒ oauth.permissionDao.validate.code(~s)
   }
 
-  def model = Permission(code.original, name.original, description.original, isSystem.converted getOrElse false)
+}
+class UpdatePermissionCommand(implicit system: ActorSystem) extends PermissionCommand()(system) {
+
+  private lazy val retrieved = oauth.permissionDao.findOneById(~code.converted)
+
+  val code: ValidatedBinding[String] = bind[String]("id") validate {
+    case s ⇒
+      (retrieved.map(_ ⇒ (~s).success[FieldError]) | SimpleError("The permission doesn't exist").fail[String]): FieldValidation[String]
+  }
+
+  override def model: Permission = {
+    (retrieved map {
+      _.copy(name = ~name.converted, description = ~description.converted, isSystem = ~isSystem.converted)
+    }) | Permission(code.original, name.original, description.original, ~isSystem.converted)
+  }
 }

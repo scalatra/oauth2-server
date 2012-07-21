@@ -2,7 +2,7 @@ package org.scalatra
 package oauth2
 
 import auth.{ DefaultAuthenticationSupport, ForgotPasswordAuthSupport, PasswordAuthSupport, AuthenticationSupport }
-import model.Account
+import model.{ OAuth2ModelCommand, Account }
 import org.scalatra.scalate.ScalateSupport
 import akka.actor.ActorSystem
 import org.scalatra.servlet.ServletBase
@@ -13,6 +13,8 @@ import Scalaz._
 import net.liftweb.json._
 import OAuth2Imports._
 import java.io.PrintWriter
+import command.CommandSupport
+import extension.TypedParamSupport
 
 trait AuthenticationApp[UserClass >: Null <: AppUser[_]]
     extends PasswordAuthSupport[UserClass]
@@ -63,7 +65,9 @@ trait OAuth2ServerBaseApp extends ScalatraServlet
     with ScalateSupport
     with CorsSupport
     with LoadBalancedSslRequirement
-    with DefaultAuthenticationSupport[Account] {
+    with DefaultAuthenticationSupport[Account]
+    with CommandSupport
+    with TypedParamSupport {
 
   implicit protected def system: ActorSystem
   override protected implicit def jsonFormats: Formats = new OAuth2Formats
@@ -111,7 +115,8 @@ trait OAuth2ServerBaseApp extends ScalatraServlet
   }
 
   protected def inferFromJValue: ContentTypeInferrer = {
-    case _: JValue ⇒ formats("json")
+    case _: JValue if format == "xml" ⇒ formats("xml")
+    case _: JValue                    ⇒ formats("json")
   }
 
   override protected def transformRequestBody(body: JValue) = body.camelizeKeys
@@ -149,6 +154,21 @@ trait OAuth2ServerBaseApp extends ScalatraServlet
       case (true, false)  ⇒ candidate
       case (false, true)  ⇒ "/" + candidate.dropRight(1)
       case (false, false) ⇒ "/" + candidate
+    }
+  }
+
+  /**
+   * Create and bind a [[org.scalatra.command.Command]] of the given type with the current Scalatra params.
+   *
+   * For every command type, creation and binding is performed only once and then stored into
+   * a request attribute.
+   */
+  def oauth2Command[T <: OAuth2ModelCommand[_]](implicit mf: Manifest[T], system: ActorSystem): T = {
+    commandOption[T] getOrElse {
+      val newCommand = mf.erasure.getConstructor(classOf[ActorSystem]).newInstance(system).asInstanceOf[T]
+      newCommand.doBinding(params)
+      request("_command_" + mf.erasure.getName) = newCommand
+      newCommand
     }
   }
 
