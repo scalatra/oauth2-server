@@ -1,7 +1,7 @@
 package org.scalatra
 package oauth2
 
-import model.Error
+import command.FieldError
 import scalaz._
 import Scalaz._
 
@@ -25,7 +25,7 @@ trait AppToken {
 
 trait UserProvider[UserClass <: AppUser[_]] {
 
-  def login(loginOrEmail: String, password: String, ipAddress: String = ""): Validation[Error, UserClass]
+  def login(loginOrEmail: String, password: String, ipAddress: String = ""): Validation[FieldError, UserClass]
   def findUserById(id: String): Option[UserClass]
   def loggedIn(user: UserClass, ipAddress: String): UserClass
   def findByLoginOrEmail(loginOrEmail: String): Option[UserClass]
@@ -34,24 +34,24 @@ trait UserProvider[UserClass <: AppUser[_]] {
     email: Option[String],
     name: Option[String],
     password: Option[String],
-    passwordConfirmation: Option[String]): ValidationNEL[Error, UserClass]
-  def confirm(token: String): Validation[Error, UserClass]
-  def validate(user: UserClass): ValidationNEL[Error, UserClass]
+    passwordConfirmation: Option[String]): ValidationNEL[FieldError, UserClass]
+  def confirm(token: String): Validation[FieldError, UserClass]
+  def validate(user: UserClass): ValidationNEL[FieldError, UserClass]
 }
 
 trait RememberMeProvider[UserClass <: AppUser[_]] {
-  def loginFromRemember(token: String): Validation[Error, UserClass]
-  def remember(owner: UserClass): Validation[Error, String]
+  def loginFromRemember(token: String): Validation[FieldError, UserClass]
+  def remember(owner: UserClass): Validation[FieldError, String]
 }
 
 trait ForgotPasswordProvider[UserClass <: AppUser[_]] {
-  def forgot(loginOrEmail: Option[String]): Validation[Error, UserClass]
-  def resetPassword(token: String, password: String, passwordConfirmation: String): ValidationNEL[Error, UserClass]
+  def forgot(loginOrEmail: Option[String]): Validation[FieldError, UserClass]
+  def resetPassword(token: String, password: String, passwordConfirmation: String): ValidationNEL[FieldError, UserClass]
   def rememberedPassword(owner: UserClass, ipAddress: String): UserClass
 }
 
 trait AuthenticatedChangePasswordProvider[UserClass <: AppUser[_]] {
-  def changePassword(owner: UserClass, oldPassword: String, password: String, passwordConfirmation: String): Validation[Error, UserClass]
+  def changePassword(owner: UserClass, oldPassword: String, password: String, passwordConfirmation: String): Validation[FieldError, UserClass]
 }
 
 trait OAuthUserProvider

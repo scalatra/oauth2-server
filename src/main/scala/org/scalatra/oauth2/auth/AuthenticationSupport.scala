@@ -7,11 +7,10 @@ import javax.servlet.http.{ HttpServletResponse, HttpServletRequest }
 import java.io.PrintWriter
 import scalaz._
 import Scalaz._
-import model.ValidationError
 import org.scalatra.scalate.{ ScalatraRenderContext, ScalateSupport }
 import org.scalatra.auth._
 import ScentryAuthStore.CookieAuthStore
-import org.scalatra._
+import command._
 
 class OAuthScentryConfig extends ScentryConfig
 
@@ -203,7 +202,7 @@ trait DefaultAuthenticationSupport[UserClass >: Null <: AppUser[_]] extends Auth
       new ForgotPasswordStrategy(self, authProvider),
       new RememberMeStrategy(self, authProvider),
       new AppUserBasicAuth(self, oauth.web.realm, authProvider)) foreach { strategy ⇒
-        scentry.registerStrategy(strategy.name, _ ⇒ strategy)
+        scentry.register(strategy.name, _ ⇒ strategy)
       }
 
   }

@@ -10,6 +10,7 @@ import scalaz._
 import Scalaz._
 import OAuth2Imports._
 import akka.actor.ActorSystem
+import command.{ FieldValidation, FieldError }
 
 case class Client(
     secret: String,
@@ -31,13 +32,14 @@ class ClientDao(collection: MongoCollection)(implicit system: ActorSystem)
     extends SalatDAO[Client, ObjectId](collection = collection) {
 
   object validate {
+    import org.scalatra.command.Validation._
     import Validations._
 
     def name(displayName: String) = nonEmptyString(fieldNames.displayName, displayName)
 
     def scopes(scope: List[String]) = nonEmptyCollection(fieldNames.scope, scope.filter(_.nonBlank))
 
-    def clientProfile(profile: String): Validation[Error, String] =
+    def clientProfile(profile: String): FieldValidation[String] =
       for {
         nem ← nonEmptyString(fieldNames.profile, profile)
         oo ← oneOf(fieldNames.profile, nem, "Web Application", "User-Agent", "Native Application")
@@ -45,17 +47,17 @@ class ClientDao(collection: MongoCollection)(implicit system: ActorSystem)
 
     def clientSecret(secret: String) = nonEmptyString(fieldNames.secret, secret)
 
-    def validRedirectUri(uri: Option[String]): Validation[Error, Option[String]] = {
+    def validRedirectUri(uri: Option[String]): FieldValidation[Option[String]] = {
       (uri map { u ⇒
         for {
           nem ← nonEmptyString(fieldNames.redirectUri, u)
-          valid ← validAbsoluteUrl(fieldNames.redirectUri, nem, "http", "https")
+          valid ← validAbsoluteUrl(fieldNames.redirectUri, nem, !OAuth2Extension.isProduction, "http", "https")
         } yield valid.some
       }) | none[String].success
     }
 
-    def validLink(uri: Option[String]): Validation[Error, Option[String]] =
-      ((uri >>= (_.blankOption)) ∘ (s ⇒ validAbsoluteUrl(fieldNames.link, s, "http", "https") ∘ (_.some))) | none[String].success
+    def validLink(uri: Option[String]): FieldValidation[Option[String]] =
+      ((uri >>= (_.blankOption)) ∘ (s ⇒ validAbsoluteUrl(fieldNames.link, s, !OAuth2Extension.isProduction, "http", "https") ∘ (_.some))) | none[String].success
 
     def authorizationType(authType: String) =
       enumValue(fieldNames.authorizationType, authType, AuthorizationType).map(AuthorizationType.withName)
@@ -72,7 +74,7 @@ class ClientDao(collection: MongoCollection)(implicit system: ActorSystem)
       authType: String,
       scopes: List[String],
       redirectUri: Option[String],
-      link: Option[String])(factory: Factory): ValidationNEL[Error, Client] = {
+      link: Option[String])(factory: Factory): ValidationNEL[FieldError, Client] = {
       ((validate.clientProfile(profile).liftFailNel)
         |@| (validate.name(displayName).liftFailNel)
         |@| (validate.authorizationType(authType).liftFailNel)

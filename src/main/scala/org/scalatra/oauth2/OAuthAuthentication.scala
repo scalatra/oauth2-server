@@ -16,6 +16,7 @@ import org.scribe.builder.api.{ TwitterApi, FacebookApi }
 import net.liftweb.json._
 import org.scalatra.{ CookieOptions, CookieSupport, FlashMapSupport, ScalatraServlet }
 import annotation.tailrec
+import command.FieldError
 
 class FacebookApiCalls(accessToken: OAuthToken)(implicit formats: Formats) {
   private val urlBase = "https://graph.facebook.com/"
@@ -76,7 +77,7 @@ class OAuthAuthentication(implicit system: ActorSystem)
           confirmedAt = DateTime.now)
       })
       val linkedAccounts = (LinkedOAuthAccount("facebook", (fbUser \ "username").extract[String]) :: usr.linkedOAuthAccounts).distinct
-      authProvider.loggedIn(usr.copy(linkedOAuthAccounts = linkedAccounts), request.remoteAddress).success[model.Error]
+      authProvider.loggedIn(usr.copy(linkedOAuthAccounts = linkedAccounts), request.remoteAddress).success[FieldError]
     }
 
     val twitterProvider = oauth.providers("twitter")
@@ -90,7 +91,7 @@ class OAuthAuthentication(implicit system: ActorSystem)
         password = BCryptPassword.random,
         confirmedAt = DateTime.now)
       val linkedAccounts = (LinkedOAuthAccount("twitter", twLogin) :: owner.linkedOAuthAccounts).distinct
-      authProvider.loggedIn(owner.copy(linkedOAuthAccounts = linkedAccounts), request.remoteAddress).success[model.Error]
+      authProvider.loggedIn(owner.copy(linkedOAuthAccounts = linkedAccounts), request.remoteAddress).success[FieldError]
     }
   }
 

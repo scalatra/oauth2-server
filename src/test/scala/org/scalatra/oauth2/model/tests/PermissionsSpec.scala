@@ -8,7 +8,7 @@ import org.specs2.specification.After
 import org.scalatra.oauth2.OAuth2Imports._
 import scalaz._
 import Scalaz._
-
+import org.scalatra.command.ValidationError
 
 class PermissionsSpec extends AkkaSpecification { def is =
   "A permission should" ^

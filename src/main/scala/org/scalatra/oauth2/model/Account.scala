@@ -15,6 +15,7 @@ import Scalaz._
 import OAuth2Imports._
 import org.mindrot.jbcrypt.BCrypt
 import akka.actor.ActorSystem
+import command.{ FieldValidation, FieldError, SimpleError }
 
 object fieldNames {
   val login = "login"
@@ -60,6 +61,8 @@ object fieldNames {
   val clientType = "clientType"
   val profile = "profile"
   val code = "code"
+  val description = "description"
+  val isSystem = "isSystem"
 }
 
 case class Token(token: String, createdAt: DateTime = DateTime.now) extends AppToken {
@@ -170,7 +173,7 @@ class AccountDao(collection: MongoCollection)(implicit system: ActorSystem)
   collection.ensureIndex(Map("remembered.token" -> 1), "remembered_token_idx")
   collection.ensureIndex(Map("linkedOAuthAccounts.provider" -> 1, "linkedOAuthAccounts.id" -> 1), "linked_oauth_accounts_idx", true)
 
-  def login(loginOrEmail: String, password: String, ipAddress: String): Validation[Error, Account] = {
+  def login(loginOrEmail: String, password: String, ipAddress: String): FieldValidation[Account] = {
     val usrOpt = findByLoginOrEmail(loginOrEmail)
     val verifiedPass = usrOpt filter (_.password.isMatch(password))
     if (verifiedPass.isEmpty && usrOpt.isDefined)
@@ -192,14 +195,14 @@ class AccountDao(collection: MongoCollection)(implicit system: ActorSystem)
 
   def findByLinkedAccount(provider: String, id: String) = findOne(Map("linkedOAuthAccounts.provider" -> provider, "linkedOAuthAccounts.id" -> id))
 
-  def loginFromRemember(token: String): Validation[Error, Account] = {
+  def loginFromRemember(token: String): FieldValidation[Account] = {
     val key = fieldNames.remembered + "." + fieldNames.token
     (findOne(Map(key -> token))
-      some (_.success[Error])
+      some (_.success[FieldError])
       none InvalidToken().fail[Account])
   }
 
-  def remember(owner: Account): Validation[Error, String] =
+  def remember(owner: Account): FieldValidation[String] =
     allCatch.withApply(e ⇒ SimpleError(e.getMessage).fail) {
       val token = Token()
       save(owner.copy(remembered = token))
@@ -211,11 +214,13 @@ class AccountDao(collection: MongoCollection)(implicit system: ActorSystem)
   }
 
   object validations {
+    import org.scalatra.command._
+    import Validation._
     import Validations._
 
-    def name(name: String): Validation[Error, String] = nonEmptyString(fieldNames.name, name)
+    def name(name: String): FieldValidation[String] = nonEmptyString(fieldNames.name, name)
 
-    def login(login: String, id: Option[ObjectId] = None): Validation[Error, String] = {
+    def login(login: String, id: Option[ObjectId] = None): FieldValidation[String] = {
       for {
         a ← nonEmptyString(fieldNames.login, login)
         b ← validFormat(fieldNames.login, a, """^\w+([\.\w]*)*$""".r, "%s can only contain letters, numbers, underscores and dots.")
@@ -223,34 +228,34 @@ class AccountDao(collection: MongoCollection)(implicit system: ActorSystem)
       } yield c
     }
 
-    def email(email: String, id: Option[ObjectId] = None): Validation[Error, String] =
+    def email(email: String, id: Option[ObjectId] = None): FieldValidation[String] =
       for {
         a ← nonEmptyString(fieldNames.email, email)
         b ← validEmail(fieldNames.email, a)
         c ← uniqueField[String](fieldNames.email, b, collection, id)
       } yield c
 
-    def password(password: String): Validation[Error, String] =
+    def password(password: String): FieldValidation[String] =
       for {
         a ← nonEmptyString(fieldNames.password, password)
         b ← minLength(fieldNames.password, a, 6)
       } yield b
 
-    def passwordWithConfirmation(password: String, passwordConfirmation: String): Validation[Error, String] =
+    def passwordWithConfirmation(password: String, passwordConfirmation: String): FieldValidation[String] =
       for {
         a ← this.password(password)
         b ← validConfirmation(fieldNames.password, a, fieldNames.password + "Confirmation", passwordConfirmation)
       } yield b
 
-    def tokenRequired(tokenType: String, token: String): Validation[Error, String] =
+    def tokenRequired(tokenType: String, token: String): FieldValidation[String] =
       nonEmptyString(tokenType.toLowerCase + "." + fieldNames.token, token)
 
-    def validPassword(owner: Account, password: String): Validation[Error, Account] =
+    def validPassword(owner: Account, password: String): FieldValidation[Account] =
       if (owner.password.isMatch(password)) owner.success
       else SimpleError("The username/password combination doesn not match").fail
 
     /*_*/
-    def apply(owner: Account): ValidationNEL[Error, Account] = {
+    def apply(owner: Account): ValidationNEL[FieldError, Account] = {
       val factory: Factory = owner.copy(_, _, _)
       (login(owner.login, owner.id.some).liftFailNel
         |@| email(owner.email, owner.id.some).liftFailNel
@@ -265,8 +270,8 @@ class AccountDao(collection: MongoCollection)(implicit system: ActorSystem)
     email: Option[String],
     name: Option[String],
     password: Option[String],
-    passwordConfirmation: Option[String]): ValidationNEL[Error, Account] = {
-    val newOwner: ValidationNEL[Error, Account] = (validations.login(~login).liftFailNel
+    passwordConfirmation: Option[String]): ValidationNEL[FieldError, Account] = {
+    val newOwner: ValidationNEL[FieldError, Account] = (validations.login(~login).liftFailNel
       |@| validations.email(~email).liftFailNel
       |@| validations.name(~name).liftFailNel
       |@| (validations
@@ -284,41 +289,41 @@ class AccountDao(collection: MongoCollection)(implicit system: ActorSystem)
 
   /*_*/
 
-  def validate(user: Account): Scalaz.ValidationNEL[Error, Account] = validations(user)
+  def validate(user: Account): Scalaz.ValidationNEL[FieldError, Account] = validations(user)
 
-  def confirm(token: String): Validation[Error, Account] = {
+  def confirm(token: String): FieldValidation[Account] = {
     val key = fieldNames.confirmation + "." + fieldNames.token
     validations.tokenRequired("confirmation", token) flatMap { tok ⇒
       findOne(Map(key -> tok)) map { owner ⇒
         if (!owner.isConfirmed) {
           val upd = owner.copy(confirmedAt = DateTime.now)
           save(upd)
-          upd.success[Error]
+          upd.success[FieldError]
         } else AlreadyConfirmed().fail
       } getOrElse InvalidToken().fail
     }
   }
 
-  def forgot(loginOrEmail: Option[String]): Validation[Error, Account] = {
-    Validations.nonEmptyString(fieldNames.login, ~loginOrEmail) flatMap { loe ⇒
+  def forgot(loginOrEmail: Option[String]): FieldValidation[Account] = {
+    org.scalatra.command.Validation.nonEmptyString(fieldNames.login, ~loginOrEmail) flatMap { loe ⇒
       findByLoginOrEmail(loe) map { owner ⇒
         val updated = owner.copy(reset = Token(), resetAt = MinDate)
         save(updated)
         if (!oauth.isTest) oauth.smtp.send(MailMessage(SendForgotPasswordMail(updated.name, updated.login, updated.email, updated.reset.token)))
-        updated.success[Error]
-      } getOrElse SimpleError("Account not found.").fail
+        updated.success[FieldError]
+      } getOrElse SimpleError("Account not found.").fail[Account]
     }
   }
 
   /*_*/
-  def resetPassword(token: String, password: String, passwordConfirmation: String): ValidationNEL[Error, Account] = {
-    val r: ValidationNEL[Error, Validation[Error, Account]] = (validations.tokenRequired("reset", token).liftFailNel
+  def resetPassword(token: String, password: String, passwordConfirmation: String): ValidationNEL[FieldError, Account] = {
+    val r: ValidationNEL[FieldError, FieldValidation[Account]] = (validations.tokenRequired("reset", token).liftFailNel
       |@| validations.passwordWithConfirmation(password, passwordConfirmation).liftFailNel)(doReset _)
     (r fold (_.fail, _.liftFailNel))
   }
   /*_*/
 
-  def changePassword(owner: Account, oldPassword: String, password: String, passwordConfirmation: String): Validation[Error, Account] = {
+  def changePassword(owner: Account, oldPassword: String, password: String, passwordConfirmation: String): FieldValidation[Account] = {
     for {
       o ← validations.validPassword(owner, oldPassword)
       pwd ← validations.passwordWithConfirmation(password, passwordConfirmation)
@@ -329,13 +334,13 @@ class AccountDao(collection: MongoCollection)(implicit system: ActorSystem)
     }
   }
 
-  private def doReset(token: String, password: String): Validation[Error, Account] = {
+  private def doReset(token: String, password: String): FieldValidation[Account] = {
     val key = fieldNames.reset + "." + fieldNames.token
     findOne(Map(key -> token)) map { owner ⇒
-      owner.isReset ? (InvalidToken(): Error).fail[Account] | {
+      owner.isReset ? (InvalidToken(): FieldError).fail[Account] | {
         val upd = owner.copy(password = BCryptPassword(password).encrypted, resetAt = DateTime.now, reset = Token())
         save(upd)
-        upd.success[Error]
+        upd.success[FieldError]
       }
     } getOrElse InvalidToken().fail
   }

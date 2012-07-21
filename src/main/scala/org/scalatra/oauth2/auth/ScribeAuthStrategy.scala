@@ -10,10 +10,9 @@ import org.scribe.oauth.{ OAuth20ServiceImpl, OAuth10aServiceImpl, OAuthService 
 import OAuth2Imports._
 import java.util.concurrent.ConcurrentHashMap
 import scala.collection.JavaConverters._
-import org.scalatra._
-import auth.{ ScentrySupport, ScentryStrategy }
-import model.{ SimpleError }
-import auth.ScentryAuthStore.{ CookieAuthStore }
+import org.scalatra.auth.{ ScentrySupport, ScentryStrategy }
+import command.{ FieldError, ValidationError, SimpleError }
+import org.scalatra.auth.ScentryAuthStore.{ CookieAuthStore }
 import org.fusesource.scalate.Binding
 import javax.servlet.http.{ HttpServletResponse, HttpServletRequest }
 import java.io.PrintWriter
@@ -33,7 +32,7 @@ trait ScribeAuthStrategyContext[UserClass >: Null <: AppUser[_]] {
 
   def app: ScalatraBase with FlashMapSupport with ScribeAuthSupport[UserClass]
 
-  def findOrCreateUser(accessToken: OAuthToken): Validation[model.Error, UserClass]
+  def findOrCreateUser(accessToken: OAuthToken): Validation[FieldError, UserClass]
 }
 
 trait ScribeAuthSupport[UserClass >: Null <: AppUser[_]] extends AuthenticationSupport[UserClass] { self: ScalatraBase with SessionSupport with FlashMapSupport ⇒
@@ -44,7 +43,7 @@ trait ScribeAuthSupport[UserClass >: Null <: AppUser[_]] extends AuthenticationS
 
   protected def sslRequired: Boolean = true
 
-  def registerOAuthService(name: String, service: OAuthService)(findOrCreateUser: OAuthToken ⇒ Validation[model.Error, UserClass]) = {
+  def registerOAuthService(name: String, service: OAuthService)(findOrCreateUser: OAuthToken ⇒ Validation[FieldError, UserClass]) = {
     val nm = name
     val fn = findOrCreateUser
     val ctxt = new ScribeAuthStrategyContext[UserClass] {
@@ -111,14 +110,14 @@ trait ScribeAuthSupport[UserClass >: Null <: AppUser[_]] extends AuthenticationS
     }
   }
 
-  protected def trySavingCompletedProfile(): ValidationNEL[model.Error, UserClass]
+  protected def trySavingCompletedProfile(): ValidationNEL[FieldError, UserClass]
 
   /**
    * Registers authentication strategies.
    */
   override protected def registerAuthStrategies {
     oauthServicesRegistry foreach {
-      case (k, v) ⇒ scentry.registerStrategy(k, _ ⇒ new ScribeAuthStrategy(v))
+      case (k, v) ⇒ scentry.register(k, _ ⇒ new ScribeAuthStrategy(v))
     }
   }
 

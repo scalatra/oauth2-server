@@ -8,6 +8,7 @@ import scalaz._
 import Scalaz._
 import com.mongodb.casbah.commons.conversions.scala.RegisterJodaTimeConversionHelpers
 import org.specs2.specification.After
+import org.scalatra.command.ValidationError
 
 class AccountSpec extends AkkaSpecification { def is = sequential ^
   "An account dao should" ^

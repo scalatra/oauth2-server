@@ -3,16 +3,16 @@ package oauth2
 package model
 
 import java.net.URI
-import collection.mutable.HashMap
 import OAuth2Imports._
+import command.FieldError
+import collection.mutable
 
-sealed trait Error {
-  def message: String
+case class AlreadyConfirmed(message: String = "This account has already been confirmed.") extends FieldError {
+  def args: Seq[Any] = Nil
 }
-case class ValidationError(message: String, field: String) extends Error
-case class SimpleError(message: String) extends Error
-case class AlreadyConfirmed(message: String = "This account has already been confirmed.") extends Error
-case class InvalidToken(message: String = "The token is invalid") extends Error
+case class InvalidToken(message: String = "The token is invalid") extends FieldError {
+  def args: Seq[Any] = Nil
+}
 
 object OAuth2Error {
   object Code extends Enumeration {
@@ -117,7 +117,7 @@ abstract class OAuth2Error(
   }
 
   private def buildQueryString(query: Map[String, Seq[String]]) = {
-    val m = new HashMap[String, Seq[String]]
+    val m = new mutable.HashMap[String, Seq[String]]
     m += "error" -> List(error.toString)
     state foreach { m += "state" -> List(_) }
     description foreach { m += "error_description" -> List(_) }

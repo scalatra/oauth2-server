@@ -10,6 +10,7 @@ import scalaz._
 import Scalaz._
 import OAuth2Imports._
 import akka.actor.ActorSystem
+import command.{ Validation, FieldValidation, FieldError }
 
 case class Permission(@Key("_id") code: String, name: String, description: String, isSystem: Boolean = false)
 
@@ -20,18 +21,18 @@ class PermissionDao(collection: MongoCollection)(implicit system: ActorSystem)
   oauth.permissions foreach save
 
   object validate {
-
-    import Validations._
+    import Validation._
 
     def name(name: String) = nonEmptyString(fieldNames.name, name)
 
-    private def uniqueCode(fieldName: String, value: ⇒ String, collection: MongoCollection): Validation[Error, String] = {
+    private[this] def uniqueCode(fieldName: String, value: ⇒ String, collection: MongoCollection): FieldValidation[String] = {
       def q(s: String) = Map("_id" -> s)
       new PredicateValidator[String](
         fieldName,
         s ⇒ collection.count(q(s), Map("_id" -> 1)) == 0,
         "%s exists already.").validate(value)
     }
+
     def code(code: String) =
       for {
         nec ← nonEmptyString(fieldNames.code, code)
@@ -40,7 +41,7 @@ class PermissionDao(collection: MongoCollection)(implicit system: ActorSystem)
       } yield uniq
 
     /*_*/
-    def apply(perm: Permission): ValidationNEL[Error, Permission] = {
+    def apply(perm: Permission): ValidationNEL[FieldError, Permission] = {
       (code(perm.code).liftFailNel |@|
         name(perm.name).liftFailNel) { (_, _) ⇒ perm }
     }
