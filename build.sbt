@@ -34,7 +34,7 @@ libraryDependencies ++= Seq(
   "org.scalatra"            % "scalatra-lift-json"   % "2.1.0-SNAPSHOT",
   "org.scalatra"            % "scalatra-swagger"     % "2.1.0-SNAPSHOT",
   "org.scalatra"            % "scalatra-slf4j"       % "2.1.0-SNAPSHOT",
-  "org.scalatra"            % "contrib-validation"   % "1.0.0-SNAPSHOT",
+//  "org.scalatra"            % "contrib-validation"   % "1.0.5-SNAPSHOT",
   "net.databinder"          % "dispatch-http_2.9.1"  % "0.8.8",
   "net.databinder"          % "dispatch-oauth_2.9.1" % "0.8.8",
   "org.clapper"             % "scalasti_2.9.1"       % "0.5.8",

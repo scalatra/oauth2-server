@@ -6,13 +6,8 @@ import scalaz._
 import Scalaz._
 import com.novus.salat.global._
 import OAuth2Imports._
-import net.liftweb.json._
-import org.apache.commons.validator.routines.{ UrlValidator, EmailValidator }
-import scala.util.matching.Regex
-import scala.util.control.Exception._
-import java.net.{ HttpURLConnection, URI }
-import command.Validation.PredicateValidator
 import command.FieldValidation
+import command.Validators.PredicateValidator
 
 object Validations {
 

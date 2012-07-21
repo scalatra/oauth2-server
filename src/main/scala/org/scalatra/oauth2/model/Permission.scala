@@ -11,6 +11,8 @@ import Scalaz._
 import OAuth2Imports._
 import akka.actor.ActorSystem
 import command.{ Validation, FieldValidation, FieldError }
+import command.Validators.PredicateValidator
+import commands.CreatePermissionCommand
 
 case class Permission(@Key("_id") code: String, name: String, description: String, isSystem: Boolean = false)
 
@@ -33,7 +35,7 @@ class PermissionDao(collection: MongoCollection)(implicit system: ActorSystem)
         "%s exists already.").validate(value)
     }
 
-    def code(code: String) =
+    def code(code: String): FieldValidation[String] =
       for {
         nec ← nonEmptyString(fieldNames.code, code)
         ff ← validFormat(fieldNames.code, nec, """^(\w+|-)([-\w]*)*$""".r, "%s can only contain letters, numbers, underscores and hyphens.")
@@ -46,6 +48,19 @@ class PermissionDao(collection: MongoCollection)(implicit system: ActorSystem)
         name(perm.name).liftFailNel) { (_, _) ⇒ perm }
     }
     /*_*/
+  }
+
+  def create(cmd: CreatePermissionCommand): ValidationNEL[FieldError, Permission] = {
+    if (cmd.valid == Some(true)) {
+      val model = cmd.model
+      save(model)
+      model.successNel
+    } else {
+      val f = cmd.errors.map(_.validation) collect {
+        case Failure(e) ⇒ e
+      }
+      nel(f.head, f.tail: _*).fail
+    }
   }
 
 }

@@ -11,7 +11,7 @@ object ApiError {
 }
 case class ApiError(fieldName: Option[String], message: String) {
 
-  def toJValue = {
+  def toJValue: JValue = {
     val lb = new ListBuffer[JValue]
     fieldName foreach { lb += JString(_) }
     lb += JString(message)
@@ -26,7 +26,7 @@ case class ApiErrorList(values: List[ApiError]) {
 }
 
 case class OAuth2Response(data: JValue = JNull, errors: List[JValue] = Nil, statusCode: Option[Int] = None) {
-  def toJValue = {
+  def toJValue: JValue = {
     val obj = JObject(JField("data", data) :: JField("errors", JArray(errors)) :: Nil)
     statusCode map { sc ⇒ obj merge JObject(JField("statusCode", JInt(sc)) :: Nil) } getOrElse obj
   }
