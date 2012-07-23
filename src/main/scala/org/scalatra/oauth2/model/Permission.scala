@@ -24,8 +24,24 @@ trait ModelCommand[TModel <: Product] { self: Command with ValidationSupport ⇒
 
 trait OAuth2ModelCommand[TModel <: Product] extends Command with ValidationSupport with ModelCommand[TModel]
 
+trait CommandableDao[ObjectType <: AnyRef, ID <: Any] { self: SalatDAO[ObjectType, ID] =>
+
+  def execute(cmd: OAuth2ModelCommand[ObjectType]): ValidationNEL[FieldError, ObjectType] = {
+    if (cmd.valid == Some(true)) {
+      val model = cmd.model
+      save(model)
+      model.successNel
+    } else {
+      val f = cmd.errors.map(_.validation) collect {
+        case Failure(e) ⇒ e
+      }
+      nel(f.head, f.tail: _*).fail
+    }
+  }
+}
+
 class PermissionDao(collection: MongoCollection)(implicit system: ActorSystem)
-    extends SalatDAO[Permission, String](collection = collection) {
+    extends SalatDAO[Permission, String](collection = collection) with CommandableDao[Permission, String] {
   private val oauth = OAuth2Extension(system)
 
   oauth.permissions foreach save
@@ -61,17 +77,6 @@ class PermissionDao(collection: MongoCollection)(implicit system: ActorSystem)
 
   def create(cmd: CreatePermissionCommand): ValidationNEL[FieldError, Permission] = execute(cmd)
 
-  def execute(cmd: OAuth2ModelCommand[Permission]): ValidationNEL[FieldError, Permission] = {
-    if (cmd.valid == Some(true)) {
-      val model = cmd.model
-      save(model)
-      model.successNel
-    } else {
-      val f = cmd.errors.map(_.validation) collect {
-        case Failure(e) ⇒ e
-      }
-      nel(f.head, f.tail: _*).fail
-    }
-  }
+
 
 }

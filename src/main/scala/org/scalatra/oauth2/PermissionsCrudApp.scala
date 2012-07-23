@@ -3,14 +3,23 @@ package oauth2
 
 import akka.actor.ActorSystem
 import commands.{ PermissionCommand, UpdatePermissionCommand, CreatePermissionCommand }
-import model.{ OAuth2ModelCommand, Permission, ApiError, OAuth2Response }
+import model._
+import model.OAuth2Response
+import model.Permission
 import OAuth2Imports._
 import net.liftweb.json._
 import command.{ FieldError, ValidationError }
 import scalaz._
 import Scalaz._
+import scalaz.Failure
+import command.ValidationError
+import scalaz.Success
+import com.novus.salat.dao.SalatDAO
 
-class PermissionsCrudApp(implicit protected val system: ActorSystem) extends OAuth2ServerBaseApp {
+abstract class SalatCrudApp[ObjectType <: AnyRef, ID <: Any](implicit mf: Manifest[ObjectType], protected val system: ActorSystem) extends OAuth2ServerBaseApp {
+  def dao: SalatDAO[ObjectType, ID] with CommandableDao[ObjectType, ID]
+  lazy val viewName: String = mf.erasure.getSimpleName.underscore.pluralize
+
 
   before("/") {
     if (isAnonymous) scentry.authenticate("remember_me")
@@ -21,7 +30,7 @@ class PermissionsCrudApp(implicit protected val system: ActorSystem) extends OAu
   def pageSize = ~params.getAs[Int]("pageSize") max 1
 
   get("/") {
-    val clients = oauth.permissionDao.find(MongoDBObject()).limit(pageSize).skip((page - 1) * pageSize)
+    val clients = dao.find(MongoDBObject()).limit(pageSize).skip((page - 1) * pageSize)
     format match {
       case "json" ⇒ OAuth2Response(JArray(clients.toList.map(c ⇒ Extraction.decompose(c))))
       case _      ⇒ jade("permissions", "permissions" -> clients)
@@ -29,28 +38,32 @@ class PermissionsCrudApp(implicit protected val system: ActorSystem) extends OAu
   }
 
   post("/") {
-    executeCommand[CreatePermissionCommand]("addPermission")
+    executeCreateCommand
   }
 
   put("/:id") {
-    executeCommand[UpdatePermissionCommand]("editPermission")
+    executeUpdateCommand
   }
 
   delete("/:id") {
-    oauth.permissionDao.removeById(params("id"))
+    dao.removeById(params("id"))
   }
 
-  private def executeCommand[T <: OAuth2ModelCommand[Permission]](clientRoute: String)(implicit mf: Manifest[T], system: ActorSystem) = {
+  protected def executeCreateCommand: Any
+  protected def executeUpdateCommand: Any
+
+  protected def executeCommand[T <: OAuth2ModelCommand[Permission]](clientRoute: String)(implicit mf: Manifest[T], system: ActorSystem) = {
     val cmd = oauth2Command[T]
-    val res = oauth.permissionDao.execute(cmd)
+    val res = dao.execute(cmd)
     renderCommandResult(res, cmd.model, clientRoute)
   }
+
   private def renderCommandResult(result: ValidationNEL[FieldError, Permission], model: Permission, clientRoute: String) = {
     result match {
       case Success(perm) ⇒
         format match {
           case "json" | "xml" ⇒ OAuth2Response(Extraction.decompose(perm))
-          case _              ⇒ jade("permissions", "clientRoute" -> "addPermission", "permission" -> perm)
+          case _              ⇒ jade(viewName, "clientRoute" -> clientRoute, "model" -> perm)
         }
 
       case Failure(errs) ⇒
@@ -62,10 +75,18 @@ class PermissionsCrudApp(implicit protected val system: ActorSystem) extends OAu
           case "json" | "xml" ⇒
             OAuth2Response(Extraction.decompose(model), rr.list.map(_.toJValue))
           case _ ⇒
-            jade("permissions", "clientRoute" -> clientRoute, "permission" -> model, "errors" -> rr.list)
+            jade(viewName, "clientRoute" -> clientRoute, "model" -> model, "errors" -> rr.list)
         }
 
     }
   }
+}
 
+class PermissionsCrudApp(implicit system: ActorSystem) extends SalatCrudApp[Permission, String] {
+
+  val dao = oauth.permissionDao
+
+  protected def executeCreateCommand: Any = executeCommand[CreatePermissionCommand]("addPermission")
+
+  protected def executeUpdateCommand: Any = executeCommand[UpdatePermissionCommand]("editPermission")
 }
