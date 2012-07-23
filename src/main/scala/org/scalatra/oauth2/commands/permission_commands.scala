@@ -24,14 +24,14 @@ abstract class PermissionCommand(implicit system: ActorSystem) extends OAuth2Mod
   def model = Permission(~code.converted, ~name.converted, ~description.converted, ~isSystem.converted)
 }
 
-class CreatePermissionCommand(implicit system: ActorSystem) extends PermissionCommand()(system) {
+class CreatePermissionCommand(implicit system: ActorSystem) extends PermissionCommand {
 
   val code = bind[String](fieldNames.code) validate {
     case s ⇒ oauth.permissionDao.validate.code(~s)
   }
 
 }
-class UpdatePermissionCommand(implicit system: ActorSystem) extends PermissionCommand()(system) with IdFromParamsBagCommand {
+class UpdatePermissionCommand(implicit system: ActorSystem) extends PermissionCommand with IdFromParamsBagCommand {
 
   private lazy val retrieved = oauth.permissionDao.findOneById(~code.converted)
 

@@ -26,11 +26,19 @@ import _root_.ro.isdc.wro.util.provider.ConfigurableProviderSupport
 import collection.immutable.HashMap
 import _root_.ro.isdc.wro.model.resource.processor.impl.css._
 import _root_.ro.isdc.wro.model.resource.processor.impl.js.{JSMinProcessor, SemicolonAppenderPreProcessor}
+import java.io.IOException
+import org.apache.commons.lang3.StringUtils
+import org.mozilla.javascript.ScriptableObject
+import ro.isdc.wro.extensions.processor.support.handlebarsjs.HandlebarsJs
+import ro.isdc.wro.extensions.processor.support.template.AbstractJsTemplateCompiler
+import ro.isdc.wro.extensions.script.RhinoScriptBuilder
+import ro.isdc.wro.model.resource.Resource
+import ro.isdc.wro.util.WroUtil
 import scala.collection.JavaConverters._
 import _root_.ro.isdc.wro.model.resource.processor.{ResourcePostProcessor, ResourcePreProcessor}
 import ro.isdc.wro.extensions.processor.js
 import js.{CoffeeScriptProcessor, UglifyJsProcessor}
-import js.{UglifyJsProcessor, CoffeeScriptProcessor}
+import js.{UglifyJsProcessor, CoffeeScriptProcessor, HandlebarsJsProcessor}
 
 /**
  * Provides Common wro4j Processors for daily use :)
@@ -69,7 +77,16 @@ class OAuth2Processors extends ConfigurableProviderSupport {
       CssDataUriPreProcessor.ALIAS -> new CssDataUriPreProcessor(),
       JawrCssMinifierProcessor.ALIAS -> new JawrCssMinifierProcessor(),
       JSMinProcessor.ALIAS -> new JSMinProcessor(),
-      CssMinProcessor.ALIAS -> new CssMinProcessor
+      CssMinProcessor.ALIAS -> new CssMinProcessor,
+      HandlebarsJsProcessor.ALIAS -> ExtensionsAwareProcessorDecorator.decorate(new HandlebarsJsProcessor {
+        override def getArgument(resource: Resource): String = resource.getUri
+        override def createCompiler(): AbstractJsTemplateCompiler = new HandlebarsJs {
+          override def compile(content: String, name: String): String = {
+            HandlebarsJs.HANDLEBARS_JS_TEMPLATES_INIT +
+              "\ntemplates['" + name + "'] = template(" + super.compile(content, null) + " ); })();"
+          }
+        }
+      }).addExtension("handlebars")
     )
   }
 }

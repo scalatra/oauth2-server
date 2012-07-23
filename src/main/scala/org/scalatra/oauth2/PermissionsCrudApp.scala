@@ -16,10 +16,9 @@ import command.ValidationError
 import scalaz.Success
 import com.novus.salat.dao.SalatDAO
 
-abstract class SalatCrudApp[ObjectType <: AnyRef, ID <: Any](implicit mf: Manifest[ObjectType], protected val system: ActorSystem) extends OAuth2ServerBaseApp {
+abstract class SalatCrudApp[ObjectType <: Product, ID <: Any](implicit mf: Manifest[ObjectType], protected val system: ActorSystem) extends OAuth2ServerBaseApp {
   def dao: SalatDAO[ObjectType, ID] with CommandableDao[ObjectType, ID]
   lazy val viewName: String = mf.erasure.getSimpleName.underscore.pluralize
-
 
   before("/") {
     if (isAnonymous) scentry.authenticate("remember_me")
@@ -46,19 +45,20 @@ abstract class SalatCrudApp[ObjectType <: AnyRef, ID <: Any](implicit mf: Manife
   }
 
   delete("/:id") {
-    dao.removeById(params("id"))
+    dao.removeById(castId(params("id")))
   }
 
+  protected def castId(idStr: String): ID
   protected def executeCreateCommand: Any
   protected def executeUpdateCommand: Any
 
-  protected def executeCommand[T <: OAuth2ModelCommand[Permission]](clientRoute: String)(implicit mf: Manifest[T], system: ActorSystem) = {
+  protected def executeCommand[T <: OAuth2ModelCommand[ObjectType]](clientRoute: String)(implicit mf: Manifest[T], system: ActorSystem) = {
     val cmd = oauth2Command[T]
     val res = dao.execute(cmd)
     renderCommandResult(res, cmd.model, clientRoute)
   }
 
-  private def renderCommandResult(result: ValidationNEL[FieldError, Permission], model: Permission, clientRoute: String) = {
+  private def renderCommandResult(result: ValidationNEL[FieldError, ObjectType], model: ObjectType, clientRoute: String) = {
     result match {
       case Success(perm) ⇒
         format match {
@@ -89,4 +89,6 @@ class PermissionsCrudApp(implicit system: ActorSystem) extends SalatCrudApp[Perm
   protected def executeCreateCommand: Any = executeCommand[CreatePermissionCommand]("addPermission")
 
   protected def executeUpdateCommand: Any = executeCommand[UpdatePermissionCommand]("editPermission")
+
+  protected def castId(idStr: String): String = idStr
 }

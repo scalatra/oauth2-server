@@ -1,0 +1,29 @@
+{{#if permissions}}
+<table class="table table-bordered table-striped">
+    <caption>A list of available permissions</caption>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Description</th>
+            <th>System</th>
+            <th>&nbsp;</th>
+        </tr>
+    </thead>
+    <tbody>
+    {{#each permissions}}
+        <tr>
+            <td>{{name}}</td>
+            <td>{{description}}</td>
+            <td>{{isSystem}}</td>
+            <td>
+                <a class="edit-link" data-id="{{code}}">Edit</a>
+                <a class="delete-link" data-id="{{code}}">Delete</a>
+            </td>
+        </tr>
+    {{/each}}
+    </tbody>
+</table>
+
+{{else}}
+<p>There are currently no clients registered</p>
+{{/if}}

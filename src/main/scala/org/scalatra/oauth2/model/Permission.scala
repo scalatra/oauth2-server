@@ -24,7 +24,7 @@ trait ModelCommand[TModel <: Product] { self: Command with ValidationSupport ⇒
 
 trait OAuth2ModelCommand[TModel <: Product] extends Command with ValidationSupport with ModelCommand[TModel]
 
-trait CommandableDao[ObjectType <: AnyRef, ID <: Any] { self: SalatDAO[ObjectType, ID] =>
+trait CommandableDao[ObjectType <: Product, ID <: Any] { self: SalatDAO[ObjectType, ID] ⇒
 
   def execute(cmd: OAuth2ModelCommand[ObjectType]): ValidationNEL[FieldError, ObjectType] = {
     if (cmd.valid == Some(true)) {
@@ -76,7 +76,5 @@ class PermissionDao(collection: MongoCollection)(implicit system: ActorSystem)
   }
 
   def create(cmd: CreatePermissionCommand): ValidationNEL[FieldError, Permission] = execute(cmd)
-
-
 
 }

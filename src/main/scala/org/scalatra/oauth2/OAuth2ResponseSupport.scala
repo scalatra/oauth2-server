@@ -12,30 +12,34 @@ import Scalaz._
 import net.liftweb.json.Xml._
 import scala.Some
 
+object OAuth2ResponseSupport {
+  val JsonContentTypeHeader = Map("Content-Type" -> "application/json")
+}
 trait OAuth2ResponseSupport { self: ScalatraBase with ApiFormats ⇒
 
+  import OAuth2ResponseSupport.JsonContentTypeHeader
   def halt(bcResponse: OAuth2Response): Nothing = {
-    halt(500, bcResponse.copy(statusCode = Some(500)), Map("Content-Type" -> "application/json"), "Bad request")
+    halt(500, bcResponse.copy(statusCode = Some(500)), JsonContentTypeHeader, "Bad request")
   }
 
   def halt(code: Int, bcResponse: OAuth2Response): Nothing = {
-    halt(code, bcResponse.copy(statusCode = Some(code)), Map("Content-Type" -> "application/json"))
+    halt(code, bcResponse.copy(statusCode = Some(code)), JsonContentTypeHeader)
   }
 
   def halt(error: JValue): Nothing = {
-    halt(500, OAuth2Response(errors = error :: Nil, statusCode = Some(500)), Map("Content-Type" -> "application/json"))
+    halt(500, OAuth2Response(errors = error :: Nil, statusCode = Some(500)), JsonContentTypeHeader)
   }
 
   def halt(code: Int, error: JValue): Nothing = {
-    halt(code, OAuth2Response(errors = error :: Nil, statusCode = Some(code)), Map("Content-Type" -> "application/json"))
+    halt(code, OAuth2Response(errors = error :: Nil, statusCode = Some(code)), JsonContentTypeHeader)
   }
 
   def halt(errors: List[JValue]): Nothing = {
-    halt(500, OAuth2Response(errors = errors, statusCode = Some(500)), Map("Content-Type" -> "application/json"))
+    halt(500, OAuth2Response(errors = errors, statusCode = Some(500)), JsonContentTypeHeader)
   }
 
   def halt(code: Int, errors: List[JValue]): Nothing = {
-    halt(code, OAuth2Response(errors = errors, statusCode = Some(code)), Map("Content-Type" -> "application/json"))
+    halt(code, OAuth2Response(errors = errors, statusCode = Some(code)), JsonContentTypeHeader)
   }
 
   def halt(code: Int, msg: String): Nothing = {
