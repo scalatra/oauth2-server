@@ -208,11 +208,11 @@ trait DefaultAuthenticationSupport[UserClass >: Null <: AppUser[_]] extends Auth
   }
 
   def unauthenticated() = {
-    format match {
-      case "json" ⇒ scentry.strategies("resource_owner_basic").unauthenticated()
-      case _ ⇒
-        session(scentryConfig.returnToKey) = request.getRequestURI
-        redirect(scentryConfig.failureUrl)
+    if (request.isBasicAuth && request.providesAuth) {
+      scentry.strategies("resource_owner_basic").unauthenticated()
+    } else {
+      session(scentryConfig.returnToKey) = request.getRequestURI
+      redirect(scentryConfig.failureUrl)
     }
   }
 

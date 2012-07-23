@@ -27,12 +27,13 @@ require.config({
 
 });
 
-require(['cs!common', 'bootstrap'], function( Common, Bootstrap ){
+require(['cs!common', 'bootstrap', 'backbone'], function( Common, Bootstrap, Backbone ){
 
   // Initialize routing and start Backbone.history()
 //  var TodoRouter = new Workspace;
 
 
+  Backbone.history.stop();
   Backbone.history.start();
 
   // Initialize the application view

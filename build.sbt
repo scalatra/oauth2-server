@@ -1,8 +1,9 @@
 import scala.xml.Group
 import com.typesafe.startscript.StartScriptPlugin
 import scalariform.formatter.preferences._
-import com.mojolly.scalate.ScalatePlugin._
-import RequireJsKeys._
+//import RequireJsKeys._
+import ScalateKeys._
+import Wro4jKeys._
 import net.liftweb.json._
 import JsonDSL._
 
@@ -34,7 +35,7 @@ libraryDependencies ++= Seq(
   "org.scalatra"            % "scalatra-lift-json"   % "2.1.0-SNAPSHOT",
   "org.scalatra"            % "scalatra-swagger"     % "2.1.0-SNAPSHOT",
   "org.scalatra"            % "scalatra-slf4j"       % "2.1.0-SNAPSHOT",
-//  "org.scalatra"            % "contrib-validation"   % "1.0.5-SNAPSHOT",
+  "org.scalatra"            % "contrib-validation"   % "1.0.5-SNAPSHOT",
   "net.databinder"          % "dispatch-http_2.9.1"  % "0.8.8",
   "net.databinder"          % "dispatch-oauth_2.9.1" % "0.8.8",
   "org.clapper"             % "scalasti_2.9.1"       % "0.5.8",
@@ -42,9 +43,10 @@ libraryDependencies ++= Seq(
   "org.scribe"              % "scribe"               % "1.3.1",
   "javax.mail"              % "mail"                 % "1.4.5",
   "commons-codec"           % "commons-codec"        % "1.6",
+  "ro.isdc.wro4j"           % "wro4j-core"           % "1.4.7" exclude("log4j", "log4j") exclude("org.slf4j", "slf4j-log4j12"),
+  "ro.isdc.wro4j"           % "wro4j-extensions"     % "1.4.7" exclude("log4j", "log4j") exclude("org.slf4j", "slf4j-log4j12"),
   "com.typesafe.akka"       % "akka-actor"           % "2.0.2",
   "com.typesafe.akka"       % "akka-testkit"         % "2.0.2"               % "test",
-  "org.fusesource.scalate"  % "scalate-jruby"        % "1.5.3",
   "org.fusesource.scalate"  % "scalate-markdownj"    % "1.5.3",
   "org.scala-tools.time"    % "time_2.9.1"           % "0.5",
   "org.scalatra"            % "scalatra-specs2"      % "2.1.0-SNAPSHOT"      % "test",
@@ -57,6 +59,8 @@ libraryDependencies ++= Seq(
 )
 
 resolvers += "sonatype oss snapshots" at "https://oss.sonatype.org/content/repositories/snapshots/"
+
+resolvers += "sonatype oss releases" at "https://oss.sonatype.org/content/repositories/releases/"
 
 resolvers += Classpaths.typesafeResolver
 
@@ -175,47 +179,20 @@ seq(StartScriptPlugin.startScriptForWarSettings: _*)
 
 externalResolvers <<= resolvers map { Resolver.withDefaultResolvers(_, scalaTools = false) }
 
-seq(requireJsSettings: _*)
-
-buildProfile in (Compile, requireJs) := (
-  ("uglify" -> ("ascii_only" -> true)) ~
-  ("pragmasOnSave" -> ("excludeCoffeeScript" -> true) ~ ("excludeJade" -> true)) ~
-  ("paths" -> ("jquery" -> "empty:")) ~
-  ("stubModules" -> List("cs", "jade")) ~
-  ("modules" -> List[JValue](("name" -> "main") ~ ("exclude" -> List("coffee-script", "jade"))))
-)
-
-mainConfigFile in (Compile, requireJs) <<=
-  (sourceDirectory in (Compile, requireJs), baseUrl in (Compile, requireJs))((a, b) => Some(a / b / "main.js"))
-
-auxCompile in Compile <<= (auxCompile in Compile).dependsOn(requireJs in Compile)
-
-compile in Compile <<= (compile in Compile).dependsOn(requireJs in Compile)
-
-watchSources <++= (webApp in (Compile, requireJs)) map (d => (d / "WEB-INF" ** "*").get)
-
-
-
+watchSources <++= (sourceDirectory in Compile) map (d => (d / "webapp" ** "*").get)
 
 //watchSources in Compile <<= (sourceDirectory in Compile in requireJs) map { d => (d ** "*").get }
 
-// seq(coffeeSettings: _*)
+seq(wro4jSettings: _*)
 
-// (CoffeeKeys.iced in (Compile, CoffeeKeys.coffee)) := true
+compile in Compile <<= (compile in Compile).dependsOn(generateResources in Compile)
 
-// (resourceManaged in (Compile, CoffeeKeys.coffee)) <<= (sourceDirectory in Compile)(_ / "javascript")
+(webappResources in Compile) <+= (targetFolder in generateResources in Compile)
 
-// sourceGenerators in Compile <+= (sourceDirectory in Compile) map { dir =>
-//   val files = (dir / "javascript" ** "*.js") x relativeTo (dir / "javascript")
-//   val tgt = dir / "javascript/app.jsm"
-//   IO.write(tgt, files.map(_._2).mkString("", "\n", "\n"))
-//   Seq.empty[File]
-// }
+outputFolder in (Compile, generateResources) := "assets/"
 
-// // watchSources <+= (sourceDirectory in Compile) map { _ / "coffee" }
+processorProvider in (Compile, generateResources) := new OAuth2Processors
 
-// seq(closureSettings:_*)
+wroFile in (Compile, generateResources) <<= (baseDirectory)(_ / "project" / "wro.xml")
 
-// (sourceDirectory in (Compile, ClosureKeys.closure)) <<= (sourceDirectory in Compile)(_ / "javascript")
-
-// (resourceManaged in (Compile, ClosureKeys.closure)) <<= (sourceDirectory in Compile)(_ / "webapp" / "js")
+propertiesFile in (Compile, generateResources) <<= (baseDirectory)(_ / "project" / "wro.properties")

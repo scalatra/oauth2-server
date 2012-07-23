@@ -14,6 +14,11 @@ class PermissionsCrudApp(implicit protected val system: ActorSystem) extends OAu
 
   before("/") {
     if (isAnonymous) scentry.authenticate("remember_me")
+    if (isAnonymous) {
+      scentry.strategies.values.find(_.isValid).flatMap(_.authenticate()) foreach { u ⇒
+        scentry.user = u
+      }
+    }
     if (isAnonymous && scentry.authenticate().isEmpty) unauthenticated()
   }
 

@@ -12,5 +12,6 @@
       <url-pattern>/img/*</url-pattern>
       <url-pattern>/css/*</url-pattern>
       <url-pattern>/js/*</url-pattern>
+      <url-pattern>/assets/*</url-pattern>
     </servlet-mapping>
 </web-app>
