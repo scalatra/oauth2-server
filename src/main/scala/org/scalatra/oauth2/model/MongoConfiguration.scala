@@ -29,8 +29,6 @@ case class MongoConfiguration(uri: URI) {
     }
   }
 
-  logger.info("the uri userinfo: " + uri.getUserInfo)
-  logger.info("the parsed info: " + userInfo.toString)
   def isAuthenticated = uri.getUserInfo.blankOption.isDefined
 
   var _db: MongoDB = null

@@ -31,18 +31,18 @@ class CreatePermissionCommand(implicit system: ActorSystem) extends PermissionCo
   }
 
 }
-class UpdatePermissionCommand(implicit system: ActorSystem) extends PermissionCommand()(system) {
+class UpdatePermissionCommand(implicit system: ActorSystem) extends PermissionCommand()(system) with IdFromParamsBagCommand {
 
   private lazy val retrieved = oauth.permissionDao.findOneById(~code.converted)
 
   val code: ValidatedBinding[String] = bind[String]("id") validate {
     case s ⇒
-      (retrieved.map(_ ⇒ (~s).success[FieldError]) | SimpleError("The permission doesn't exist").fail[String]): FieldValidation[String]
+      (retrieved.map(_ ⇒ (~s).success[FieldError]) | SimpleError("The permission doesn't exist.").fail[String]): FieldValidation[String]
   }
 
   override def model: Permission = {
     (retrieved map {
       _.copy(name = ~name.converted, description = ~description.converted, isSystem = ~isSystem.converted)
-    }) | Permission(code.original, name.original, description.original, ~isSystem.converted)
+    }) | Permission("", name.original, description.original, ~isSystem.converted)
   }
 }

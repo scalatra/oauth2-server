@@ -67,7 +67,7 @@ trait ScribeAuthSupport[UserClass >: Null <: AppUser[_]] extends AuthenticationS
   get("/:provider") {
     if (!oauthServicesRegistry.contains(params("provider"))) halt(404, "The provider [" + params("provider") + "] is not available.")
 
-    oauthServicesRegistry get (params("provider")) flatMap {
+    oauthServicesRegistry get params("provider") flatMap {
       _.oauthService match {
         case svc: OAuth10aServiceImpl ⇒
           val tok = svc.getRequestToken

@@ -46,7 +46,7 @@ class PermissionDao(collection: MongoCollection)(implicit system: ActorSystem)
     def code(code: String): FieldValidation[String] = {
       for {
         nec ← nonEmptyString(fieldNames.code, code)
-        ff ← validFormat(fieldNames.code, nec, """^(\w+|-)([-\w]*)*$""".r, "%s can only contain letters, numbers, underscores and hyphens.")
+        ff ← validFormat(fieldNames.code, nec, """^\w+([-\w]*)*$""".r, "%s can only contain letters, numbers, underscores and hyphens.")
         uniq ← uniqueCode(fieldNames.code, ff, collection)
       } yield uniq
     }

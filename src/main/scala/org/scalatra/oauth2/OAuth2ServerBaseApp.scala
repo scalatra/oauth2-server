@@ -169,7 +169,7 @@ trait OAuth2ServerBaseApp extends ScalatraServlet
       format match {
         case "json" | "xml" ⇒
           logger.debug("Binding from json")
-          newCommand.doBinding(parsedBody)
+          newCommand.doBinding(json = parsedBody, params = params)
         case _ ⇒
           logger.debug("Binding from params")
           newCommand.doBinding(params)
