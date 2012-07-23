@@ -39,34 +39,33 @@ abstract class BasicAuthStrategy[UserType <: AnyRef](protected val app: Scalatra
 
   override def isValid = {
     val v = app.request.isBasicAuth && app.request.providesAuth
-    println("This request provides basic auth? " + v.toString)
+    //    println("This request provides basic auth? " + v.toString)
     v
   }
 
-  override def beforeAuthenticate { println("before authenticate " + getClass.getName) }
-
-  override def afterAuthenticate(winningStrategy: String, user: UserType) {
-    println("after authenticate " + getClass.getName)
-  }
-
-  override def beforeSetUser(user: UserType) {
-    println("before set user " + getClass.getName)
-  }
-
-  override def beforeFetch[IdType](userId: IdType) {
-    println("before fetch user " + getClass.getName)
-  }
-
-  override def afterFetch(user: UserType) {
-    println("before fetch user " + getClass.getName)
-  }
-
-  override def beforeLogout(user: UserType) {
-    println("before logout " + getClass.getName)
-  }
+  //  override def beforeAuthenticate { println("before authenticate " + getClass.getName) }
+  //
+  //  override def afterAuthenticate(winningStrategy: String, user: UserType) {
+  //    println("after authenticate " + getClass.getName)
+  //  }
+  //
+  //  override def beforeSetUser(user: UserType) {
+  //    println("before set user " + getClass.getName)
+  //  }
+  //
+  //  override def beforeFetch[IdType](userId: IdType) {
+  //    println("before fetch user " + getClass.getName)
+  //  }
+  //
+  //  override def afterFetch(user: UserType) {
+  //    println("before fetch user " + getClass.getName)
+  //  }
+  //
+  //  override def beforeLogout(user: UserType) {
+  //    println("before logout " + getClass.getName)
+  //  }
 
   def authenticate() = {
-    println("authenticating in " + getClass.getName)
     val req = app.request
     validate(req.username, req.password)
   }
@@ -75,18 +74,15 @@ abstract class BasicAuthStrategy[UserType <: AnyRef](protected val app: Scalatra
   protected def validate(userName: String, password: String): Option[UserType]
 
   override def afterSetUser(user: UserType) {
-    println("after set user " + getClass.getName)
     app.response.headers(REMOTE_USER) = getUserId(user)
   }
 
   override def unauthenticated() {
-    println("unauthenticated " + getClass.getName)
     app.response.headers("WWW-Authenticate") = challenge
     app.halt(401, "Unauthenticated")
   }
 
   override def afterLogout(user: UserType) {
-    println("after logout " + getClass.getName)
     app.response.headers(REMOTE_USER) = ""
   }
 }
@@ -96,12 +92,8 @@ class AppUserBasicAuth[UserClass <: AppUser[_]](app: ScalatraBase, realm: String
 
   protected def getUserId(user: UserClass) = user.idString
 
-  protected def validate(userName: String, password: String) = {
-    println("validating: " + userName + ", " + password)
-    val r = userProvider.login(userName, password, app.remoteAddress).toOption
-    println("user:" + r)
-    r
-  }
+  protected def validate(userName: String, password: String) =
+    userProvider.login(userName, password, app.remoteAddress).toOption
 }
 
 class ClientBasicAuth(app: ScalatraBase, realm: String, clientsDao: ClientDao)

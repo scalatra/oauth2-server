@@ -166,7 +166,14 @@ trait OAuth2ServerBaseApp extends ScalatraServlet
   def oauth2Command[T <: OAuth2ModelCommand[_]](implicit mf: Manifest[T], system: ActorSystem): T = {
     commandOption[T] getOrElse {
       val newCommand = mf.erasure.getConstructor(classOf[ActorSystem]).newInstance(system).asInstanceOf[T]
-      newCommand.doBinding(params)
+      format match {
+        case "json" | "xml" ⇒
+          logger.debug("Binding from json")
+          newCommand.doBinding(parsedBody)
+        case _ ⇒
+          logger.debug("Binding from params")
+          newCommand.doBinding(params)
+      }
       request("_command_" + mf.erasure.getName) = newCommand
       newCommand
     }

@@ -4,7 +4,6 @@ import org.scalatra.oauth2._
 import javax.servlet.{ DispatcherType, ServletContext }
 import org.scalatra.LifeCycle
 import akka.util.duration._
-import ro.isdc.wro.http.WroFilter
 import collection.JavaConverters._
 
 class Scalatra extends LifeCycle {

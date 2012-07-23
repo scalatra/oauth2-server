@@ -33,7 +33,6 @@ class RememberMeStrategy[UserClass <: AppUser[_]](
    * After authentication, sets the remember-me cookie on the response.
    */
   override def afterAuthenticate(winningStrategy: String, user: UserClass) = {
-    logger debug "Executing after authenticate in remember me strategy with winning strategy [%s] and user [%s]".format(winningStrategy, user.login)
     if (winningStrategy == "remember_me" ||
       (winningStrategy == "user_password" && app.params.getOrElse("remember_me", "").asCheckboxBool)) {
       logger debug "Remembering user [%s]".format(user.email)
@@ -48,9 +47,7 @@ class RememberMeStrategy[UserClass <: AppUser[_]](
    * Authenticates a user by validating the remember-me cookie.
    */
   def authenticate = {
-    logger debug "Authenticating in Remember me strategy"
     app.cookies.get(cookieKey) flatMap { token ⇒
-      logger debug "Authenticating with token [%s]".format(token)
       rememberMeProvider.loginFromRemember(token) match {
         case u @ Success(usr) ⇒ {
           logger info "Authenticated user [%s] from cookie".format(usr.login)

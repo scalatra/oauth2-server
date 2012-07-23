@@ -8,7 +8,6 @@ import akka.actor.{ ActorSystemImpl, ActorSystem }
 import akka.dispatch.Await
 import java.util.concurrent.TimeoutException
 import akka.util.duration._
-import org.scalatra.oauth2.Logging
 import collection.JavaConverters._
 
 object AkkaSpecification {

@@ -14,11 +14,6 @@ class PermissionsCrudApp(implicit protected val system: ActorSystem) extends OAu
 
   before("/") {
     if (isAnonymous) scentry.authenticate("remember_me")
-    if (isAnonymous) {
-      scentry.strategies.values.find(_.isValid).flatMap(_.authenticate()) foreach { u ⇒
-        scentry.user = u
-      }
-    }
     if (isAnonymous && scentry.authenticate().isEmpty) unauthenticated()
   }
 
@@ -64,8 +59,10 @@ class PermissionsCrudApp(implicit protected val system: ActorSystem) extends OAu
           case e                  ⇒ ApiError(e.message)
         })
         format match {
-          case "json" | "xml" ⇒ OAuth2Response(Extraction.decompose(model), rr.list.map(_.toJValue))
-          case _              ⇒ jade("permissions", "clientRoute" -> "addPermission", "permission" -> model, "errors" -> rr.list)
+          case "json" | "xml" ⇒
+            OAuth2Response(Extraction.decompose(model), rr.list.map(_.toJValue))
+          case _ ⇒
+            jade("permissions", "clientRoute" -> clientRoute, "permission" -> model, "errors" -> rr.list)
         }
 
     }

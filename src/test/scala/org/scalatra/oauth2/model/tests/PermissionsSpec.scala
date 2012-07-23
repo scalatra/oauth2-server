@@ -10,6 +10,8 @@ import scalaz._
 import Scalaz._
 import org.scalatra.command.ValidationError
 
+
+
 class PermissionsSpec extends AkkaSpecification { def is =
   "A permission should" ^
     "not validate when the name is empty" ! validate.failsEmptyName ^ bt ^
@@ -23,19 +25,13 @@ class PermissionsSpec extends AkkaSpecification { def is =
 
   def validate = new CreateContext
 
-  trait PermissionSpecContextBase extends After {
-    val conn = MongoConnection()
-    val coll = conn("oauth_server_test")("permissions")
-    coll.drop()
-    val dao = new PermissionDao(coll)
 
-    def after = {
-      conn.close()
-    }
-
-  }
 
   class CreateContext extends PermissionSpecContextBase {
+
+
+    val dao: PermissionDao = new PermissionDao(coll)
+
     def failsEmptyName = this {
       val res = dao.validate(Permission("blah", "", ""))
       (res.isFailure must beTrue) and {
@@ -57,7 +53,7 @@ class PermissionsSpec extends AkkaSpecification { def is =
       }
     }
 
-    def duplicateCode = {
+    def duplicateCode = this {
       val first = Permission("first-permission", "The first permission", "")
       val second = Permission("first-permission", "The second permission", "")
       dao.save(first)
