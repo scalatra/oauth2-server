@@ -194,3 +194,11 @@ processorProvider in (Compile, generateResources) := new OAuth2Processors
 wroFile in (Compile, generateResources) <<= (baseDirectory)(_ / "project" / "wro.xml")
 
 propertiesFile in (Compile, generateResources) <<= (baseDirectory)(_ / "project" / "wro.properties")
+
+TaskKey[Seq[File]]("coffee-jade", "Compiles view templates to javascript") <<= (baseDirectory, sourceDirectory in Compile, streams) map { (b, dir, s) =>
+  val bd = dir / "webapp" / "js"
+  ((b / "project" / "coffeejade.sh").getAbsolutePath+" "+bd.getAbsolutePath+" templates") ! s.log
+  (bd / "templates" ** "*.js").get
+}
+
+generateResources in Compile <<= (generateResources in Compile).dependsOn(TaskKey[Seq[File]]("coffee-jade"))

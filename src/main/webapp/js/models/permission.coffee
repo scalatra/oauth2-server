@@ -1,3 +1,2 @@
-class Permission extends Backbone.Model
-
-  urlRoot: "/permissions"
+class window.Permission extends Backbone.Model
+  initialize: =>

@@ -1,0 +1,21 @@
+- if @collection
+  table.table.table-bordered.table-striped
+    caption A list of available permissions
+    thead
+      tr
+        th Name
+        th Description
+        th System
+        th &nbsp;
+    tbody
+      - @collection.forEach (permission) ->
+        tr
+          td= permission.name
+          td= permission.code
+          td= permission.isSystem
+          td
+            a.edit-link(data-id=permission.code) Edit
+            a.delete-link(data-id=permission.code) Delete
+
+- else
+  p There are currently no clients registered

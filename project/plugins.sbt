@@ -27,6 +27,8 @@ addSbtPlugin("com.eed3si9n" % "sbt-buildinfo" % "0.1.2")
 
 //addSbtPlugin("org.scalatra.requirejs" % "sbt-requirejs" % "0.0.3")
 
+//addSbtPlugin("io.backchat.sbtbrew" % "brew" % "0.1.0-SNAPSHOT")
+
 addSbtPlugin("com.mojolly.scalate" % "xsbt-scalate-generator" % "0.2.0")
 
 externalResolvers <<= resolvers map { Resolver.withDefaultResolvers(_, scalaTools = false) }
