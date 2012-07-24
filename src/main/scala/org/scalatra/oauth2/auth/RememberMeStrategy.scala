@@ -66,10 +66,12 @@ class RememberMeStrategy[UserClass <: AppUser[_]](
    */
   override def beforeLogout(user: UserClass) = {
     logger debug "Entering before logout in remember me strategy"
-    if (user != null)
+    if (user != null) {
       rememberMeProvider.remember(user)
+      logger debug "Removed cookie for user [%s]".format(user.login)
+    }
     app.cookies.get(cookieKey) foreach { _ ⇒ app.cookies.update(cookieKey, null) }
-    logger debug "Removed cookie for user [%s]".format(user.login)
+
   }
   /*
   override def beforeSetUser(user: UserClass) {

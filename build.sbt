@@ -29,13 +29,13 @@ libraryDependencies ++= Seq(
 seq(webSettings:_*)
 
 libraryDependencies ++= Seq(
-//  "org.scalatra"            % "scalatra"             % "2.1.0-SNAPSHOT",
-//  "org.scalatra"            % "scalatra-auth"        % "2.1.0-SNAPSHOT",
-//  "org.scalatra"            % "scalatra-scalate"     % "2.1.0-SNAPSHOT",
-//  "org.scalatra"            % "scalatra-lift-json"   % "2.1.0-SNAPSHOT",
-//  "org.scalatra"            % "scalatra-swagger"     % "2.1.0-SNAPSHOT",
-//  "org.scalatra"            % "scalatra-slf4j"       % "2.1.0-SNAPSHOT",
-//  "org.scalatra"            % "contrib-validation"   % "1.0.5-SNAPSHOT",
+ "org.scalatra"            % "scalatra"             % "2.1.0-SNAPSHOT",
+ "org.scalatra"            % "scalatra-auth"        % "2.1.0-SNAPSHOT",
+ "org.scalatra"            % "scalatra-scalate"     % "2.1.0-SNAPSHOT",
+ "org.scalatra"            % "scalatra-lift-json"   % "2.1.0-SNAPSHOT",
+ "org.scalatra"            % "scalatra-swagger"     % "2.1.0-SNAPSHOT",
+ "org.scalatra"            % "scalatra-slf4j"       % "2.1.0-SNAPSHOT",
+ "org.scalatra"            % "contrib-validation"   % "1.0.5-SNAPSHOT",
   "org.jruby"               % "jruby"                % "1.6.7.2",
   "net.databinder"          % "dispatch-http_2.9.1"  % "0.8.8",
   "net.databinder"          % "dispatch-oauth_2.9.1" % "0.8.8",
@@ -50,7 +50,7 @@ libraryDependencies ++= Seq(
   "com.typesafe.akka"       % "akka-testkit"         % "2.0.2"               % "test",
   "org.fusesource.scalate"  % "scalate-markdownj"    % "1.5.3",
   "org.scala-tools.time"    % "time_2.9.1"           % "0.5",
-//  "org.scalatra"            % "scalatra-specs2"      % "2.1.0-SNAPSHOT"      % "test",
+  "org.scalatra"            % "scalatra-specs2"      % "2.1.0-SNAPSHOT"      % "test",
   "junit"                   % "junit"                % "4.10"                % "test",
   "ch.qos.logback"          % "logback-classic"      % "1.0.6",
   "org.eclipse.jetty"       % "jetty-webapp"         % "8.1.3.v20120416"     % "container",
@@ -196,7 +196,7 @@ wroFile in (Compile, generateResources) <<= (baseDirectory)(_ / "project" / "wro
 propertiesFile in (Compile, generateResources) <<= (baseDirectory)(_ / "project" / "wro.properties")
 
 TaskKey[Seq[File]]("coffee-jade", "Compiles view templates to javascript") <<= (baseDirectory, sourceDirectory in Compile, streams) map { (b, dir, s) =>
-  val bd = dir / "webapp" / "js"
+  val bd = dir / "webapp"
   ((b / "project" / "coffeejade.sh").getAbsolutePath+" "+bd.getAbsolutePath+" templates") ! s.log
   (bd / "templates" ** "*.js").get
 }

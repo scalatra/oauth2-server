@@ -7,14 +7,30 @@ import scalaz._
 import Scalaz._
 import OAuth2Imports._
 import org.scalatra.ScalatraBase
+import liftjson.LiftJsonSupport
 
-class PasswordStrategy[UserClass <: AppUser[_]](protected val app: ScalatraBase, userProvider: UserProvider[UserClass]) extends ScentryStrategy[UserClass] {
+class PasswordStrategy[UserClass <: AppUser[_]](protected val app: ScalatraBase with LiftJsonSupport, userProvider: UserProvider[UserClass]) extends ScentryStrategy[UserClass] {
 
+  import app.jsonFormats
   override val name = "user_password"
 
-  private def login = app.params.get("login") flatMap (_.blankOption)
+  private def login = {
+    app.format match {
+      case "json" | "xml" ⇒
+        (app.parsedBody \ "login").extractOpt[String] flatMap (_.blankOption)
+      case _ ⇒
+        app.params.get("login") flatMap (_.blankOption)
+    }
+  }
 
-  private def password = app.params.get("password") flatMap (_.blankOption)
+  private def password = {
+    app.format match {
+      case "json" | "xml" ⇒
+        (app.parsedBody \ "password").extractOpt[String] flatMap (_.blankOption)
+      case _ ⇒
+        app.params.get("password") flatMap (_.blankOption)
+    }
+  }
 
   override def isValid = {
     login.isDefined && password.isDefined

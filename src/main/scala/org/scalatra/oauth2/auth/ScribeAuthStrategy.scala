@@ -18,6 +18,7 @@ import javax.servlet.http.{ HttpServletResponse, HttpServletRequest }
 import java.io.PrintWriter
 import org.scalatra.scalate.{ ScalatraRenderContext, ScalateSupport }
 import org.scribe.builder.ServiceBuilder
+import liftjson.LiftJsonSupport
 
 object OAuthToken {
   def apply(scribeToken: org.scribe.model.Token): OAuthToken = OAuthToken(scribeToken.getToken, scribeToken.getSecret)
@@ -35,7 +36,7 @@ trait ScribeAuthStrategyContext[UserClass >: Null <: AppUser[_]] {
   def findOrCreateUser(accessToken: OAuthToken): Validation[FieldError, UserClass]
 }
 
-trait ScribeAuthSupport[UserClass >: Null <: AppUser[_]] extends AuthenticationSupport[UserClass] { self: ScalatraBase with SessionSupport with FlashMapSupport ⇒
+trait ScribeAuthSupport[UserClass >: Null <: AppUser[_]] extends AuthenticationSupport[UserClass] { self: ScalatraBase with SessionSupport with FlashMapSupport with LiftJsonSupport ⇒
 
   private[this] val oauthServicesRegistry = new ConcurrentHashMap[String, ScribeAuthStrategyContext[UserClass]].asScala
 

@@ -22,11 +22,10 @@ class HomeServlet(implicit protected val system: ActorSystem)
   }
 
   get("/") {
-    jade("home")
+    jade("angular")
   }
 
-  get("/permissions") {
-    jade("permissions", "layout" -> "")
+  get("/check_auth") {
+    if (isAnonymous && scentry.authenticate().isEmpty) unauthenticated()
   }
-
 }

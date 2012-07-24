@@ -1,0 +1,23 @@
+
+<div id="permission-list">
+  <table ng-show="permissions.length" class="table table-bordered table-striped">
+    <caption>A list of available permissions</caption>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Description</th>
+        <th>System</th>
+        <th>&nbsp;</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr ng-repeat="permission in permissions">
+        <td>{{permission.name}}</td>
+        <td>{{permission.code}}</td>
+        <td>{{permission.isSystem}}</td>
+        <td><a href="/permissions/{{permission.code}}" class="edit-link">Edit</a>&nbsp;<a href="{{permission.code}}" class="delete-link">Delete</a></td>
+      </tr>
+    </tbody>
+  </table>
+  <p ng-hide="permissions.length">There are currently no clients registered</p>
+</div>

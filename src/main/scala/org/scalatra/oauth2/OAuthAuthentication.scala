@@ -17,6 +17,7 @@ import net.liftweb.json._
 import org.scalatra.{ CookieOptions, CookieSupport, FlashMapSupport, ScalatraServlet }
 import annotation.tailrec
 import command.FieldError
+import org.scalatra.liftjson.LiftJsonSupport
 
 class FacebookApiCalls(accessToken: OAuthToken)(implicit formats: Formats) {
   private val urlBase = "https://graph.facebook.com/"
@@ -40,11 +41,11 @@ class TwitterApiCalls(accessToken: OAuthToken, provider: OAuthProvider)(implicit
 }
 
 class OAuthAuthentication(implicit system: ActorSystem)
-    extends ScalatraServlet with FlashMapSupport with CookieSupport with ScribeAuthSupport[Account] {
+    extends ScalatraServlet with FlashMapSupport with CookieSupport with LiftJsonSupport with ScribeAuthSupport[Account] {
 
   val oauth = OAuth2Extension(system)
   protected val authProvider = oauth.userProvider
-  implicit val jsonFormats: Formats = new OAuth2Formats
+  override implicit val jsonFormats: Formats = new OAuth2Formats
 
   protected val userManifest = manifest[Account]
 

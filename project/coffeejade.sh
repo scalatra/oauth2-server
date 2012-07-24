@@ -1,3 +1,3 @@
 #!/bin/sh
 cd "$1"
-coffeejade $2
+jade --pretty $2

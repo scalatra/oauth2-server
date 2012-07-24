@@ -1,0 +1,41 @@
+<h2>{{pageTitle}}</h2>
+
+<form class="form-horizontal" method="post">
+  <fieldset>
+    <legend>Login</legend>
+    <div class="control-group">
+      <label class="control-label" for="login">Login:</label>
+      <div class="controls">
+        <input id="login.input-xlarge" type="text" name="login" placeholder="login or email" />
+      </div>
+    </div>
+    <div class="control-group">
+      <label class="control-label" for="password">Password:</label>
+      <div class="controls">
+        <input id="password" class="input-xlarge" type="password" name="password" placeholder="password" />
+      </div>
+    </div>
+    <div class="control-group">
+      <label class="control-label" for="remember">Remember:</label>
+      <div class="controls">
+        <label class="checkbox">
+          <input type="checkbox" name="remember" />
+        </label>
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-primary" type="submit">Log in</button>
+      <a class="btn" href="/register">Register</a>
+      <a href="/forgot">Forgot password</a>
+      <div id="fb-login" class="fb_button" style='background-position: left -166px'>
+        <a class="fb_button_medium" href='/auth/facebook'>
+          <span id="fb_login_text" class="fb_button_text">Connect with Facebook</span>
+        <a>
+      </div>
+      <a id="twitter-login" href='/auth/twitter'>
+        <img src="https://si0.twimg.com/images/dev/buttons/sign-in-with-twitter-d.png" />
+      </a>
+    </div>
+  </fieldset>
+</form>
+<script src='http://static.ak.fbcdn.net/connect/en_US/core.js'></script>

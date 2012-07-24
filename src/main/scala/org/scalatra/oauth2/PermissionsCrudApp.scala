@@ -11,14 +11,11 @@ import net.liftweb.json._
 import command.{ FieldError, ValidationError }
 import scalaz._
 import Scalaz._
-import scalaz.Failure
-import command.ValidationError
-import scalaz.Success
 import com.novus.salat.dao.SalatDAO
 
 abstract class SalatCrudApp[ObjectType <: Product, ID <: Any](implicit mf: Manifest[ObjectType], protected val system: ActorSystem) extends OAuth2ServerBaseApp {
   def dao: SalatDAO[ObjectType, ID] with CommandableDao[ObjectType, ID]
-  lazy val viewName: String = mf.erasure.getSimpleName.underscore.pluralize
+  lazy val viewName: String = "angular" //mf.erasure.getSimpleName.underscore.pluralize
 
   before("/") {
     if (isAnonymous) scentry.authenticate("remember_me")
@@ -73,7 +70,7 @@ abstract class SalatCrudApp[ObjectType <: Product, ID <: Any](implicit mf: Manif
         })
         format match {
           case "json" | "xml" ⇒
-            OAuth2Response(Extraction.decompose(model), rr.list.map(_.toJValue))
+            OAuth2Response(Extraction.decompose(model), ApiErrorList(rr.list).toJValue)
           case _ ⇒
             jade(viewName, "clientRoute" -> clientRoute, "model" -> model, "errors" -> rr.list)
         }

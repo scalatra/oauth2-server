@@ -27,23 +27,23 @@ trait OAuth2ResponseSupport { self: ScalatraBase with ApiFormats ⇒
   }
 
   def halt(error: JValue): Nothing = {
-    halt(500, OAuth2Response(errors = error :: Nil, statusCode = Some(500)), JsonContentTypeHeader)
+    halt(500, OAuth2Response(errors = JObject(JField("__global__", JArray(error :: Nil)) :: Nil), statusCode = Some(500)), JsonContentTypeHeader)
   }
 
   def halt(code: Int, error: JValue): Nothing = {
-    halt(code, OAuth2Response(errors = error :: Nil, statusCode = Some(code)), JsonContentTypeHeader)
+    halt(code, OAuth2Response(errors = JObject(JField("__global__", JArray(error :: Nil)) :: Nil), statusCode = Some(code)), JsonContentTypeHeader)
   }
 
   def halt(errors: List[JValue]): Nothing = {
-    halt(500, OAuth2Response(errors = errors, statusCode = Some(500)), JsonContentTypeHeader)
+    halt(500, OAuth2Response(errors = JObject(JField("__global__", JArray(errors)) :: Nil), statusCode = Some(500)), JsonContentTypeHeader)
   }
 
   def halt(code: Int, errors: List[JValue]): Nothing = {
-    halt(code, OAuth2Response(errors = errors, statusCode = Some(code)), JsonContentTypeHeader)
+    halt(code, OAuth2Response(errors = JObject(JField("__global__", JArray(errors)) :: Nil), statusCode = Some(code)), JsonContentTypeHeader)
   }
 
   def halt(code: Int, msg: String): Nothing = {
-    halt(code, OAuth2Response(errors = JArray(JString("") :: JString(msg) :: Nil) :: Nil, statusCode = Some(code)), Map("Content-Type" -> "application/json"))
+    halt(code, OAuth2Response(errors = JObject(JField("__global__", JArray(JObject(JField("message", JString(msg)) :: Nil) :: Nil)) :: Nil), statusCode = Some(code)), Map("Content-Type" -> "application/json"))
   }
 
   def halt(code: Int): Nothing = halt(code, OAuth2Response(statusCode = Some(code)), headers = Map("Content-Type" -> "application/json"))

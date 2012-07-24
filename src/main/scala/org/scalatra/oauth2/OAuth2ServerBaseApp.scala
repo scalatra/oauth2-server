@@ -19,7 +19,7 @@ import extension.TypedParamSupport
 trait AuthenticationApp[UserClass >: Null <: AppUser[_]]
     extends PasswordAuthSupport[UserClass]
     with ForgotPasswordAuthSupport[UserClass] {
-  self: ServletBase with ApiFormats with FlashMapSupport with CookieSupport with ScalateSupport with DefaultAuthenticationSupport[UserClass] ⇒
+  self: ServletBase with LiftJsonSupport with FlashMapSupport with CookieSupport with ScalateSupport with DefaultAuthenticationSupport[UserClass] ⇒
 
 }
 
@@ -59,9 +59,9 @@ trait OAuth2MethodOverride extends Handler {
 trait OAuth2ServerBaseApp extends ScalatraServlet
     with OAuth2ResponseSupport
     with OAuth2MethodOverride
-    with LiftJsonSupport
     with FlashMapSupport
     with CookieSupport
+    with LiftJsonSupport
     with ScalateSupport
     with CorsSupport
     with LoadBalancedSslRequirement
@@ -70,7 +70,7 @@ trait OAuth2ServerBaseApp extends ScalatraServlet
     with TypedParamSupport {
 
   implicit protected def system: ActorSystem
-  override protected implicit def jsonFormats: Formats = new OAuth2Formats
+  override implicit val jsonFormats: Formats = new OAuth2Formats
 
   val oauth = OAuth2Extension(system)
 

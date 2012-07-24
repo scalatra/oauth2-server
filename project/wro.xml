@@ -2,19 +2,17 @@
 
 <groups xmlns="http://www.isdc.ro/wro">
   <group name='main'>
-    <css>/css/bootstrap.css</css>
     <css>/css/main.less</css>
-    <js>/js/lib/jquery-1.7.2.js</js>
-    <js>/js/lib/bootstrap.js</js>
-    <js>/js/lib/underscore.js</js>
-    <js>/js/lib/jade-runtime.js</js>
-    <js>/js/lib/backbone.js</js>
-    <js>/js/lib/backbone.validation.js</js>
-    <js minimize="false">/js/models/*.coffee</js>
-    <js minimize="false">/js/collections/*.coffee</js>
-    <js minimize="false">/js/templates/permissions/*.js</js>
-    <js minimize="false">/js/views/**.coffee</js>
-    <js minimize="false">/js/routers/*.coffee</js>
+    <js minimize="false">http://code.jquery.com/jquery-1.7.2.js</js>
+    <js minimize="false">/js/lib/bootstrap.js</js>
+    <js minimize="false">http://underscorejs.org/underscore.js</js>
+    <js minimize="false">/js/lib/angular-1.0.1.js</js>
+    <js minimize="false">/js/lib/angular-bootstrap-1.0.1.js</js>
+    <js minimize="false">/js/lib/angular-cookies-1.0.1.js</js>
+    <js minimize="false">/js/lib/angular-resource-1.0.1.js</js>
+    <js minimize="false">/js/lib/angular-loader-1.0.1.js</js>
+    <js minimize="false">/js/lib/angular-sanitize-1.0.1.js</js>
+    <js minimize="false">/js/app/*.coffee</js>
     <js minimize="false">/js/*.coffee</js>
   </group>
 </groups>

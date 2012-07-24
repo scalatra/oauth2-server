@@ -1,0 +1,25 @@
+<div ng-include="'/templates/shared/validation_errors.html'"></div>
+<form class="form-horizontal">
+  <fieldset>
+    <legend>Register an account</legend>
+    <div ng-include="'/templates/shared/user_fields.html'"></div>
+    <!-- if (errors.exists(_.field == "password")) "error control-group" else "control-group" -->
+    <div class="control-group" ng-class="errorClass('password')">
+      <label class="control-label" for="password">Password:</label>
+      <div class="controls">
+        <input id="password" class="input-xlarge" type="password" name="password" placeholder="Password" ng-model="user.password" required />
+      </div>
+    </div>
+    <div class="control-group">
+      <label class="control-label" for="password_confirmation">Password confirmation:</label>
+      <div class="controls">
+        <input id="password_confirmation" class="input-xlarge" type="password" name="password_confirmation" placeholder="Password confirmation" ng-model="user.passwordConfirmation" required />
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-primary" ng-click="register(user)" ng-disabled="form.$invalid">Register</button>
+      <a class="btn" href="/login">Log in</a>
+    </div>
+  </fieldset>
+</form>
+

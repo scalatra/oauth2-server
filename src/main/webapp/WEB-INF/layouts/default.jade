@@ -4,7 +4,7 @@
 -@ val user: org.scalatra.oauth2.model.Account = null
 
 !!! 5
-html
+html(ng-app="app")
   head
     title= title
     meta(charset="utf-8")
@@ -15,7 +15,7 @@ html
         padding-top: 60px; /* 60px to make the container go all the way to the bottom of the topbar */
       }
 
-  body
+  body(ng-controller="AppController")
     div.navbar.navbar-fixed-top
       div.navbar-inner
         div.container

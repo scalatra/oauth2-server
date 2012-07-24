@@ -11,10 +11,15 @@ import org.scalatra.scalate.{ ScalatraRenderContext, ScalateSupport }
 import org.scalatra.auth._
 import ScentryAuthStore.CookieAuthStore
 import command._
+import model.{ ApiErrorList, OAuth2Response, ApiError }
+import net.liftweb.json.Extraction
+import liftjson.{ LiftJsonSupport }
+import OAuth2Imports._
+import net.liftweb.json.JsonAST.JNull
 
 class OAuthScentryConfig extends ScentryConfig
 
-trait PasswordAuthSupport[UserClass >: Null <: AppUser[_]] { self: ScalatraBase with FlashMapSupport with CookieSupport with AuthenticationSupport[UserClass] ⇒
+trait PasswordAuthSupport[UserClass >: Null <: AppUser[_]] { self: ScalatraBase with FlashMapSupport with CookieSupport with AuthenticationSupport[UserClass] with LiftJsonSupport ⇒
 
   get("/login") {
     redirectIfAuthenticated()
@@ -25,31 +30,58 @@ trait PasswordAuthSupport[UserClass >: Null <: AppUser[_]] { self: ScalatraBase 
     redirectIfAuthenticated()
     authenticate()
     if (isAnonymous) {
-      flash.now("error") = "Username/password is incorrect"
-      jade("login")
+      format match {
+        case "json" | "xml" ⇒
+          status = 401
+          ApiError("Username or password is incorrect")
+        case _ ⇒
+          flash.now("error") = "Username/password is incorrect"
+          jade("login")
+      }
+
     } else {
-      flash("success") = ("Welcome back, " + user.name)
-      redirectAuthenticated()
+      loggedIn(user, "Welcome back, " + user.name)
     }
   }
 
   get("/register") {
     redirectIfAuthenticated()
-    jade("register")
+    jade("angular")
   }
 
   post("/register") {
     redirectIfAuthenticated()
-    val regResult =
-      authProvider.register(
-        params.get("login"),
-        params.get("email"),
-        params.get("name"),
-        params.get("password"),
-        params.get("password_confirmation"))
-    regResult.fold(
-      errs ⇒ jade("register", "errors" -> errs.list),
-      loggedIn(_, "Registered and logged in."))
+    format match {
+      case "json" | "xml" ⇒
+        val json = parsedBody.camelizeKeys
+        val regResult =
+          authProvider.register(
+            (json \ "login").extractOpt[String].flatMap(_.blankOption),
+            (json \ "email").extractOpt[String].flatMap(_.blankOption),
+            (json \ "name").extractOpt[String].flatMap(_.blankOption),
+            (json \ "password").extractOpt[String].flatMap(_.blankOption),
+            (json \ "passwordConfirmation").extractOpt[String].flatMap(_.blankOption))
+        regResult.fold(
+          errs ⇒ {
+            val e = ApiErrorList((errs.list map {
+              case er: ValidationError ⇒ ApiError(er.field, er.message)
+              case er                  ⇒ ApiError(er.message)
+            }).toList)
+            OAuth2Response(parsedBody, e.toJValue)
+          },
+          loggedIn(_, "Registered and logged in."))
+      case _ ⇒
+        val regResult =
+          authProvider.register(
+            params.get("login"),
+            params.get("email"),
+            params.get("name"),
+            params.get("password"),
+            params.get("password_confirmation"))
+        regResult.fold(
+          errs ⇒ jade("register", "errors" -> errs.list),
+          loggedIn(_, "Registered and logged in."))
+    }
   }
 
   get("/logout") {
@@ -80,7 +112,7 @@ trait PasswordAuthSupport[UserClass >: Null <: AppUser[_]] { self: ScalatraBase 
   }
 }
 
-trait ForgotPasswordAuthSupport[UserClass >: Null <: AppUser[_]] { self: ScalatraBase with FlashMapSupport with AuthenticationSupport[UserClass] ⇒
+trait ForgotPasswordAuthSupport[UserClass >: Null <: AppUser[_]] { self: ScalatraBase with FlashMapSupport with AuthenticationSupport[UserClass] with LiftJsonSupport ⇒
   get("/forgot") {
     redirectIfAuthenticated()
     jade("forgot")
@@ -89,10 +121,23 @@ trait ForgotPasswordAuthSupport[UserClass >: Null <: AppUser[_]] { self: Scalatr
   post("/forgot") {
     redirectIfAuthenticated()
     authProvider.forgot(params.get("login")).fold(
-      err ⇒ jade("forgot", "error" -> err.message),
+      err ⇒ {
+        format match {
+          case "json" | "xml" ⇒
+            ApiError(err.message)
+          case _ ⇒
+            jade("forgot", "error" -> err.message)
+        }
+
+      },
       owner ⇒ {
-        flash("info") = "Password reset link has been sent to <a href=\"mailto:%s\">%s</a>.".format(owner.email, owner.email)
-        redirectAuthenticated()
+        format match {
+          case "json" | "xml" ⇒
+            OAuth2Response(Extraction.decompose(user))
+          case _ ⇒
+            flash("info") = "Password reset link has been sent to <a href=\"mailto:%s\">%s</a>.".format(owner.email, owner.email)
+            redirectAuthenticated()
+        }
       })
   }
 
@@ -116,7 +161,7 @@ trait ForgotPasswordAuthSupport[UserClass >: Null <: AppUser[_]] { self: Scalatr
 
 }
 
-trait AuthenticationSupport[UserClass >: Null <: AppUser[_]] extends ScentrySupport[UserClass] with ScalateSupport { self: ScalatraBase with SessionSupport with FlashMapSupport ⇒
+trait AuthenticationSupport[UserClass >: Null <: AppUser[_]] extends ScentrySupport[UserClass] with ScalateSupport { self: ScalatraBase with SessionSupport with FlashMapSupport with LiftJsonSupport ⇒
 
   protected def fromSession = { case id: String ⇒ authProvider.findUserById(id).orNull }
   protected def toSession = { case usr: AppUser[_] ⇒ usr.idString }
@@ -132,11 +177,18 @@ trait AuthenticationSupport[UserClass >: Null <: AppUser[_]] extends ScentrySupp
 
   def redirectIfAuthenticated() = if (isAuthenticated) redirectAuthenticated()
 
-  def redirectAuthenticated() = redirect(session.get(scentryConfig.returnToKey).map(_.toString) | scentryConfig.returnTo)
+  def redirectAuthenticated() = {
+    format match {
+      case "json" | "xml" ⇒
+        OAuth2Response(Extraction.decompose(user))
+      case _ ⇒
+        redirect(session.get(scentryConfig.returnToKey).map(_.toString) | scentryConfig.returnTo)
+    }
+  }
 
   def loggedIn(authenticated: UserClass, message: String) = {
     if (userOption.isEmpty) scentry.user = authenticated
-    flash("success") = message
+    if (format == "html") flash("success") = message
     redirectAuthenticated()
   }
 
@@ -177,7 +229,7 @@ trait AuthenticationSupport[UserClass >: Null <: AppUser[_]] extends ScentrySupp
 
 }
 
-trait DefaultAuthenticationSupport[UserClass >: Null <: AppUser[_]] extends AuthenticationSupport[UserClass] { self: ScalatraBase with SessionSupport with CookieSupport with FlashMapSupport with ApiFormats ⇒
+trait DefaultAuthenticationSupport[UserClass >: Null <: AppUser[_]] extends AuthenticationSupport[UserClass] { self: ScalatraBase with SessionSupport with CookieSupport with FlashMapSupport with LiftJsonSupport ⇒
 
   protected def oauth: OAuth2Extension
 
@@ -211,8 +263,13 @@ trait DefaultAuthenticationSupport[UserClass >: Null <: AppUser[_]] extends Auth
     if (request.isBasicAuth && request.providesAuth) {
       scentry.strategies("resource_owner_basic").unauthenticated()
     } else {
-      session(scentryConfig.returnToKey) = request.getRequestURI
-      redirect(scentryConfig.failureUrl)
+      format match {
+        case "json" | "xml" ⇒
+          Unauthorized(OAuth2Response(JNull, ApiErrorList(List(ApiError("Unauthenticated"))).toJValue))
+        case _ ⇒
+          session(scentryConfig.returnToKey) = request.getRequestURI
+          redirect(scentryConfig.failureUrl)
+      }
     }
   }
 
