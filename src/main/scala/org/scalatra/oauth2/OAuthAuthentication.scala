@@ -41,7 +41,7 @@ class TwitterApiCalls(accessToken: OAuthToken, provider: OAuthProvider)(implicit
 }
 
 class OAuthAuthentication(implicit system: ActorSystem)
-    extends ScalatraServlet with FlashMapSupport with CookieSupport with LiftJsonSupport with ScribeAuthSupport[Account] {
+    extends ScalatraServlet with CsrfTokenSupport with FlashMapSupport with CookieSupport with LiftJsonSupport with ScribeAuthSupport[Account] {
 
   val oauth = OAuth2Extension(system)
   protected val authProvider = oauth.userProvider

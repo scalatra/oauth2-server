@@ -1,14 +1,13 @@
-<!-- if (errors.exists(_.field == "login")) "error control-group" else "control-group" -->
 <div class="control-group" ng-class="errorClass('login')">
   <label class="control-label" for="login">Login:</label>
   <div class="controls">
-    <input id="login" class="input-xlarge" type="text" name="login" placeholder="Login" ng-model="user.login" required />
+    <input id="login" class="input-xlarge" type="text" name="login" placeholder="Login" ng-model="user.login" required min-length="3" ng-pattern="/^\w+([\.\w]*)*$/"/>
   </div>
 </div>
 <div class="control-group" ng-class="errorClass('name')">
   <label class="control-label" for="name">Name:</label>
   <div class="controls">
-    <input id="name" class="input-xlarge" type="text" name="name" placeholder="Name" ng-model="user.name" />
+    <input id="name" class="input-xlarge" type="text" name="name" placeholder="Name" ng-model="user.name" required />
   </div>
 </div>
 <div class="control-group" ng-class="errorClass('email')">

@@ -1,18 +1,18 @@
 <h2>{{pageTitle}}</h2>
 
-<form class="form-horizontal" method="post">
+<form class="form-horizontal" name="loginForm">
   <fieldset>
     <legend>Login</legend>
     <div class="control-group">
       <label class="control-label" for="login">Login:</label>
       <div class="controls">
-        <input id="login.input-xlarge" type="text" name="login" placeholder="login or email" />
+        <input id="login.input-xlarge" type="text" name="login" placeholder="login or email" required />
       </div>
     </div>
     <div class="control-group">
       <label class="control-label" for="password">Password:</label>
       <div class="controls">
-        <input id="password" class="input-xlarge" type="password" name="password" placeholder="password" />
+        <input id="password" class="input-xlarge" type="password" name="password" placeholder="password" required />
       </div>
     </div>
     <div class="control-group">
@@ -24,7 +24,7 @@
       </div>
     </div>
     <div class="form-actions">
-      <button class="btn btn-primary" type="submit">Log in</button>
+      <button class="btn btn-primary" ng-click="login()" ng-disabled="loginForm.$invalid">Log in</button>
       <a class="btn" href="/register">Register</a>
       <a href="/forgot">Forgot password</a>
       <div id="fb-login" class="fb_button" style='background-position: left -166px'>

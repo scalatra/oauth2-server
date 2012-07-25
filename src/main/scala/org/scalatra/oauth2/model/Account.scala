@@ -223,9 +223,10 @@ class AccountDao(collection: MongoCollection)(implicit system: ActorSystem)
     def login(login: String, id: Option[ObjectId] = None): FieldValidation[String] = {
       for {
         a ← nonEmptyString(fieldNames.login, login)
-        b ← validFormat(fieldNames.login, a, """^\w+([\.\w]*)*$""".r, "%s can only contain letters, numbers, underscores and dots.")
-        c ← uniqueField[String](fieldNames.login, b, collection, id)
-      } yield c
+        b ← minLength(fieldNames.login, a, 3)
+        c ← validFormat(fieldNames.login, b, """^\w+([\.\w]*)*$""".r, "%s can only contain letters, numbers, underscores and dots.")
+        d ← uniqueField[String](fieldNames.login, c, collection, id)
+      } yield d
     }
 
     def email(email: String, id: Option[ObjectId] = None): FieldValidation[String] =

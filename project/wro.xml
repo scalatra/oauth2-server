@@ -12,6 +12,7 @@
     <js minimize="false">/js/lib/angular-resource-1.0.1.js</js>
     <js minimize="false">/js/lib/angular-loader-1.0.1.js</js>
     <js minimize="false">/js/lib/angular-sanitize-1.0.1.js</js>
+    <js minimize="false">/js/lib/angular-ui.js</js>
     <js minimize="false">/js/app/*.coffee</js>
     <js minimize="false">/js/*.coffee</js>
   </group>

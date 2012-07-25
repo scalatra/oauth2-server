@@ -57,6 +57,7 @@ trait OAuth2MethodOverride extends Handler {
 }
 
 trait OAuth2ServerBaseApp extends ScalatraServlet
+    with CsrfTokenSupport
     with OAuth2ResponseSupport
     with OAuth2MethodOverride
     with FlashMapSupport

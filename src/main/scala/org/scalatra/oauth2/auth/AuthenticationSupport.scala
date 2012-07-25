@@ -23,7 +23,7 @@ trait PasswordAuthSupport[UserClass >: Null <: AppUser[_]] { self: ScalatraBase 
 
   get("/login") {
     redirectIfAuthenticated()
-    jade("login")
+    jade("angular")
   }
 
   post("/login") {
@@ -51,6 +51,7 @@ trait PasswordAuthSupport[UserClass >: Null <: AppUser[_]] { self: ScalatraBase 
 
   post("/register") {
     redirectIfAuthenticated()
+    logger.debug("Registering user from " + format)
     format match {
       case "json" | "xml" ⇒
         val json = parsedBody.camelizeKeys
@@ -67,7 +68,7 @@ trait PasswordAuthSupport[UserClass >: Null <: AppUser[_]] { self: ScalatraBase 
               case er: ValidationError ⇒ ApiError(er.field, er.message)
               case er                  ⇒ ApiError(er.message)
             }).toList)
-            OAuth2Response(parsedBody, e.toJValue)
+            BadRequest(OAuth2Response(parsedBody, e.toJValue))
           },
           loggedIn(_, "Registered and logged in."))
       case _ ⇒
