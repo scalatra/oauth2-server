@@ -91,6 +91,8 @@ trait ScribeAuthSupport[UserClass >: Null <: AppUser[_]] extends AuthenticationS
         authProvider.validate(u).fold(
           errs ⇒ {
             contentType = "text/html"
+            scentry.user = null
+            scentry.store.invalidate
             jade("incomplete_oauth", "errors" -> errs.list, "login" -> u.login, "email" -> u.email, "name" -> u.name)
           },
           uu ⇒ loggedIn(uu, uu.login + " logged in from " + params("provider") + "."))
@@ -125,7 +127,7 @@ trait ScribeAuthSupport[UserClass >: Null <: AppUser[_]] extends AuthenticationS
   protected def authCookieOptions: CookieOptions
 
   override protected def configureScentry {
-    scentry.store = new CookieAuthStore(this, authCookieOptions)
+    scentry.store = new CookieAuthStore(this)(authCookieOptions)
   }
 
   def unauthenticated() {

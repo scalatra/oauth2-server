@@ -1,7 +1,7 @@
 package org.scalatra
 package oauth2
 
-import org.joda.time.format.DateTimeFormatter
+import org.joda.time.format.{ DateTimeFormat, DateTimeFormatter }
 import org.joda.time.DateTime
 import scala.util.control.Exception._
 
@@ -11,7 +11,7 @@ trait DateParser {
 }
 
 object DateFormats extends DateParser {
-  val All = DateFormats(Iso8601NoMillis, Iso8601)
+  val All = DateFormats(Iso8601NoMillis, Iso8601, HttpDate)
 
   def parse(s: String) = All.parse(s)
 
@@ -35,5 +35,9 @@ object DateFormats extends DateParser {
 
   object Iso8601NoMillis extends DateFormat {
     val dateTimeformat = Iso8601DateNoMillis
+  }
+
+  object HttpDate extends DateFormat {
+    val dateTimeformat = DateTimeFormat.forPattern("EEE, dd MMM yyyy HH:mm:ss zzz")
   }
 }

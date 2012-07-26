@@ -1,22 +1,23 @@
 <h2>{{pageTitle}}</h2>
+
 <div ng-include="'/templates/shared/validation_errors.html'"></div>
-<form class="form-horizontal" method="post">
+<form class="form-horizontal" name="resetPasswordForm">
   <fieldset>
     <legend>Reset your password</legend>
     <div class="control-group">
       <label class="control-label" for="password">Password:</label>
       <div class="controls">
-        <input id="password" class="error input-xlarge" type="password" name="password" placeholder="Password" />
+        <input id="password" class="input-xlarge" ng-model="password" type="password" name="password" placeholder="Password" required />
       </div>
     </div>
     <div class="control-group">
       <label class="control-label" for="password_confirmation">Password confirmation:</label>
       <div class="controls">
-        <input id="password_confirmation" class="input-xlarge" type="password" name="password_confirmation" placeholder="Password confirmation" />
+        <input id="password_confirmation" class="input-xlarge" ng-model="confirmation" type="password" name="password_confirmation" required placeholder="Password confirmation" />
       </div>
     </div>
     <div class="form-actions">
-      <button class="btn btn-primary" type="submit">Reset</button>
+      <button class="btn btn-primary" ng-click="resetPassword(password, confirmation)" ng-disabled="hasErrors()">Reset</button>
     </div>
   </fieldset>
 </form>

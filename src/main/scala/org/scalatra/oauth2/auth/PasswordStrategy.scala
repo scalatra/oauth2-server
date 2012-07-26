@@ -40,7 +40,7 @@ class PasswordStrategy[UserClass <: AppUser[_]](protected val app: ScalatraBase 
    * Authenticates a user by validating the username (or email) and password request params.
    */
   def authenticate: Option[UserClass] = {
-    logger debug "Authenticating in UserPasswordStrategy with: %s, %s".format(~login, app.remoteAddress)
+    logger debug "Authenticating in UserPasswordStrategy from %s with: %s, %s".format(app.format, ~login, app.remoteAddress)
     val usr = userProvider.login(login.get, password.get, app.remoteAddress)
     usr.toOption
   }

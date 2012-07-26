@@ -54,7 +54,7 @@ trait PasswordAuthSupport[UserClass >: Null <: AppUser[_]] { self: ScalatraBase 
     logger.debug("Registering user from " + format)
     format match {
       case "json" | "xml" ⇒
-        val json = parsedBody.camelizeKeys
+        val json = parsedBody
         val regResult =
           authProvider.register(
             (json \ "login").extractOpt[String].flatMap(_.blankOption),
@@ -99,11 +99,11 @@ trait PasswordAuthSupport[UserClass >: Null <: AppUser[_]] { self: ScalatraBase 
     authProvider.confirm(params("token")).fold(
       m ⇒ {
         flash("error") = m.message
-        redirect(scentryConfig.failureUrl)
+        redirect(scentryConfig.login)
       },
       owner ⇒ {
         flash("success") = "Account confirmed!"
-        redirect(scentryConfig.failureUrl)
+        redirect(scentryConfig.login)
       })
   }
 
@@ -116,48 +116,63 @@ trait PasswordAuthSupport[UserClass >: Null <: AppUser[_]] { self: ScalatraBase 
 trait ForgotPasswordAuthSupport[UserClass >: Null <: AppUser[_]] { self: ScalatraBase with FlashMapSupport with AuthenticationSupport[UserClass] with LiftJsonSupport ⇒
   get("/forgot") {
     redirectIfAuthenticated()
-    jade("forgot")
+    jade("angular")
   }
 
   post("/forgot") {
     redirectIfAuthenticated()
-    authProvider.forgot(params.get("login")).fold(
-      err ⇒ {
-        format match {
-          case "json" | "xml" ⇒
-            ApiError(err.message)
-          case _ ⇒
-            jade("forgot", "error" -> err.message)
-        }
-
-      },
-      owner ⇒ {
-        format match {
-          case "json" | "xml" ⇒
-            OAuth2Response(Extraction.decompose(user))
-          case _ ⇒
+    format match {
+      case "json" | "xml" ⇒
+        authProvider.forgot(jsonParam[String]("login")).fold(
+          err ⇒ ApiError(err.message),
+          owner ⇒ OAuth2Response(Extraction.decompose(owner)))
+      case _ ⇒
+        authProvider.forgot(params.get("login")).fold(
+          err ⇒ jade("forgot", "error" -> err.message),
+          owner ⇒ {
             flash("info") = "Password reset link has been sent to <a href=\"mailto:%s\">%s</a>.".format(owner.email, owner.email)
             redirectAuthenticated()
-        }
-      })
+          })
+    }
   }
 
   get("/reset/:token") {
     redirectIfAuthenticated()
-    jade("reset", "token" -> params("token"))
+    jade("angular")
   }
 
   post("/reset/:token") {
     redirectIfAuthenticated()
-    authProvider.resetPassword(params("token"), ~params.get("password"), ~params.get("password_confirmation")).fold(
-      err ⇒ {
-        (err.list.filter {
-          case a: ValidationError ⇒ false
-          case _                  ⇒ true
-        }).headOption foreach { m ⇒ flash.now("error") = m.message }
-        jade("reset", "errors" -> err.list.collect { case a: ValidationError ⇒ a })
-      },
-      loggedIn(_, "Password reset successfully"))
+    format match {
+      case "json" | "xml" ⇒
+        authProvider.resetPassword(params("token"), ~jsonParam[String]("password"), ~jsonParam[String]("passwordConfirmation")).fold(
+          err ⇒ {
+            val e = ApiErrorList((err.list map {
+              case er: ValidationError ⇒ ApiError(er.field, er.message)
+              case er                  ⇒ ApiError(er.message)
+            }).toList)
+            BadRequest(OAuth2Response(parsedBody, e.toJValue))
+          },
+          loggedIn(_, "Password reset successfully"))
+      case _ ⇒
+        authProvider.resetPassword(params("token"), ~params.get("password"), ~params.get("password_confirmation")).fold(
+          err ⇒ {
+            (err.list.filter {
+              case a: ValidationError ⇒ false
+              case _                  ⇒ true
+            }).headOption foreach { m ⇒ flash.now("error") = m.message }
+            jade("reset", "errors" -> err.list.collect { case a: ValidationError ⇒ a })
+          },
+          loggedIn(_, "Password reset successfully"))
+
+    }
+
+  }
+
+  private def jsonParam[TParam](key: String)(implicit mf: Manifest[TParam]): Option[TParam] = {
+    val r = (parsedBody \ key).extractOpt[TParam]
+    if (mf == manifest[String]) r.flatMap(_.asInstanceOf[String].blankOption).asInstanceOf[Option[TParam]]
+    else r
   }
 
 }
@@ -238,15 +253,12 @@ trait DefaultAuthenticationSupport[UserClass >: Null <: AppUser[_]] extends Auth
    * Registers authentication strategies.
    */
   override protected def configureScentry {
-    val authCookieOptions = CookieOptions(
+    val authCookieOptions = cookieOptions.copy(
       domain = (if (oauth.web.domain == ".localhost") "localhost" else oauth.web.domain),
-      path = "/",
       secure = oauth.web.sslRequired,
       httpOnly = true)
-    scentry.store = new CookieAuthStore(self, authCookieOptions)
-    scentry.unauthenticated {
-      unauthenticated()
-    }
+    scentry.store = new CookieAuthStore(self)(authCookieOptions)
+    scentry.unauthenticated { unauthenticated() }
   }
 
   override protected def registerAuthStrategies = {

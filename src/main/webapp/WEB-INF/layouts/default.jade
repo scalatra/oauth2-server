@@ -28,37 +28,29 @@ html(ng-app="app")
             ul.nav
               li
                 a(href="/") Home
-              - if (isAuthenticated) 
-                li.dropdown#clients-menu
-                  a.dropdown-toggle(href="#clients-menu" data-toggle="dropdown")
-                    | Clients
-                    b.caret
-                  ul.dropdown-menu
-                    li
-                      a(href="/clients") List
-                      a(href="/clients/new") Create
-                li.dropdown#clients-menu
-                  a.dropdown-toggle(href="#permissions-menu" data-toggle="dropdown")
-                    | Permissions
-                    b.caret
-                  ul.dropdown-menu
-                    li
-                      a(href="/permissions") List
-                      a(href="/permissions/new") Create
+              li.dropdown#clients-menu(ng-show="currentUser")
+                a.dropdown-toggle(href="#clients-menu" data-toggle="dropdown")
+                  | Clients
+                  b.caret
+                ul.dropdown-menu
+                  li
+                    a(href="/clients") List
+                    a(href="/clients/new") Create
+              li
+                a(href="/permissions" ng-show="currentUser") Permissions
           div.nav-collapse.pull-right
             ul.nav
-              - if (isAnonymous)
-                li
-                  a(href="/login") Login
-                li
-                  a(href="/register") Sign up
-              - else
-                li
-                  p.navbar-text Logged in as #{user.name}
-                li.divider-vertical
-                li
-                  a(href="/logout") Logout
-                li.divider-vertical
+              li(ng-hide="currentUser")
+                a(href="/login") Login
+              li.divider-vertical(ng-hide="currentUser")
+              li(ng-hide="currentUser")
+                a(href="/register") Sign up
+              li(ng-show="currentUser")
+                p.navbar-text Logged in as {{currentUser.name}}
+              li.divider-vertical(ng-show="currentUser")
+              li(ng-show="currentUser")
+                a(href="/logout") Logout
+              li.divider-vertical
 
 
 

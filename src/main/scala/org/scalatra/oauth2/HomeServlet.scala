@@ -8,6 +8,9 @@ class HomeServlet(implicit protected val system: ActorSystem)
     extends OAuth2ServerBaseApp
     with AuthenticationApp[Account] {
 
+  val guarded = Seq("", "login", "register", "forgot", "reset")
+  guarded foreach (s ⇒ xsrfGuard("/" + s))
+
   before("/") {
     if (isAnonymous) scentry.authenticate("remember_me")
   }

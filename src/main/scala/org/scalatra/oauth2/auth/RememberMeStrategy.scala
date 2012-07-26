@@ -34,7 +34,7 @@ class RememberMeStrategy[UserClass <: AppUser[_]](
    */
   override def afterAuthenticate(winningStrategy: String, user: UserClass) = {
     if (winningStrategy == "remember_me" ||
-      (winningStrategy == "user_password" && app.params.getOrElse("remember_me", "").asCheckboxBool)) {
+      (winningStrategy == "user_password" && app.params.getOrElse("remember", "").asCheckboxBool)) {
       logger debug "Remembering user [%s]".format(user.email)
       rememberMeProvider.remember(user) foreach { token ⇒
         logger info "Setting cookie for user [%s]".format(user.email)

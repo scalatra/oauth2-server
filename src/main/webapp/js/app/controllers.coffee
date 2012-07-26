@@ -2,44 +2,80 @@
 
 mod = {}
 
-mod.AppController = ['$scope', '$http', '$location', '$rootScope', ($scope, $http, $location, $rootScope) ->
-  $scope.pageTitle = "Scalatra OAuth2"
-  $scope.notifications =
-    error: []
-    info: []
-    success: []
-    warn: []
+mod.AppController = [
+  '$scope'
+  '$http'
+  '$location'
+  'loginService'
+  ($scope, $http, $location, loginService) ->
+    $scope.pageTitle = "Scalatra OAuth2"
+    $scope.notifications =
+      error: []
+      info: []
+      success: []
+      warn: []
 
-  $rootScope.currentUser = null
+    $scope.errorClass = (field) ->
+      showError = _.any $scope.notifications.error, (item) ->
+        item.field_name == field
 
-  $scope.errorClass = (field) ->
-    showError = _.any $scope.notifications.error, (item) ->
-      item.field_name == field
+      if showError then "error" else ""
 
-    if showError then "error" else ""
+    $scope.$on "authenticated", (user) ->
+      $location.path("/")
 
-  $http
-    .get("/check_auth")
-    .success((response, status, headers, config) ->
-      $rootScope.currentUser = response.data)
-    .error((response, status, headers, config) -> 
-      $rootScope.currentUser = null
-    )
+    $http
+      .get("/check_auth")
+      .success (response, status, headers, config) ->
+        loginService.authenticated response.data
+      .error (response, status, headers, config) ->
+        loginService.logout()
 
-  $rootScope.$watch "currentUser", (newValue, oldValue) ->
-    if (!oldValue && !newValue) || (oldValue && newValue != oldValue)
-      $location.url("/login")
+
 ]
 
 mod.HomeController = ['$scope', '$location', ($scope, $location) ->
 ]
 
-mod.LoginController = ['$scope', '$http', ($scope, $http) ->
-
+mod.LoginController = ['$scope', '$http', '$location', 'loginService', ($scope, $http, $location, loginService) ->
+  $scope.credentials = {}
+  $scope.login = (credentials) ->
+    $http
+      .post("login", credentials)
+      .success (response) ->
+        loginService.authenticated(response.data)
+      .error(response, status, headers) ->
+        loginService.logout()
+        $scope.credentials =
+          login: response.data.login
+          remember: response.data.remember
 ]
 
 
-mod.ResetController = ['$scope', '$http', ($scope, $http) ->
+mod.ResetController = [
+  '$scope'
+  '$http'
+  '$location'
+  '$routeParams'
+  'loginService'
+  ($scope, $http, $location, $routeParams, loginService) ->
+    $scope.hasErrors =  ->
+      $scope.resetPasswordForm.password.$setValidity("sameAs", $scope.password == $scope.confirmation) if $scope.resetPasswordForm.password?
+      $scope.resetPasswordForm.$invalid
+
+    $scope.resetPassword = (password, confirmation) ->
+      data =
+        password: password
+        passwordConfirmation: confirmation
+
+      $http
+        .post("/reset/"+$routeParams.token, data)
+        .success (response) ->
+          loginService.authenticated(response.data)
+        .error (response, status, headers) ->
+          $scope.notifications.error = response.errors
+          $scope.password = null
+          $scope.confirmation = null
 
 ]
 
@@ -52,17 +88,17 @@ mod.RegisterController = ['$scope', '$http', '$timeout', "$location", ($scope, $
   $scope.register =  (user) ->
     $http
       .post("/register", user)
-      .success((response, status, headers, config) ->
+      .success (response, status, headers, config) ->
         u = angular.copy(response.data)
         removePasswordKeys(u)
         $scope.user = u
         $scope.errors = response.errors
         $location.url("/login") if response.errors.isEmpty
-      )
-      .error((response, status, headers, config) ->
+
+      .error (response, status, headers, config) ->
         removePasswordKeys($scope.user)
         $scope.notifications.error = response.errors
-      )
+
 
   $scope.reset = () ->
     $scope.user = {}
@@ -77,7 +113,17 @@ mod.RegisterController = ['$scope', '$http', '$timeout', "$location", ($scope, $
 
 ]
 
-mod.ForgotController = ['$scope', '$http', ($scope, $http) ->
+mod.ForgotController = ['$scope', '$http', '$location', ($scope, $http, $location) ->
+  $scope.emailSent = null
+  $scope.forgot = (login) ->
+    $http
+      .post("/forgot", { login: login })
+      .success (response, status, headers, config) ->
+        $scope.emailSent = true
+      .error (response, status, headers, config) ->
+        $scope.emailSent = false
+        $scope.notifications.error = response.error
+
 
 ]
 

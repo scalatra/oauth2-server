@@ -41,17 +41,17 @@ class TwitterApiCalls(accessToken: OAuthToken, provider: OAuthProvider)(implicit
 }
 
 class OAuthAuthentication(implicit system: ActorSystem)
-    extends ScalatraServlet with CsrfTokenSupport with FlashMapSupport with CookieSupport with LiftJsonSupport with ScribeAuthSupport[Account] {
+    extends ScalatraServlet with XsrfTokenSupport with FlashMapSupport with CookieSupport with LiftJsonSupport with ScribeAuthSupport[Account] {
 
   val oauth = OAuth2Extension(system)
   protected val authProvider = oauth.userProvider
+  override protected lazy val jsonVulnerabilityGuard: Boolean = true
   override implicit val jsonFormats: Formats = new OAuth2Formats
 
   protected val userManifest = manifest[Account]
 
-  protected val authCookieOptions = CookieOptions(
+  protected lazy val authCookieOptions = cookieOptions.copy(
     domain = (if (oauth.web.domain == ".localhost") "localhost" else oauth.web.domain),
-    path = "/",
     secure = oauth.web.sslRequired,
     httpOnly = true)
 

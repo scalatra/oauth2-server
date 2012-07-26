@@ -17,7 +17,7 @@ abstract class SalatCrudApp[ObjectType <: Product, ID <: Any](implicit mf: Manif
   def dao: SalatDAO[ObjectType, ID] with CommandableDao[ObjectType, ID]
   lazy val viewName: String = "angular" //mf.erasure.getSimpleName.underscore.pluralize
 
-  before("/") {
+  before() {
     if (isAnonymous) scentry.authenticate("remember_me")
     if (isAnonymous && scentry.authenticate().isEmpty) unauthenticated()
   }
@@ -29,7 +29,7 @@ abstract class SalatCrudApp[ObjectType <: Product, ID <: Any](implicit mf: Manif
     val clients = dao.find(MongoDBObject()).limit(pageSize).skip((page - 1) * pageSize)
     format match {
       case "json" ⇒ OAuth2Response(JArray(clients.toList.map(c ⇒ Extraction.decompose(c))))
-      case _      ⇒ jade("permissions", "permissions" -> clients)
+      case _      ⇒ jade("angular")
     }
   }
 
