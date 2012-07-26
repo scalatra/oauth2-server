@@ -9,9 +9,8 @@ import format.ISODateTimeFormat
 import java.net.URI
 import scala.io.Codec
 import javax.servlet.http.HttpServletRequest
-import _root_.org.scalatra.servlet.ServletApiImplicits
 
-package object oauth2 extends ServletApiImplicits {
+package object oauth2 extends _root_.org.scalatra.servlet.ServletApiImplicits {
 
   import OAuth2Imports._
   val ENGLISH = Locale.ENGLISH

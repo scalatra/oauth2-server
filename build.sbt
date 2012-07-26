@@ -18,7 +18,7 @@ scalaVersion := "2.9.1"
 
 //javacOptions ++= Seq("-Xlint:unchecked", "-source", "1.7", "-target", "1.7", "-Xlint:deprecation")
 
-javacOptions ++= Seq("-Xlint:unchecked", "-source", "1.6", "-target", "1.6", "-Xlint:deprecation")
+javacOptions ++= Seq("-Xlint:unchecked", "-Xlint:deprecation")
 
 scalacOptions ++= Seq("-optimize", "-unchecked", "-deprecation", "-Xcheckinit", "-encoding", "utf8", "-P:continuations:enable")
 
@@ -61,8 +61,8 @@ libraryDependencies ++= Seq(
   "org.scalatra"            % "scalatra-specs2"      % "2.1.0-SNAPSHOT"      % "test",
   "junit"                   % "junit"                % "4.10"                % "test",
   "ch.qos.logback"          % "logback-classic"      % "1.0.6",
-  "org.eclipse.jetty"       % "jetty-webapp"         % "8.1.3.v20120416"     % "container",
-//  "org.eclipse.jetty.orbit" % "javax.servlet"        % "3.0.0.v201112011016" % "container;test;provided" artifacts(Artifact("javax.servlet", "orbit", "jar")),
+  "org.eclipse.jetty"       % "jetty-webapp"         % "8.1.3.v20120416"     % "container;container->default",
+//  "org.eclipse.jetty.orbit" % "javax.servlet"        % "3.0.0.v201112011016" % "container;provided" artifacts(Artifact("javax.servlet", "orbit", "jar")),
   "javax.servlet"           % "javax.servlet-api"    % "3.0.1"               % "container;provided",
   "com.novus"               % "salat_2.9.1"          % "1.9.0"
 )
