@@ -2,6 +2,7 @@ import scala.xml.Group
 import com.typesafe.startscript.StartScriptPlugin
 import scalariform.formatter.preferences._
 //import RequireJsKeys._
+import StartScriptPlugin._
 import ScalateKeys._
 import Wro4jKeys._
 import net.liftweb.json._
@@ -25,6 +26,11 @@ libraryDependencies ++= Seq(
   compilerPlugin("org.scala-lang.plugins" % "continuations" % "2.9.1"),
   compilerPlugin("org.scala-tools.sxr" % "sxr_2.9.0" % "0.2.7")
 )
+
+ivyXML :=
+  <dependencies>
+    <exclude org="org.eclipse.jetty.orbit" />
+  </dependencies>
 
 seq(webSettings:_*)
 
@@ -54,7 +60,7 @@ libraryDependencies ++= Seq(
   "junit"                   % "junit"                % "4.10"                % "test",
   "ch.qos.logback"          % "logback-classic"      % "1.0.6",
   "org.eclipse.jetty"       % "jetty-webapp"         % "8.1.3.v20120416"     % "container",
-  "org.eclipse.jetty.orbit" % "javax.servlet"        % "3.0.0.v201112011016" % "container;compile" artifacts(Artifact("javax.servlet", "orbit", "jar")),
+//  "org.eclipse.jetty.orbit" % "javax.servlet"        % "3.0.0.v201112011016" % "container;test;provided" artifacts(Artifact("javax.servlet", "orbit", "jar")),
   "javax.servlet"           % "javax.servlet-api"    % "3.0.1"               % "container;provided",
   "com.novus"               % "salat_2.9.1"          % "1.9.0"
 )
@@ -175,7 +181,13 @@ buildInfoKeys := Seq[Scoped](name, version, scalaVersion, sbtVersion)
 
 buildInfoPackage := "org.scalatra.oauth2"
 
-seq(StartScriptPlugin.startScriptForWarSettings: _*)
+seq(startScriptForWarSettings: _*)
+
+startScriptJettyVersion in Compile := "8.1.3.v20120416"
+
+startScriptJettyChecksum in Compile := "4bf0cbebe7681d254a8d7e9a4cd7449b3f5ebac8"
+
+startScriptJettyURL in Compile <<= (startScriptJettyVersion in Compile) { (version) => "http://download.eclipse.org/jetty/" + version + "/dist/jetty-distribution-" + version + ".zip" }
 
 externalResolvers <<= resolvers map { Resolver.withDefaultResolvers(_, scalaTools = false) }
 
