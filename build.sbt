@@ -16,7 +16,9 @@ version := "0.1.0-SNAPSHOT"
 
 scalaVersion := "2.9.1"
 
-javacOptions ++= Seq("-Xlint:unchecked", "-source", "1.7", "-target", "1.7", "-Xlint:deprecation")
+//javacOptions ++= Seq("-Xlint:unchecked", "-source", "1.7", "-target", "1.7", "-Xlint:deprecation")
+
+javacOptions ++= Seq("-Xlint:unchecked", "-source", "1.6", "-target", "1.6", "-Xlint:deprecation")
 
 scalacOptions ++= Seq("-optimize", "-unchecked", "-deprecation", "-Xcheckinit", "-encoding", "utf8", "-P:continuations:enable")
 
