@@ -90,15 +90,19 @@ trait ScribeAuthSupport[UserClass >: Null <: AppUser[_]] extends AuthenticationS
       u ⇒ {
         authProvider.validate(u).fold(
           errs ⇒ {
+            clearUser()
             contentType = "text/html"
-            scentry.user = null
-            scentry.store.invalidate
             jade("incomplete_oauth", "errors" -> errs.list, "login" -> u.login, "email" -> u.email, "name" -> u.name)
           },
           uu ⇒ loggedIn(uu, uu.login + " logged in from " + params("provider") + "."))
 
       },
       unauthenticated())
+  }
+
+  protected def clearUser() = {
+    scentry.user = null
+    scentry.store.invalidate
   }
 
   post("/:provider/callback") {

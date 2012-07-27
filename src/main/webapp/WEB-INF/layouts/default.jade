@@ -55,6 +55,7 @@ html(ng-app="app")
 
 
     div.container
+      != "<div notification-list></div>"
       - if (flash.get("success").isDefined)
         div.alert.alert-success
           a.close(data-dismiss="alert") ×
@@ -75,4 +76,21 @@ html(ng-app="app")
 
 
     script(src="/assets/main.js")
+
+
+    - import net.liftweb.json._
+    - implicit val jsonFormats: Formats = new OAuth2Formats
+    - val userJson = Serialization.write(user)
+
+    - if (isAuthenticated) {
+      :!coffeescript
+        angular.module("app").run ($rootScope) ->
+          $rootScope.currentUser = #{userJson};
+    - } else {
+      :!coffeescript
+        angular.module("app").run ($rootScope) ->
+          $rootScope.currentUser = null
+
+    - }
+
 

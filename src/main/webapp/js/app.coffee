@@ -45,6 +45,7 @@ App.run ['$rootScope', '$location', '$window', ($rootScope, $location, $window) 
     "/templates/register.html"
     "/templates/reset.html"
   ]
+#  $rootScope.currentUser = null
 
   $rootScope.$on "$routeChangeStart", (event, next, current) ->
     console.log("routing to: " + next.templateUrl)

@@ -80,6 +80,10 @@ trait OAuth2ServerBaseApp extends ScalatraServlet
 
   protected lazy val authProvider = oauth.userProvider
 
+  before() {
+    logger.info("Requesting path: " + requestPath)
+  }
+
   /**
    * Builds a full URL from the given relative path. Takes into account the port configuration, https, ...
    *
