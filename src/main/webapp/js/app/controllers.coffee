@@ -87,6 +87,7 @@ mod.ResetController = [
 
 mod.RegisterController = ['$scope', '$http', '$timeout', "$location", ($scope, $http, $timeout, $location) ->
   $scope.user = {}
+  $scope.validationErrors = []
   removePasswordKeys = (obj) ->
     delete obj['password']
     delete obj['password_confirmation']
@@ -114,12 +115,13 @@ mod.RegisterController = ['$scope', '$http', '$timeout', "$location", ($scope, $
   $scope.isValidForm = () ->
     $scope.registerUserForm.password.$setValidity(
       "sameAs",
-      false) unless $scope.registerUserForm.password == $scope.user.password_confirmation
+      $scope.password == $scope.confirmation) if $scope.registerUserForm.password?
     $scope.registerUserForm.$invalid
 
 ]
 
 mod.ForgotController = ['$scope', '$http', '$location', ($scope, $http, $location) ->
+  $scope.validationErrors = []
   $scope.emailSent = null
   $scope.forgot = (login) ->
     $http
@@ -134,6 +136,7 @@ mod.ForgotController = ['$scope', '$http', '$location', ($scope, $http, $locatio
 ]
 
 mod.PermissionList = ['$scope', '$http', (s, $http) ->
+  s.validationErrors = []
   s.permissions = []
   $http
     .get('/permissions')

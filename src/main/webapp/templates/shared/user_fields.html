@@ -1,16 +1,16 @@
-<div class="control-group" ng-class="errorClass('login')">
+<div class="control-group">
   <label class="control-label" for="login">Login:</label>
   <div class="controls">
     <input id="login" class="input-xlarge" type="text" name="login" placeholder="Login" ng-model="user.login" required min-length="3" ng-pattern="/^\w+([\.\w]*)*$/"/>
   </div>
 </div>
-<div class="control-group" ng-class="errorClass('name')">
+<div class="control-group">
   <label class="control-label" for="name">Name:</label>
   <div class="controls">
     <input id="name" class="input-xlarge" type="text" name="name" placeholder="Name" ng-model="user.name" required />
   </div>
 </div>
-<div class="control-group" ng-class="errorClass('email')">
+<div class="control-group">
   <label class="control-label" for="email">Email address:</label>
   <div class="controls">
     <input id="email" class="input-xlarge" type="email" name="email" placeholder="Email address" ng-model="user.email" required />

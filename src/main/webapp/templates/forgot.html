@@ -1,6 +1,6 @@
 <h2>{{pageTitle}}</h2>
-
-<form class="form-horizontal" name="forgotPasswordForm" ng-hide="emailSent">
+<div validation-summary ng-hide="emailSent"></div>
+<form class="form-horizontal" name="forgotPasswordForm" ng-hide="emailSent" novalidate validation-errors>
   <fieldset>
     <legend>Forgot password</legend>
     <div class="control-group">

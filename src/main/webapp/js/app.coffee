@@ -4,6 +4,8 @@
 App = angular.module('app', [
   'ngCookies'
   'ngResource'
+  'bootstrap'
+  'ui'
   'app.controllers'
   'app.directives'
   'app.filters'
@@ -29,39 +31,36 @@ App.config([
     .when('/auth/twitter', { templateUrl: '/external/auth/twitter.html' })
     .otherwise({redirectTo: '/'})
 
-  # Without serve side support html5 must be disabled.
+  # Without server side support html5 must be disabled.
   # (server side support being everything must render the angular view partial)
   $locationProvider.html5Mode true
 
 ])
 
-App.run ['$rootScope', '$location', '$window', ($rootScope, $location, $window) ->
+App.constant 'validationFormats',
+  required: "{{field_name}} must be present."
+  emptyCollection: "{{field_name}} must not be empty."
+  email: "{{field_name}} must be a valid email."
+  url: "{{field_name}} must be a valid url."
+  pattern: "{{field_name}} is invalid."
+  sameAs: "{{field_name}} must match confirmation."
+  minlength: "{{field_name}} is too short."
+  maxlength: "{{field_name}} is too long."
+  min: "{{field_name}} is too small."
+  max: "{{field_name}} is too large"
 
-  $rootScope.currentUser = null
+App.run ['$rootScope', '$location', '$window', '$log', ($rootScope, $location, $window, $log) ->
 
-  allowed = [
-    "/templates/login.html"
-    "/templates/forgot.html"
-    "/templates/register.html"
-    "/templates/reset.html"
-  ]
 #  $rootScope.currentUser = null
 
   $rootScope.$on "$routeChangeStart", (event, next, current) ->
-    console.log("routing to: " + next.templateUrl)
-    console.log(next)
+#    $log.info("routing to: " + next.templateUrl)
+#    $log.info(next)
     isExternal = /^\/external/i.test(next.templateUrl)
-    unless isExternal
-      isUnauthenticatedUrl = _.contains(allowed, next.templateUrl)    
-      if not $rootScope.currentUser? and not isUnauthenticatedUrl
-        $location.path("/login")
-        event.stopPropagation() if event.stopPropagation?
-      else if $rootScope.currentUser? and isUnauthenticatedUrl
-        event.stopPropagation() if event.stopPropagation?
-    else
+    if isExternal
       $window.location.href = /^\/external(.*)\.html/i.exec(next.templateUrl)[1]
 
-
+    false
 ]
 
 angular.element(document).ready ->

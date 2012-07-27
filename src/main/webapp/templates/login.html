@@ -1,12 +1,12 @@
 <h2>{{pageTitle}}</h2>
-
-<form class="form-horizontal" name="loginForm">
+<div validation-summary></div>
+<form class="form-horizontal" name="loginForm" novalidate validation-errors>
   <fieldset>
     <legend>Login</legend>
     <div class="control-group">
       <label class="control-label" for="login">Login:</label>
       <div class="controls">
-        <input id="login.input-xlarge" type="text" name="login" placeholder="login or email" required ng-model="credentials.login"/>
+        <input id="login" class="input-xlarge" type="text" name="login" placeholder="login or email" required ng-model="credentials.login"/>
       </div>
     </div>
     <div class="control-group">
@@ -27,7 +27,7 @@
       <button class="btn btn-primary" ng-click="login(credentials)" ng-disabled="loginForm.$invalid">Log in</button>
       <a class="btn" href="/register">Register</a>
       <a href="/forgot">Forgot password</a>
-      <div id="fb-login" class="fb_button" style='background-position: left -166px'>
+      <div id="fb-root" class="fb_button" style='background-position: left -166px'>
         <a class="fb_button_medium" href='/auth/facebook'>
           <span id="fb_login_text" class="fb_button_text">Connect with Facebook</span>
         <a>
@@ -39,3 +39,4 @@
   </fieldset>
 </form>
 <script src='http://static.ak.fbcdn.net/connect/en_US/core.js'></script>
+

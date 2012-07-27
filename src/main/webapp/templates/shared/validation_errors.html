@@ -1,8 +1,8 @@
-<div class="alert alert-error alert-block" ng-show="notifications.error.length">
-  <a class="close" data-dismiss="alert">×</a>
+<div class="alert alert-error alert-block" ng-show="errors.length">
+  <!--<a class="close" data-dismiss="alert">&times;</a>-->
   <h4 class="alert-heading">Please correct:</h4>
   <ul id="errors">
-    <li class="error" ng-repeat="error in notifications.error">
+    <li class="error" ng-repeat="error in errors">
         {{error.message}}
     </li>
   </ul>

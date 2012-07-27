@@ -58,6 +58,46 @@ mod.authenticated = ['$log', '$location', ($log, $location) ->
     $location.url(pth) unless angular.isObject(scope.$root.currentUser)
 ]
 
+mod.validationErrors = [
+  '$interpolate'
+  '$log'
+  'validationFormats'
+  ($interpolate, $log, validationFormats) ->
+    (scope, elem, attrs) ->
+      scopeKey = attrs.validationErrors or "validationErrors"
+      scope.$watch attrs.name + ".$dirty && " + attrs.name + ".$error", ((value) ->
+        return  unless angular.isObject(value)
+        invalid = []
+        Object.keys(value).forEach (key) ->
+          err = value[key]
+          if err
+            if angular.isArray(err)
+              err.forEach (i) ->
+                vals = field_name: i.$name
+                formatString = validationFormats[key]
+                if angular.isString(formatString) and formatString
+                  vals.message = $interpolate(formatString)(vals)
+                  invalid.push vals
+                else
+                  $log.error "No validation message found for key: " + key
+
+        scope[scopeKey] = invalid
+      ), true
+]
+
+mod.validationSummary = ->
+  restrict: "AE"
+  scope: true
+  controller: ($scope, $attrs) ->
+    count = 0
+    $scope.errors = []
+    $scope.$watch $attrs.validationSummary or $attrs.errors or "validationErrors", (newValue) ->
+      $scope.errors = newValue  if newValue
+  templateUrl: "/templates/shared/validation_errors.html"
+
+
+
+
 # register the module with Angular
 angular.module('app.directives', [
   # require the 'app.service' module

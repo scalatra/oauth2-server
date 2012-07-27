@@ -1,11 +1,11 @@
 <h2>{{pageTitle}}</h2>
 
-<div ng-include="'/templates/shared/validation_errors.html'"></div>
-<form class="form-horizontal" name="registerUserForm" novalidate>
+<div validation-summary></div>
+<form class="form-horizontal" name="registerUserForm" novalidate validation-errors>
   <fieldset>
     <legend>Register an account</legend>
     <div ng-include="'/templates/shared/user_fields.html'"></div>
-     <div class="control-group" ng-class="errorClass('password')">
+     <div class="control-group">
       <label class="control-label" for="password">Password:</label>
       <div class="controls">
         <input id="password" class="input-xlarge" type="password" name="password" placeholder="Password" ng-model="user.password" required ng-minlength="6" />
