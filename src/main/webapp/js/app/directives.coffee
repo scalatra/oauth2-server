@@ -52,6 +52,12 @@ mod.notificationList = ['$log', '$interpolate', ($log, $interpolate) ->
 
 ]
 
+mod.authenticated = ['$log', '$location', ($log, $location) ->
+  (scope, elem, attrs) ->
+    pth = attrs.authenticated || attrs.redirectTo || "/login"
+    $location.url(pth) unless angular.isObject(scope.$root.currentUser)
+]
+
 # register the module with Angular
 angular.module('app.directives', [
   # require the 'app.service' module
