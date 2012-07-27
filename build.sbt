@@ -44,6 +44,7 @@ libraryDependencies ++= Seq(
   "org.scalatra"            % "scalatra-swagger"     % "2.1.0-RC1",
   "org.scalatra"            % "scalatra-slf4j"       % "2.1.0-RC1",
   "org.scalatra"            % "contrib-validation"   % "1.0.5-SNAPSHOT",
+  "org.mozilla"             % "rhino"                % "1.7R4",
   "org.jruby"               % "jruby"                % "1.6.7.2",
   "net.databinder"          % "dispatch-http_2.9.1"  % "0.8.8",
   "net.databinder"          % "dispatch-oauth_2.9.1" % "0.8.8",
