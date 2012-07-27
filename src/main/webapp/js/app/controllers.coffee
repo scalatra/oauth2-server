@@ -4,32 +4,22 @@ mod = {}
 
 mod.AppController = [
   '$scope'
-  '$http'
   '$location'
   'loginService'
-  ($scope, $http, $location, loginService) ->
+  'notificationService'
+  ($scope, $location, loginService, notificationService) ->
     $scope.pageTitle = "Scalatra OAuth2"
-    $scope.notifications =
-      error: []
-      info: []
-      success: []
-      warn: []
 
     $scope.errorClass = (field) ->
-      showError = _.any $scope.notifications.error, (item) ->
-        item.field_name == field
-
+      showError = _.any $scope.validationErrors || [], (item) -> item.field_name == field
       if showError then "error" else ""
 
-    $scope.$on "authenticated", (user) ->
+    $scope.$on "authenticated", (sc, user) ->
+      notificationService.notify "info", {message: ("Welcome, " + user.name)}      
       $location.path("/")
 
-    $http
-      .get("/check_auth")
-      .success (response, status, headers, config) ->
-        loginService.authenticated response.data
-      .error (response, status, headers, config) ->
-        loginService.logout()
+    # $scope.loadView = ->
+    #   console.log("Loading view")
 
 
 ]
@@ -37,20 +27,33 @@ mod.AppController = [
 mod.HomeController = ['$scope', '$location', ($scope, $location) ->
 ]
 
-mod.LoginController = ['$scope', '$http', '$location', 'loginService', ($scope, $http, $location, loginService) ->
-  $scope.credentials = {}
-  $scope.login = (credentials) ->
-    $http
-      .post("login", credentials)
-      .success (response) ->
-        loginService.authenticated(response.data)
-      .error(response, status, headers) ->
-        loginService.logout()
-        $scope.credentials =
-          login: response.data.login
-          remember: response.data.remember
-]
+mod.LoginController = [
+  '$scope' 
+  '$http'
+  '$location'
+  'loginService'
+  'notificationService' 
+  ($scope, $http, $location, loginService, notificationService) ->
+    $scope.credentials = {}
+    $scope.validationErrors = []
+    $scope.login = (credentials) ->
+      $http
+        .post("login", credentials)
+        .success (response) ->
+          loginService.authenticated(response.data)
+        .error (response, status, headers) ->
+          loginService.logout()
+          $scope.credentials =
+            login: response.data.login
+            remember: response.data.remember
+          switch status
+            when 401 
+              notificationService.notify('error', 'There was a problem with your username or password.')
+            else
+              notificationService.notify('error', response.errors)
+    counter = 0
 
+]
 
 mod.ResetController = [
   '$scope'
@@ -58,7 +61,10 @@ mod.ResetController = [
   '$location'
   '$routeParams'
   'loginService'
-  ($scope, $http, $location, $routeParams, loginService) ->
+  'notificationService'
+  ($scope, $http, $location, $routeParams, loginService, notificationService) ->
+    $scope.validationErrors = []
+
     $scope.hasErrors =  ->
       $scope.resetPasswordForm.password.$setValidity("sameAs", $scope.password == $scope.confirmation) if $scope.resetPasswordForm.password?
       $scope.resetPasswordForm.$invalid
@@ -73,7 +79,7 @@ mod.ResetController = [
         .success (response) ->
           loginService.authenticated(response.data)
         .error (response, status, headers) ->
-          $scope.notifications.error = response.errors
+          notificationService.notify response.errors
           $scope.password = null
           $scope.confirmation = null
 
