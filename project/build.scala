@@ -2,8 +2,8 @@ import sbt._
 import Keys._
 
 object OAuth2ServerBuild extends Build {
-  val dispatchLiftJson =
-         uri("git://github.com/backchatio/dispatch-lift-json")
+//  val dispatchLiftJson =
+//         uri("git://github.com/backchatio/dispatch-lift-json")
 
 //  val contribLocation = uri("git://github.com/scalatra/scalatra-contrib#51c7268bab8b8c5bbd205f72e8d333b41bfdf924")
 //  val contribLocation = file("/Users/ivan/projects/scalatra/scalatra-contrib")
@@ -14,8 +14,8 @@ object OAuth2ServerBuild extends Build {
 //  def scalatra(name: String = null) =
 //    ProjectRef(scalatraLocation, if (name == null || name.trim.isEmpty) "scalatra" else "scalatra-" + name)
 
-  val root = (Project("oauth2-server", file("."))
-                dependsOn(dispatchLiftJson))
+  val root = (Project("oauth2-server", file(".")))
+//                dependsOn(dispatchLiftJson))
 //                dependsOn(scalatra(""))
 //                dependsOn(scalatra("auth"))
 //                dependsOn(scalatra("lift-json"))

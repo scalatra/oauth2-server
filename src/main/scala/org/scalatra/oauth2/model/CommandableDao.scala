@@ -6,9 +6,10 @@ import scalaz._
 import Scalaz._
 import com.novus.salat.dao.SalatDAO
 import command.{ Command, ValidationSupport, FieldError }
+import com.novus.salat.Context
+import OAuth2Imports._
 
-trait CommandableDao[ObjectType <: Product, ID <: Any] {
-  self: SalatDAO[ObjectType, ID] ⇒
+trait CommandableDao[ObjectType <: Product] {
 
   def execute[TCommand <: ValidationSupport <% ModelCommand[ObjectType]](cmd: TCommand): ValidationNEL[FieldError, ObjectType] = {
     if (cmd.valid == Some(true)) {
@@ -22,4 +23,9 @@ trait CommandableDao[ObjectType <: Product, ID <: Any] {
       nel(f.head, f.tail: _*).fail
     }
   }
+
+  def save(model: ObjectType): Unit
 }
+
+abstract class SalatCommandableDao[ObjectType <: Product, ID <: Any](collection: MongoCollection)(implicit mot: Manifest[ObjectType], mid: Manifest[ID], ctx: Context)
+    extends SalatDAO[ObjectType, ID](collection) with CommandableDao[ObjectType]

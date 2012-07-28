@@ -23,14 +23,4 @@ object ModelCommand {
       def model: TModel = factory
     }
 
-  implicit def createPermissionCommand2ModelCommand(cmd: CreatePermissionCommand): ModelCommand[Permission] =
-    modelCommand(Permission(~cmd.code.converted, ~cmd.name.converted, ~cmd.description.converted, ~cmd.isSystem.converted))
-
-  implicit def updatePermissionCommand2ModelCommand(cmd: UpdatePermissionCommand): ModelCommand[Permission] =
-    modelCommand {
-      (cmd.retrieved map {
-        _.copy(name = ~cmd.name.converted, description = ~cmd.description.converted, isSystem = ~cmd.isSystem.converted)
-      }) | Permission("", cmd.name.original, cmd.description.original, ~cmd.isSystem.converted)
-    }
-
 }

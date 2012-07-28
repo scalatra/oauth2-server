@@ -14,6 +14,7 @@ import mojolly.inflector.InflectorImports
 import net.liftweb.json.JsonAST.JValue
 import query.dsl.FluidQueryBarewordOps
 import query.{ ValidDateOrNumericTypeHolder, ValidNumericTypeHolder, ValidDateTypeHolder, ValidBarewordExpressionArgTypeHolder }
+import org.scalatra.oauth2.DateFormats.DateFormat
 
 object OAuth2Imports
     extends InflectorImports
@@ -124,13 +125,21 @@ object OAuth2Imports
   }
   implicit def doubleMult(f: Double) = new DoubleMult(f)
 
-  //  implicit def dateTimeOrdered(dt: DateTime) = {
-  //    new Ordered[DateTime] {
-  //      def compare(that: DateTime) = dt.compareTo(dt)
-  //    }
-  //  }
-
   implicit def string2RicherString(s: String) = new OAuthString(s)
   implicit def jvalue2RicherJValue(j: JValue) = new OAuthJValue(j)
   implicit def byteArray2Richer(arr: Array[Byte]) = new OAuth2ByteArray(arr)
+
+  class DateTimeConversion(source: String) {
+    def asDate(format: String): Option[DateTime] = new DateFormat {
+      val dateTimeformat = DateTimeFormat.forPattern(format)
+    }.parse(source)
+
+    def asWebDate: Option[DateTime] = DateFormats.parse(source)
+
+    def asIso8601Date: Option[DateTime] = DateFormats(DateFormats.Iso8601, DateFormats.Iso8601NoMillis).parse(source)
+
+  }
+
+  implicit def stringToDateConversion(source: String) = new DateTimeConversion(source)
+
 }

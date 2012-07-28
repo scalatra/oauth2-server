@@ -44,16 +44,14 @@ libraryDependencies ++= Seq(
   "org.scalatra"            % "scalatra-swagger"     % "2.1.0-RC1",
   "org.scalatra"            % "scalatra-slf4j"       % "2.1.0-RC1",
   "org.scalatra"            % "contrib-validation"   % "1.0.5-RC1",
-  "net.liftweb"             % "lift-json-scalaz"     % "2.4",
+  "net.liftweb"            %% "lift-json-scalaz"     % "2.4",
   "org.mozilla"             % "rhino"                % "1.7R4",
   "org.jruby"               % "jruby"                % "1.6.7.2",
-  "net.databinder"          % "dispatch-http_2.9.1"  % "0.8.8",
-  "net.databinder"          % "dispatch-oauth_2.9.1" % "0.8.8",
+  "net.databinder.dispatch" % "core_2.9.1"           % "0.9.0",
   "org.clapper"             % "scalasti_2.9.1"       % "0.5.8",
   "org.mindrot"             % "jbcrypt"              % "0.3m",
   "org.scribe"              % "scribe"               % "1.3.1",
   "javax.mail"              % "mail"                 % "1.4.5",
-  "org.uncommons.maths"     % "uncommons-maths"      % "1.2.2a",
   "commons-codec"           % "commons-codec"        % "1.6",
 //  "ro.isdc.wro4j"           % "wro4j-core"           % "1.4.7" exclude("log4j", "log4j") exclude("org.slf4j", "slf4j-log4j12"),
 //  "ro.isdc.wro4j"           % "wro4j-extensions"     % "1.4.7" exclude("log4j", "log4j") exclude("org.slf4j", "slf4j-log4j12"),
@@ -64,8 +62,7 @@ libraryDependencies ++= Seq(
   "org.scalatra"            % "scalatra-specs2"      % "2.1.0-RC1"           % "test",
   "junit"                   % "junit"                % "4.10"                % "test",
   "ch.qos.logback"          % "logback-classic"      % "1.0.6",
-  "org.eclipse.jetty"       % "jetty-webapp"         % "8.1.3.v20120416"     % "container;container->default",
-//  "org.eclipse.jetty.orbit" % "javax.servlet"        % "3.0.0.v201112011016" % "container;provided" artifacts(Artifact("javax.servlet", "orbit", "jar")),
+  "org.eclipse.jetty"       % "jetty-webapp"         % "8.1.3.v20120416"     % "container",
   "javax.servlet"           % "javax.servlet-api"    % "3.0.1"               % "container;provided",
   "com.novus"               % "salat_2.9.1"          % "1.9.0"
 )
@@ -200,7 +197,7 @@ watchSources <++= (sourceDirectory in Compile) map (d => (d / "webapp" ** "*").g
 
 seq(wro4jSettings: _*)
 
-compile in Compile <<= (compile in Compile).dependsOn(generateResources in Compile)
+//compile in Compile <<= (compile in Compile).dependsOn(generateResources in Compile)
 
 (webappResources in Compile) <+= (targetFolder in generateResources in Compile)
 

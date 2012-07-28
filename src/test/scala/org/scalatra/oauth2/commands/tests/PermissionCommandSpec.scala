@@ -10,7 +10,6 @@ import command.{SimpleError, ValidationError}
 import net.liftweb.json._
 import JsonDSL._
 import com.mongodb.casbah.WriteConcern
-import model.ModelCommand._
 
 
 class PermissionCommandSpec extends AkkaSpecification { def is = sequential ^
@@ -43,7 +42,7 @@ class PermissionCommandSpec extends AkkaSpecification { def is = sequential ^
   def createPermission(asJson: Boolean) = new CreatePermissionCommandSpecContext(asJson)
   def updatePermission(asJson: Boolean) = new UpdatePermissionCommandSpecContext(asJson)
 
-  abstract class PermissionCommandSpecContext(asJson: Boolean)  extends PermissionSpecContextBase {
+  abstract class PermissionCommandSpecContext(asJson: Boolean)  extends PermissionSpecContextBase with PermissionModelCommands {
 
     def cmd: PermissionCommand
     val dao: PermissionDao = new PermissionDao(coll)
@@ -55,7 +54,7 @@ class PermissionCommandSpec extends AkkaSpecification { def is = sequential ^
   class CreatePermissionCommandSpecContext(asJson: Boolean) extends PermissionCommandSpecContext(asJson) {
 
 
-    val cmd = new CreatePermissionCommand()
+    val cmd = new CreatePermissionCommand(OAuth2Extension(system))
 
     def failsEmptyName = this {
       if (asJson) cmd.doBinding(json = ("code" -> "blah"): JValue) else cmd.doBinding(Map("code" -> "blah"))
@@ -122,7 +121,7 @@ class PermissionCommandSpec extends AkkaSpecification { def is = sequential ^
 
   class UpdatePermissionCommandSpecContext(asJson: Boolean) extends PermissionCommandSpecContext(asJson) {
 
-    val cmd = new UpdatePermissionCommand
+    val cmd = new UpdatePermissionCommand(OAuth2Extension(system))
     val first = Permission("first-permission", "The first permission", "")
     dao.save(first, WriteConcern.Safe)
 

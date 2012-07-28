@@ -7,7 +7,7 @@ import model.{ ApiErrorList, ApiError, OAuth2Response }
 import net.liftweb.json._
 import OAuth2Imports._
 import org.scalatra.{ ResponseStatus, ScalatraBase }
-import scalaz._
+import _root_.scalaz._
 import Scalaz._
 import net.liftweb.json.Xml._
 import scala.Some

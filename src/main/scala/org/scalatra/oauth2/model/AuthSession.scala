@@ -41,3 +41,5 @@ case class AuthSession(
   val isRemembered = rememberedAt > MinDate
 
 }
+
+class AuthSessionDao

@@ -12,14 +12,13 @@ import OAuth2Imports._
 import akka.actor.ActorSystem
 import command._
 import command.Validators.PredicateValidator
-import commands.CreatePermissionCommand
+import commands.{ PermissionModelCommands, CreatePermissionCommand }
 import command.Validation
-import ModelCommand._
 
 case class Permission(@Key("_id") code: String, name: String, description: String, isSystem: Boolean = false)
 
 class PermissionDao(collection: MongoCollection)(implicit system: ActorSystem)
-    extends SalatDAO[Permission, String](collection = collection) with CommandableDao[Permission, String] {
+    extends SalatCommandableDao[Permission, String](collection = collection) with PermissionModelCommands {
   private val oauth = OAuth2Extension(system)
 
   oauth.permissions foreach save

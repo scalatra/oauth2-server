@@ -11,7 +11,7 @@ case class Token(token: String, createdAt: DateTime = DateTime.now) extends AppT
 object Token {
 
   def apply(): Token = generate()
-  def generate(size: Int = 16, algo: String = "AESCounterRNG"): Token = {
+  def generate(size: Int = 16, algo: String = "SHA1PRNG"): Token = {
     val random = SecureRandom.getInstance(algo)
     val pw = new Array[Byte](size)
     random.nextBytes(pw)

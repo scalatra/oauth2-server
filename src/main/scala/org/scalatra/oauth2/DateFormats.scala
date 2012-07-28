@@ -2,8 +2,8 @@ package org.scalatra
 package oauth2
 
 import org.joda.time.format.{ DateTimeFormat, DateTimeFormatter }
-import org.joda.time.DateTime
 import scala.util.control.Exception._
+import OAuth2Imports._
 
 trait DateParser {
   def parse(s: String): Option[DateTime]
