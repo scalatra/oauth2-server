@@ -1,6 +1,6 @@
 package org.scalatra
 package oauth2
-
+/*
 import auth.{ DefaultAuthenticationSupport, ForgotPasswordAuthSupport, PasswordAuthSupport, AuthenticationSupport }
 import model.{ OAuth2ModelCommand, Account }
 import org.scalatra.scalate.ScalateSupport
@@ -22,6 +22,7 @@ trait AuthenticationApp[UserClass >: Null <: AppUser[_]]
   self: ServletBase with LiftJsonSupport with FlashMapSupport with CookieSupport with ScalateSupport with DefaultAuthenticationSupport[UserClass] ⇒
 
 }
+
 
 /**
  * Mixin for clients that only support a limited set of HTTP verbs.  If the
@@ -66,7 +67,7 @@ trait OAuth2ServerBaseApp extends ScalatraServlet
     with ScalateSupport
     with CorsSupport
     with LoadBalancedSslRequirement
-    with DefaultAuthenticationSupport[Account]
+    //    with DefaultAuthenticationSupport[Account]
     with CommandSupport
     with TypedParamSupport {
 
@@ -187,3 +188,4 @@ trait OAuth2ServerBaseApp extends ScalatraServlet
 
 }
 
+*/

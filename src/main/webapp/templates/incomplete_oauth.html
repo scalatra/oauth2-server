@@ -1,0 +1,11 @@
+<div validation-summary></div>
+<form class="form-horizontal" name="incompleteOAuth" novalidate validation-errors>
+
+    <fieldset>
+        <legend>Please verify this information is correct</legend>
+        <div ng-include="'/templates/shared/user_fields.html'"></div>
+        <div class="form-actions">
+            <button class="btn btn-primary" ng-click="completeOAuthRegistration()" ng-disabled="incompleteOAuth.$invalid">Save</button>
+        </div>
+    </fieldset>
+</form>

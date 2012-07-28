@@ -27,7 +27,7 @@ html(ng-app="app")
           div.nav-collapse
             ul.nav
               li
-                a(href="/") Home
+                a(ng-href="/") Home
               li.dropdown#clients-menu(ng-show="currentUser")
                 a.dropdown-toggle(href="#clients-menu" data-toggle="dropdown")
                   | Clients
@@ -37,7 +37,7 @@ html(ng-app="app")
                     a(href="/clients") List
                     a(href="/clients/new") Create
               li
-                a(href="/permissions" ng-show="currentUser") Permissions
+                a(ng-href="/permissions" ng-show="currentUser") Permissions
           div.nav-collapse.pull-right
             ul.nav
               li(ng-hide="currentUser")

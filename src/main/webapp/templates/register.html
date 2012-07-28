@@ -2,25 +2,30 @@
 
 <div validation-summary></div>
 <form class="form-horizontal" name="registerUserForm" novalidate validation-errors>
-  <fieldset>
-    <legend>Register an account</legend>
-    <div ng-include="'/templates/shared/user_fields.html'"></div>
-     <div class="control-group">
-      <label class="control-label" for="password">Password:</label>
-      <div class="controls">
-        <input id="password" class="input-xlarge" type="password" name="password" placeholder="Password" ng-model="user.password" required ng-minlength="6" />
-      </div>
-    </div>
-    <div class="control-group">
-      <label class="control-label" for="password_confirmation">Password confirmation:</label>
-      <div class="controls">
-        <input id="password_confirmation" class="input-xlarge" type="password" name="password_confirmation" placeholder="Password confirmation" ng-model="user.password_confirmation" required ng-minlength="6" />
-      </div>
-    </div>
-    <div class="form-actions">
-      <button class="btn btn-primary" ng-click="register(user)" ng-disabled="isValidForm()">Register</button>
-      <a class="btn" ng-click="reset()">Log in</a>
-    </div>
-  </fieldset>
+    <fieldset>
+        <legend>Register an account</legend>
+        <div ng-include="'/templates/shared/user_fields.html'"></div>
+        <div class="control-group">
+            <label class="control-label" for="password">Password:</label>
+
+            <div class="controls">
+                <input id="password" class="input-xlarge" type="password" name="password" placeholder="Password"
+                       ng-model="user.password" required ng-minlength="6"/>
+            </div>
+        </div>
+        <div class="control-group">
+            <label class="control-label" for="password_confirmation">Password confirmation:</label>
+
+            <div class="controls">
+                <input id="password_confirmation" class="input-xlarge" type="password" name="password_confirmation"
+                       placeholder="Password confirmation" ng-model="user.password_confirmation" required
+                       ng-minlength="6"/>
+            </div>
+        </div>
+        <div class="form-actions">
+            <button class="btn btn-primary" ng-click="register(user)" ng-disabled="isValidForm()">Register</button>
+            <a class="btn" ng-click="reset()">Log in</a>
+        </div>
+    </fieldset>
 </form>
 

@@ -5,6 +5,7 @@ import net.liftweb.json._
 import java.nio.charset.Charset
 import rl.UrlCodingUtils
 import mojolly.inflector.Inflector
+import org.apache.commons.codec.binary.Hex
 
 class OAuthString(s: String) {
   def blankOption = if (isBlank) None else Some(s)
@@ -42,6 +43,8 @@ class OAuthString(s: String) {
   }
 
   def %%(params: Map[String, String]) = Inflector.interpolate(s, params)
+
+  def hexDecode() = Hex.decodeHex(s.toCharArray)
 }
 
 class OAuthJValue(json: JValue) {
@@ -57,4 +60,8 @@ class OAuthJValue(json: JValue) {
       case x                                    ⇒ x
     }
   }
+}
+
+class OAuth2ByteArray(arr: Array[Byte]) {
+  def hexEncode(toLowerCase: Boolean = true) = new String(Hex.encodeHex(arr, toLowerCase))
 }

@@ -85,7 +85,7 @@ mod.ResetController = [
 
 ]
 
-mod.RegisterController = ['$scope', '$http', '$timeout', "$location", ($scope, $http, $timeout, $location) ->
+mod.RegisterController = ['$scope', '$http', '$timeout', "$location", "notificationService", ($scope, $http, $timeout, $location, notificationService) ->
   $scope.user = {}
   $scope.validationErrors = []
   removePasswordKeys = (obj) ->
@@ -104,12 +104,11 @@ mod.RegisterController = ['$scope', '$http', '$timeout', "$location", ($scope, $
 
       .error (response, status, headers, config) ->
         removePasswordKeys($scope.user)
-        $scope.notifications.error = response.errors
+        notificationService.errors(response.errors)
 
 
   $scope.reset = () ->
     $scope.user = {}
-    $scope.notifications.error = []
     $location.url("/login")
 
   $scope.isValidForm = () ->

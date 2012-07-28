@@ -1,3 +1,4 @@
+/*
 package org.scalatra
 package oauth2
 
@@ -57,7 +58,7 @@ class ClientsCrudApp(implicit protected val system: ActorSystem) extends OAuth2S
 
   post("/") {
     val client = Client(
-      Token.generate.token,
+      Token().token,
       ~params.get("profile"),
       ~params.get("display_name"),
       AuthorizationType.withName(~params.get("auth_type")),
@@ -92,3 +93,4 @@ class ClientsCrudApp(implicit protected val system: ActorSystem) extends OAuth2S
   def templateData(pairs: (String, Any)*) = (lists ++ Map(pairs: _*)).toSeq
 
 }
+*/

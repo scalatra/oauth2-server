@@ -14,31 +14,9 @@ import command._
 import command.Validators.PredicateValidator
 import commands.CreatePermissionCommand
 import command.Validation
+import ModelCommand._
 
 case class Permission(@Key("_id") code: String, name: String, description: String, isSystem: Boolean = false)
-
-trait ModelCommand[TModel <: Product] { self: Command with ValidationSupport ⇒
-
-  def model: TModel
-}
-
-trait OAuth2ModelCommand[TModel <: Product] extends Command with ValidationSupport with ModelCommand[TModel]
-
-trait CommandableDao[ObjectType <: Product, ID <: Any] { self: SalatDAO[ObjectType, ID] ⇒
-
-  def execute(cmd: OAuth2ModelCommand[ObjectType]): ValidationNEL[FieldError, ObjectType] = {
-    if (cmd.valid == Some(true)) {
-      val model = cmd.model
-      save(model)
-      model.successNel
-    } else {
-      val f = cmd.errors.map(_.validation) collect {
-        case Failure(e) ⇒ e
-      }
-      nel(f.head, f.tail: _*).fail
-    }
-  }
-}
 
 class PermissionDao(collection: MongoCollection)(implicit system: ActorSystem)
     extends SalatDAO[Permission, String](collection = collection) with CommandableDao[Permission, String] {

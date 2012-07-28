@@ -9,7 +9,7 @@ import scalaz._
 import Scalaz._
 import model.Permission
 
-abstract class PermissionCommand(implicit system: ActorSystem) extends OAuth2ModelCommand[Permission] with CommandValidators {
+abstract class PermissionCommand(implicit system: ActorSystem) extends Command with ValidationSupport with CommandValidators {
 
   protected val oauth = OAuth2Extension(system)
 
@@ -21,7 +21,7 @@ abstract class PermissionCommand(implicit system: ActorSystem) extends OAuth2Mod
 
   val isSystem = bind[Boolean](fieldNames.isSystem)
 
-  def model = Permission(~code.converted, ~name.converted, ~description.converted, ~isSystem.converted)
+  //  def model = Permission(~code.converted, ~name.converted, ~description.converted, ~isSystem.converted)
 }
 
 class CreatePermissionCommand(implicit system: ActorSystem) extends PermissionCommand {
@@ -33,16 +33,16 @@ class CreatePermissionCommand(implicit system: ActorSystem) extends PermissionCo
 }
 class UpdatePermissionCommand(implicit system: ActorSystem) extends PermissionCommand with IdFromParamsBagCommand {
 
-  private lazy val retrieved = oauth.permissionDao.findOneById(~code.converted)
+  lazy val retrieved = oauth.permissionDao.findOneById(~code.converted)
 
   val code: ValidatedBinding[String] = bind[String]("id") validate {
     case s ⇒
       (retrieved.map(_ ⇒ (~s).success[FieldError]) | SimpleError("The permission doesn't exist.").fail[String]): FieldValidation[String]
   }
 
-  override def model: Permission = {
-    (retrieved map {
-      _.copy(name = ~name.converted, description = ~description.converted, isSystem = ~isSystem.converted)
-    }) | Permission("", name.original, description.original, ~isSystem.converted)
-  }
+  //  override def model: Permission = {
+  //    (retrieved map {
+  //      _.copy(name = ~name.converted, description = ~description.converted, isSystem = ~isSystem.converted)
+  //    }) | Permission("", name.original, description.original, ~isSystem.converted)
+  //  }
 }

@@ -1,3 +1,4 @@
+/*
 package org.scalatra
 package oauth2
 
@@ -140,3 +141,4 @@ class OAuthAuthentication(implicit system: ActorSystem)
   }
 
 }
+*/

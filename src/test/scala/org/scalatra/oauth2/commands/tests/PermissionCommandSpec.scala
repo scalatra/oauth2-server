@@ -10,6 +10,7 @@ import command.{SimpleError, ValidationError}
 import net.liftweb.json._
 import JsonDSL._
 import com.mongodb.casbah.WriteConcern
+import model.ModelCommand._
 
 
 class PermissionCommandSpec extends AkkaSpecification { def is = sequential ^

@@ -132,4 +132,5 @@ object OAuth2Imports
 
   implicit def string2RicherString(s: String) = new OAuthString(s)
   implicit def jvalue2RicherJValue(j: JValue) = new OAuthJValue(j)
+  implicit def byteArray2Richer(arr: Array[Byte]) = new OAuth2ByteArray(arr)
 }

@@ -11,7 +11,6 @@ trait AppUser[TPassword] {
   def name: String
   def email: String
   def password: TPassword
-  def remembered: AppToken
   def confirmation: AppToken
   def reset: AppToken
 
@@ -21,6 +20,12 @@ trait AppUser[TPassword] {
 
 trait AppToken {
   def token: String
+}
+
+trait AppAuthSession {
+  def idString: String
+  def userId: String
+  def token: AppToken
 }
 
 trait UserProvider[UserClass <: AppUser[_]] {
@@ -38,6 +43,8 @@ trait UserProvider[UserClass <: AppUser[_]] {
   def confirm(token: String): Validation[FieldError, UserClass]
   def validate(user: UserClass): ValidationNEL[FieldError, UserClass]
 }
+
+trait AuthSessionProvider[AuthSessionClass <: AppAuthSession]
 
 trait RememberMeProvider[UserClass <: AppUser[_]] {
   def loginFromRemember(token: String): Validation[FieldError, UserClass]

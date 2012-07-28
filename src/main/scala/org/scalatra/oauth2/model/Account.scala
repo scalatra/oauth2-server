@@ -17,70 +17,6 @@ import org.mindrot.jbcrypt.BCrypt
 import akka.actor.ActorSystem
 import command.{ FieldValidation, FieldError, SimpleError }
 
-object fieldNames {
-  val login = "login"
-  val id = "id"
-  val _id = "_id"
-  val email = "email"
-  val password = "password"
-  val createdAt = "createdAt"
-  val updatedAt = "updatedAt"
-  val secret = "secret"
-  val displayName = "displayName"
-  val rememberedAt = "rememberedAt"
-  val link = "link"
-  val redirectUri = "redirectUri"
-  val urlWhitelist = "urlWhitelist"
-  val scope = "scope"
-  val authorizationType = "authorizationType"
-  val revoked = "revoked"
-  val tokensGranted = "tokensGranted"
-  val tokensRevoked = "tokensRevoked"
-  val clientId = "clientId"
-  val state = "state"
-  val responseType = "responseType"
-  val grantCode = "grantCode"
-  val accessToken = "accessToken"
-  val identity = "identity"
-  val expiresAt = "expiresAt"
-  val lastAccess = "lastAccess"
-  val previousAccess = "previousAccess"
-  val name = "name"
-  val grantedAt = "grantedAt"
-  val token = "token"
-  val pwd = "pwd"
-  val salt = "salt"
-  val currentSignInIp = "currentSignInIp"
-  val previousSignInIp = "previousSignInIp"
-  val currentSignInAt = "currentSignInAt"
-  val previousSignInAt = "previousSignInAt"
-  val remembered = "remembered"
-  val confirmation = "confirmation"
-  val reset = "reset"
-  val stats = "stats"
-  val clientType = "clientType"
-  val profile = "profile"
-  val code = "code"
-  val description = "description"
-  val isSystem = "isSystem"
-}
-
-case class Token(token: String, createdAt: DateTime = DateTime.now) extends AppToken {
-  def refreshed = Token()
-}
-object Token {
-
-  def apply(): Token = generate
-  def generate: Token = {
-    val random = SecureRandom.getInstance("SHA1PRNG")
-    val pw = new Array[Byte](16)
-    random.nextBytes(pw)
-    Token(Hex.encodeHexString(pw))
-  }
-
-  def isMatch(candidate: String, toMatch: Token) = candidate == toMatch.token
-}
-
 case class BCryptPassword(pwd: String, salted: Boolean, stretches: Int) {
   def encrypted = salted ? this | BCryptPassword.hash(this)
   def isMatch(candidate: String) = BCryptPassword.isMatch(candidate, this)
@@ -114,19 +50,11 @@ object BCryptPassword {
 case class LinkedOAuthAccount(provider: String, id: String)
 
 case class AuthStats(
-    currentSignInIp: String = "",
-    previousSignInIp: String = "",
-    currentSignInAt: DateTime = MinDate,
-    lastFailureAt: DateTime = MinDate,
-    previousSignInAt: DateTime = MinDate,
     loginFailures: Int = 0,
-    loginSuccess: Int = 0) {
+    loginSuccess: Int = 0,
+    lastFailureAt: DateTime = MinDate) {
   def tick(ip: String) =
     copy(
-      currentSignInIp = ip,
-      previousSignInIp = currentSignInIp,
-      currentSignInAt = DateTime.now,
-      previousSignInAt = currentSignInAt,
       loginSuccess = (loginSuccess + 1),
       loginFailures = 0,
       lastFailureAt = MinDate)
