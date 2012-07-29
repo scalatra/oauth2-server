@@ -51,6 +51,7 @@
 //  }
 //
 //  override def afterAuthenticate(winningStrategy: String, user: UserClass) {
+//    if (winningStrategy == "user_password") app.user = userProvider.loggedIn(user, app.remoteAddress)
 //    println("after authenticate " + getClass.getName)
 //  }
 //

@@ -18,7 +18,7 @@ trait ModelCommand[TModel <: Product] {
 
 object ModelCommand {
 
-  def modelCommand[TCommand <: Command with ValidationSupport, TModel <: Product](factory: ⇒ TModel): ModelCommand[TModel] =
+  def modelCommand[TModel <: Product](factory: ⇒ TModel): ModelCommand[TModel] =
     new ModelCommand[TModel] {
       def model: TModel = factory
     }

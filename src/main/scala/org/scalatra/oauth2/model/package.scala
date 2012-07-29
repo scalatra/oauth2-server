@@ -1,7 +1,15 @@
 package org.scalatra
 package oauth2
 
+import scalaz._
+import Scalaz._
+import command.FieldError
+
+
 package object model {
+
+  type ModelValidation[T <: Product] = ValidationNEL[FieldError, T]
+
   object fieldNames {
     val login = "login"
     val id = "id"

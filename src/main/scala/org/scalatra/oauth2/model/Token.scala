@@ -20,3 +20,4 @@ object Token {
 
   def isMatch(candidate: String, toMatch: Token) = candidate == toMatch.token
 }
+

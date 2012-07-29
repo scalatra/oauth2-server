@@ -11,7 +11,7 @@ import OAuth2Imports._
 
 trait CommandableDao[ObjectType <: Product] {
 
-  def execute[TCommand <: ValidationSupport <% ModelCommand[ObjectType]](cmd: TCommand): ValidationNEL[FieldError, ObjectType] = {
+  def execute[TCommand <: ValidationSupport <% ModelCommand[ObjectType]](cmd: TCommand): ModelValidation[ObjectType] = {
     if (cmd.valid == Some(true)) {
       val model = cmd.model
       save(model)
