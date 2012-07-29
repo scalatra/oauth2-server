@@ -5,10 +5,9 @@ import scalaz._
 import Scalaz._
 import command.FieldError
 
-
 package object model {
 
-  type ModelValidation[T <: Product] = ValidationNEL[FieldError, T]
+  type ModelValidation[T] = Validation[NonEmptyList[FieldError], T]
 
   object fieldNames {
     val login = "login"

@@ -2,6 +2,7 @@ package org.scalatra
 package oauth2
 
 import com.mongodb.casbah._
+import model.BCryptPassword
 import org.scala_tools.time._
 import org.joda.time.base.{ AbstractDateTime, AbstractInstant, AbstractPartial }
 import org.joda.time.field.AbstractReadableInstantFieldProperty
@@ -15,6 +16,8 @@ import net.liftweb.json.JsonAST.JValue
 import query.dsl.FluidQueryBarewordOps
 import query.{ ValidDateOrNumericTypeHolder, ValidNumericTypeHolder, ValidDateTypeHolder, ValidBarewordExpressionArgTypeHolder }
 import org.scalatra.oauth2.DateFormats.DateFormat
+import scalaz._
+import Scalaz._
 
 object OAuth2Imports
     extends InflectorImports
@@ -142,4 +145,5 @@ object OAuth2Imports
 
   implicit def stringToDateConversion(source: String) = new DateTimeConversion(source)
 
+  implicit val bcryptZero = zero(BCryptPassword(""))
 }

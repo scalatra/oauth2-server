@@ -2,9 +2,9 @@ package org.scalatra
 package oauth2
 package commands
 
-import model.{BCryptPassword, Validations, Account, fieldNames}
+import model.{ BCryptPassword, Validations, Account, fieldNames }
 import command._
-import util.{MultiMap, MapWithIndifferentAccess, MultiMapHeadView}
+import util.{ MultiMap, MapWithIndifferentAccess, MultiMapHeadView }
 import scala.util.control.Exception.allCatch
 import scalaz._
 import Scalaz._
@@ -16,10 +16,10 @@ trait AccountModelCommands {
   import ModelCommand._
 
   implicit def loginCommand2Model(cmd: LoginCommand): ModelCommand[Account] =
-    modelCommand(cmd.retrieved)
+    modelCommand(cmd.retrieved.toOption.get)
 
   implicit def registerCommand2Model(cmd: RegisterCommand): ModelCommand[Account] =
-    modelCommand(Account(~cmd.login.converted, ~cmd.email.converted, ~cmd.name.converted, ~cmd.password.converted))
+    modelCommand(Account(~cmd.login.converted, ~cmd.email.converted, ~cmd.name.converted, cmd.password.converted.map(BCryptPassword(_)).orNull))
 
 }
 
@@ -37,13 +37,13 @@ trait PasswordParam extends OAuth2CommandPart {
   import oauth.userProvider.validations
 
   val password = bind[BCryptPassword](fieldNames.password) validate {
-    case s => s.map(_.success).getOrElse(FieldError(fieldNames.password, "Password is required."))
+    case s ⇒ s.map(_.success).getOrElse(FieldError(fieldNames.password, "Password is required.").fail)
   }
 
 }
 
 trait RetrievingLoginParam {
-  this: OAuth2Command =>
+  this: OAuth2Command ⇒
 
   lazy val retrieved: FieldValidation[Account] = {
     val r = login.converted.flatMap(oauth.userProvider.findByLoginOrEmail(_))
@@ -51,18 +51,16 @@ trait RetrievingLoginParam {
   }
 
   val login = bind[String](fieldNames.login) validate {
-    case s => for {
-      ne <- org.scalatra.command.Validation.nonEmptyString(fieldNames.login, ~s)
-      account <- retrieved
-      li <- account.login
-    } yield li
+    case s ⇒ for {
+      ne ← org.scalatra.command.Validation.nonEmptyString(fieldNames.login, ~s)
+      account ← retrieved
+    } yield account.login
   }
-
 
 }
 
 trait ConfirmedPasswordParams extends OAuth2CommandPart {
-  this: OAuth2Command =>
+  this: OAuth2Command ⇒
 
   import oauth.userProvider.validations
 
@@ -74,7 +72,7 @@ trait ConfirmedPasswordParams extends OAuth2CommandPart {
 }
 
 trait EmailParam extends OAuth2CommandPart {
-  this: OAuth2Command =>
+  this: OAuth2Command ⇒
 
   import oauth.userProvider.validations
 
@@ -82,34 +80,26 @@ trait EmailParam extends OAuth2CommandPart {
 }
 
 trait NameParam extends OAuth2CommandPart {
-  this: OAuth2Command =>
+  this: OAuth2Command ⇒
 
   import oauth.userProvider.validations
 
   val name = bind[String](fieldNames.name) validate (validations.name _)
 }
 
-
-class LoginCommand(oauth: OAuth2Extension) extends OAuth2Command(oauth) with RetrievingLoginParam {
-
+class LoginCommand(oauth: OAuth2Extension, getIpAddress: ⇒ String) extends OAuth2Command(oauth) with RetrievingLoginParam {
+  val ipAddress = getIpAddress
   val password = {
-    bind[BCryptPassword](fieldNames.password) validate {
-      case s => for {
-        ne <- org.scalatra.command.Validation.nonEmptyString(fieldNames.password, ~s)
-        account <- retrieved if account.password.isMatch(password)
-        pwd <- account.password
-      } yield pwd
+    bind[BCryptPassword](fieldNames.password) validate { (s: BCryptPassword) ⇒
+      for {
+        ne ← command.Validation.nonEmptyString(fieldNames.password, s.pwd)
+        account ← retrieved
+        pwd ← account.password.matches(ne)
+      } yield account.password
     }
   }
 
   val remember = bind[String](fieldNames.remember)
-
-  afterBinding {
-    allCatch {
-      if (login.valid && !password.valid)
-        oauth.userProvider.loginFailed(retrieved)
-    }
-  }
 
 }
 

@@ -7,20 +7,19 @@ import com.novus.salat.global._
 import com.novus.salat.annotations._
 import com.novus.salat.dao._
 import org.scalatra.oauth2.UserProvider
-import java.security.SecureRandom
 import scala.util.control.Exception._
-import org.apache.commons.codec.binary.Hex
 import scalaz._
 import Scalaz._
 import OAuth2Imports._
 import org.mindrot.jbcrypt.BCrypt
 import akka.actor.ActorSystem
 import command.{ FieldValidation, FieldError, SimpleError }
-import commands.{ActivateAccountCommand, RegisterCommand, LoginCommand, AccountModelCommands}
+import commands.{ ActivateAccountCommand, RegisterCommand, LoginCommand, AccountModelCommands }
 
 case class BCryptPassword(pwd: String, salted: Boolean, stretches: Int) {
   def encrypted = salted ? this | BCryptPassword.hash(this)
   def isMatch(candidate: String) = BCryptPassword.isMatch(candidate, this)
+  def matches(candidate: String) = BCryptPassword.matches(candidate, this)
 }
 object BCryptPassword {
   def apply(in: String, stretches: Int = 10): BCryptPassword = BCryptPassword(in, false, stretches)
@@ -40,11 +39,15 @@ object BCryptPassword {
 
   def isMatch(candidate: String, toMatch: String): Boolean = { candidate == toMatch }
 
+  def matches(candidate: String, toMatch: BCryptPassword): FieldValidation[BCryptPassword] = {
+    if (isMatch(candidate, toMatch)) BCryptPassword(candidate).encrypted.success else FieldError("password", "Passwords don't match.").fail
+  }
+
   def random = {
     BCryptPassword.hash(Token.generate(8).token)
   }
 
-  def parse(in: String): Option[BCryptPassword] = in.blankOption(BCryptPassword(_).encrypted)
+  def parse(in: String): Option[BCryptPassword] = in.blankOption map (BCryptPassword(_))
 }
 
 case class LinkedOAuthAccount(provider: String, id: String)
@@ -102,16 +105,23 @@ class AccountDao(collection: MongoCollection)(implicit system: ActorSystem)
   collection.ensureIndex(Map("remembered.token" -> 1), "remembered_token_idx")
   collection.ensureIndex(Map("linkedOAuthAccounts.provider" -> 1, "linkedOAuthAccounts.id" -> 1), "linked_oauth_accounts_idx", true)
 
-  def login(command: LoginCommand, ipAddress: String): ModelValidation[Account] = {
-    val error = FieldError("Login/password don't match")
-    if (command.valid == Some(true)) {
-      command.retrieved.fail.map(_ => nel(error))
-    } else error.failNel
+  def login(command: LoginCommand): ModelValidation[Account] = {
+    if (command.isValid) {
+      val o = command.retrieved.liftFailNel.flatMap(validate).map(loggedIn(_, command.ipAddress))
+      if (o.isSuccess && o.exists(_.isConfirmed)) o else loginFailed(command)
+    } else {
+      loginFailed(command)
+    }
   }
 
-  def loginFailed(owner: FieldValidation[Account]) = owner foreach { u => save(u.copy(stats = u.stats.tickFailures)) }
+  private def loginFailed(command: LoginCommand) = {
+    allCatch {
+      command.retrieved foreach { u ⇒ save(u.copy(stats = u.stats.tickFailures)) }
+    }
+    FieldError("Login/password don't match").failNel[Account]
+  }
 
-  def loggedIn(owner: Account, ipAddress: String): Account = {
+  private def loggedIn(owner: Account, ipAddress: String): Account = {
     val ticked = owner.copy(stats = owner.stats.tick(ipAddress), reset = Token())
     save(ticked)
     ticked
@@ -132,7 +142,7 @@ class AccountDao(collection: MongoCollection)(implicit system: ActorSystem)
   }
 
   def remember(owner: Account): FieldValidation[String] =
-    allCatch.withApply(e ⇒ SimpleError(e.getMessage).failNel) {
+    allCatch.withApply(e ⇒ SimpleError(e.getMessage).fail) {
       val token = Token()
       save(owner.copy(remembered = token))
       token.token.success
@@ -181,7 +191,7 @@ class AccountDao(collection: MongoCollection)(implicit system: ActorSystem)
       else SimpleError("The username/password combination doesn not match").fail
 
     /*_*/
-    def apply(owner: Account): ValidationNEL[FieldError, Account] = {
+    def apply(owner: Account): ModelValidation[Account] = {
       val factory: Factory = owner.copy(_, _, _)
       (login(owner.login, owner.id.some).liftFailNel
         |@| email(owner.email, owner.id.some).liftFailNel
@@ -191,45 +201,42 @@ class AccountDao(collection: MongoCollection)(implicit system: ActorSystem)
   }
 
   def register(cmd: RegisterCommand): ModelValidation[Account] = execute(cmd)
-//  /*_*/
-//  def register(
-//    login: Option[String],
-//    email: Option[String],
-//    name: Option[String],
-//    password: Option[String],
-//    passwordConfirmation: Option[String]): ValidationNEL[FieldError, Account] = {
-//    val newOwner: ValidationNEL[FieldError, Account] = (validations.login(~login).liftFailNel
-//      |@| validations.email(~email).liftFailNel
-//      |@| validations.name(~name).liftFailNel
-//      |@| (validations
-//        passwordWithConfirmation (~password, ~passwordConfirmation)
-//        map (BCryptPassword(_).encrypted)).liftFailNel) { Account(_, _, _, _) }
-//
-//    newOwner foreach { o ⇒
-//      save(o)
-//      if (!oauth.isTest) oauth.smtp.send(MailMessage(ConfirmationMail(o.name, o.login, o.email, o.confirmation.token)))
-//    }
-//    newOwner
-//  }
-//  /*_*/
+  //  /*_*/
+  //  def register(
+  //    login: Option[String],
+  //    email: Option[String],
+  //    name: Option[String],
+  //    password: Option[String],
+  //    passwordConfirmation: Option[String]): ValidationNEL[FieldError, Account] = {
+  //    val newOwner: ValidationNEL[FieldError, Account] = (validations.login(~login).liftFailNel
+  //      |@| validations.email(~email).liftFailNel
+  //      |@| validations.name(~name).liftFailNel
+  //      |@| (validations
+  //        passwordWithConfirmation (~password, ~passwordConfirmation)
+  //        map (BCryptPassword(_).encrypted)).liftFailNel) { Account(_, _, _, _) }
+  //
+  //    newOwner foreach { o ⇒
+  //      save(o)
+  //      if (!oauth.isTest) oauth.smtp.send(MailMessage(ConfirmationMail(o.name, o.login, o.email, o.confirmation.token)))
+  //    }
+  //    newOwner
+  //  }
+  //  /*_*/
 
   private type Factory = (String, String, String) ⇒ Account
 
+  def validate(user: Account): ModelValidation[Account] = validations(user)
 
-  def validate(user: Account): Scalaz.ValidationNEL[FieldError, Account] = validations(user)
-
-  def confirm(cmd: ActivateAccountCommand): ModelValidation[Account]
-
-  def confirm(token: String): FieldValidation[Account] = {
+  def confirm(cmd: ActivateAccountCommand): ModelValidation[Account] = {
     val key = fieldNames.confirmation + "." + fieldNames.token
-    validations.tokenRequired("confirmation", token) flatMap { tok ⇒
+    cmd.token.validation.liftFailNel flatMap { tok =>
       findOne(Map(key -> tok)) map { owner ⇒
         if (!owner.isConfirmed) {
           val upd = owner.copy(confirmedAt = DateTime.now)
           save(upd)
-          upd.success[FieldError]
-        } else AlreadyConfirmed().fail
-      } getOrElse InvalidToken().fail
+          upd.successNel[FieldError]
+        } else AlreadyConfirmed().failNel
+      } getOrElse InvalidToken().failNel
     }
   }
 

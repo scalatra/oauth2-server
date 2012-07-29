@@ -2,14 +2,12 @@ package org.scalatra
 package oauth2
 
 import command._
-import model.{BCryptPassword, Account, fieldNames}
+import model.{ BCryptPassword, Account, fieldNames }
 import OAuth2Imports._
 import util.conversion.TypeConverter
 import _root_.scalaz._
 import Scalaz._
-import collection.generic.{Shrinkable, Growable}
-import net.liftweb.json._
-import net.liftweb.json
+import collection.generic.{ Shrinkable, Growable }
 
 package object commands {
 
@@ -18,7 +16,10 @@ package object commands {
     const.newInstance(oauth).asInstanceOf[C]
   }
 
-  abstract class OAuth2Command(val oauth: OAuth2Extension) extends Command with ValidationSupport with CommandValidators with Growable[Command] with Shrinkable[Command] {
+  trait IsValidMethod { self: ValidationSupport ⇒
+    def isValid = valid == Some(true)
+  }
+  abstract class OAuth2Command(val oauth: OAuth2Extension) extends Command with ValidationSupport with CommandValidators with IsValidMethod with Growable[Command] with Shrinkable[Command] {
 
     implicit def toValidator[T: Zero](fn: T ⇒ FieldValidation[T]): Validator[T] = {
       case s ⇒ fn(~s)
@@ -30,16 +31,16 @@ package object commands {
 
     implicit val stringToBCryptPassword: TypeConverter[BCryptPassword] = safeOption(BCryptPassword.parse)
 
-    def +=(elem: Command): OAuth2Command = {
+    def +=(elem: Command) = {
       bindings :::= elem.bindings
       this
     }
 
     def clear() {
-      bindings = Seq.empty[Binding[_]]
+      bindings = List.empty[Binding[_]]
     }
 
-    def -=(elem: Command): OAuth2Command = {
+    def -=(elem: Command) = {
       bindings = bindings filterNot (_ == elem)
       this
     }
@@ -49,16 +50,15 @@ package object commands {
     val oauth: OAuth2Extension
   }
 
-  trait IdCommand[ID <: Any] { self: OAuth2Command ⇒
-
-    lazy val retrieved: FieldValidation[Account] = {
-      val r = id.converted.flatMap(oauth.userProvider.findOneById(_))
-      r some (_.success) none FieldError("Not found").fail
-    }
-
-    def id: ValidatedBinding[ID]
-
-  }
-
+  //  trait IdCommand[ObjectType, ID <: Any] { self: OAuth2Command ⇒
+  //
+  //    lazy val retrieved: FieldValidation[Account] = {
+  //      val r = id.converted.flatMap(oauth.userProvider.findOneById(_))
+  //      r some (_.success) none FieldError("Not found").fail[]
+  //    }
+  //
+  //    def id: ValidatedBinding[ID]
+  //
+  //  }
 
 }

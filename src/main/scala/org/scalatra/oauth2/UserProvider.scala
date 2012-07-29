@@ -2,6 +2,7 @@ package org.scalatra
 package oauth2
 
 import command.FieldError
+import commands.{ActivateAccountCommand, RegisterCommand, LoginCommand}
 import scalaz._
 import Scalaz._
 
@@ -30,18 +31,12 @@ trait AppAuthSession {
 
 trait UserProvider[UserClass <: AppUser[_]] {
 
-  def login(loginOrEmail: String, password: String, ipAddress: String = ""): Validation[FieldError, UserClass]
+  def login(loginCommand: LoginCommand): ValidationNEL[FieldError, UserClass]
   def findUserById(id: String): Option[UserClass]
-  def loggedIn(user: UserClass, ipAddress: String): UserClass
   def findByLoginOrEmail(loginOrEmail: String): Option[UserClass]
-  def register(
-    login: Option[String],
-    email: Option[String],
-    name: Option[String],
-    password: Option[String],
-    passwordConfirmation: Option[String]): ValidationNEL[FieldError, UserClass]
-  def confirm(token: String): Validation[FieldError, UserClass]
-  def validate(user: UserClass): ValidationNEL[FieldError, UserClass]
+  def register(registerCommand: RegisterCommand): ValidationNEL[FieldError, UserClass]
+  def confirm(activateCommand: ActivateAccountCommand): ValidationNEL[FieldError, UserClass]
+
 }
 
 trait AuthSessionProvider[AuthSessionClass <: AppAuthSession]

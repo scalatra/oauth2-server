@@ -8,11 +8,11 @@ import com.novus.salat.dao.SalatDAO
 import command.{ Command, ValidationSupport, FieldError }
 import com.novus.salat.Context
 import OAuth2Imports._
+import commands.IsValidMethod
 
 trait CommandableDao[ObjectType <: Product] {
-
-  def execute[TCommand <: ValidationSupport <% ModelCommand[ObjectType]](cmd: TCommand): ModelValidation[ObjectType] = {
-    if (cmd.valid == Some(true)) {
+  def execute[TCommand <: ValidationSupport with IsValidMethod <% ModelCommand[ObjectType]](cmd: TCommand): ModelValidation[ObjectType] = {
+    if (cmd.isValid) {
       val model = cmd.model
       save(model)
       model.successNel
@@ -28,4 +28,4 @@ trait CommandableDao[ObjectType <: Product] {
 }
 
 abstract class SalatCommandableDao[ObjectType <: Product, ID <: Any](collection: MongoCollection)(implicit mot: Manifest[ObjectType], mid: Manifest[ID], ctx: Context)
-    extends SalatDAO[ObjectType, ID](collection) with CommandableDao[ObjectType]
+  extends SalatDAO[ObjectType, ID](collection) with CommandableDao[ObjectType]
