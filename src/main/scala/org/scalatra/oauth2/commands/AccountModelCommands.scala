@@ -31,10 +31,7 @@ trait LoginParam extends OAuth2CommandPart {
   val login = bind[String](fieldNames.login) validate (validations.login(_: String, None))
 }
 
-trait PasswordParam extends OAuth2CommandPart {
-  this: OAuth2Command ⇒
-
-  import oauth.userProvider.validations
+trait PasswordParam extends OAuth2CommandPart { this: OAuth2Command ⇒
 
   val password = bind[BCryptPassword](fieldNames.password) validate {
     case s ⇒ s.map(_.success).getOrElse(FieldError(fieldNames.password, "Password is required.").fail)
@@ -42,8 +39,7 @@ trait PasswordParam extends OAuth2CommandPart {
 
 }
 
-trait RetrievingLoginParam {
-  this: OAuth2Command ⇒
+trait RetrievingLoginParam { this: OAuth2Command ⇒
 
   lazy val retrieved: FieldValidation[Account] = {
     val r = login.converted.flatMap(oauth.userProvider.findByLoginOrEmail(_))
@@ -59,8 +55,7 @@ trait RetrievingLoginParam {
 
 }
 
-trait ConfirmedPasswordParams extends OAuth2CommandPart {
-  this: OAuth2Command ⇒
+trait ConfirmedPasswordParams extends OAuth2CommandPart { this: OAuth2Command ⇒
 
   import oauth.userProvider.validations
 
@@ -71,16 +66,14 @@ trait ConfirmedPasswordParams extends OAuth2CommandPart {
     validations.passwordWithConfirmation(_: String, ~passwordConfirmation.converted))
 }
 
-trait EmailParam extends OAuth2CommandPart {
-  this: OAuth2Command ⇒
+trait EmailParam extends OAuth2CommandPart { this: OAuth2Command ⇒
 
   import oauth.userProvider.validations
 
   val email = bind[String](fieldNames.email) validate (validations.email(_: String, None))
 }
 
-trait NameParam extends OAuth2CommandPart {
-  this: OAuth2Command ⇒
+trait NameParam extends OAuth2CommandPart { this: OAuth2Command ⇒
 
   import oauth.userProvider.validations
 
@@ -95,7 +88,7 @@ class LoginCommand(oauth: OAuth2Extension, getIpAddress: ⇒ String) extends OAu
         ne ← command.Validation.nonEmptyString(fieldNames.password, s.pwd)
         account ← retrieved
         pwd ← account.password.matches(ne)
-      } yield account.password
+      } yield pwd
     }
   }
 
@@ -115,3 +108,15 @@ class ResetCommand(oauth: OAuth2Extension) extends OAuth2Command(oauth) with Tok
 class OAuthInfoIncompleteCommand(oauth: OAuth2Extension) extends UserFieldsCommand(oauth)
 
 class ActivateAccountCommand(oauth: OAuth2Extension) extends OAuth2Command(oauth) with TokenFromParamsBagCommand
+
+class LoginFromRememberCommand(oauth: OAuth2Extension) extends OAuth2Command(oauth) with TokenFromParamsBagCommand
+
+class ChangePasswordCommand(oauth: OAuth2Extension)(implicit val user: Account) extends OAuth2Command(oauth) with ConfirmedPasswordParams {
+  val oldPassword =
+    bind[BCryptPassword]("oldPassword") validate { (s: BCryptPassword) ⇒
+      for {
+        ne ← command.Validation.nonEmptyString("oldPassword", s.pwd)
+        pwd ← user.password.matches(ne)
+      } yield pwd
+    }
+}

@@ -2,7 +2,7 @@ package org.scalatra
 package oauth2
 
 import command.FieldError
-import commands.{ActivateAccountCommand, RegisterCommand, LoginCommand}
+import commands._
 import scalaz._
 import Scalaz._
 
@@ -42,18 +42,15 @@ trait UserProvider[UserClass <: AppUser[_]] {
 trait AuthSessionProvider[AuthSessionClass <: AppAuthSession]
 
 trait RememberMeProvider[UserClass <: AppUser[_]] {
-  def loginFromRemember(token: String): Validation[FieldError, UserClass]
+  def loginFromRemember(command: LoginFromRememberCommand): ValidationNEL[FieldError, UserClass]
   def remember(owner: UserClass): Validation[FieldError, String]
 }
 
 trait ForgotPasswordProvider[UserClass <: AppUser[_]] {
-  def forgot(loginOrEmail: Option[String]): Validation[FieldError, UserClass]
-  def resetPassword(token: String, password: String, passwordConfirmation: String): ValidationNEL[FieldError, UserClass]
-  def rememberedPassword(owner: UserClass, ipAddress: String): UserClass
+  def forgot(forgotCommand: ForgotCommand): ValidationNEL[FieldError, UserClass]
+  def resetPassword(resetCommand: ResetCommand): ValidationNEL[FieldError, UserClass]
 }
 
 trait AuthenticatedChangePasswordProvider[UserClass <: AppUser[_]] {
-  def changePassword(owner: UserClass, oldPassword: String, password: String, passwordConfirmation: String): Validation[FieldError, UserClass]
+  def changePassword(command: ChangePasswordCommand): ValidationNEL[FieldError, UserClass]
 }
-
-trait OAuthUserProvider

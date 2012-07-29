@@ -14,7 +14,7 @@ import OAuth2Imports._
 import org.mindrot.jbcrypt.BCrypt
 import akka.actor.ActorSystem
 import command.{ FieldValidation, FieldError, SimpleError }
-import commands.{ ActivateAccountCommand, RegisterCommand, LoginCommand, AccountModelCommands }
+import commands._
 
 case class BCryptPassword(pwd: String, salted: Boolean, stretches: Int) {
   def encrypted = salted ? this | BCryptPassword.hash(this)
@@ -107,7 +107,7 @@ class AccountDao(collection: MongoCollection)(implicit system: ActorSystem)
 
   def login(command: LoginCommand): ModelValidation[Account] = {
     if (command.isValid) {
-      val o = command.retrieved.liftFailNel.flatMap(validate).map(loggedIn(_, command.ipAddress))
+      val o = command.retrieved.liftFailNel.map(loggedIn(_, command.ipAddress))
       if (o.isSuccess && o.exists(_.isConfirmed)) o else loginFailed(command)
     } else {
       loginFailed(command)
@@ -122,6 +122,8 @@ class AccountDao(collection: MongoCollection)(implicit system: ActorSystem)
   }
 
   private def loggedIn(owner: Account, ipAddress: String): Account = {
+    // This ticks the login counter and changes the reset token because if we get here
+    // the user clearly remembered the password.
     val ticked = owner.copy(stats = owner.stats.tick(ipAddress), reset = Token())
     save(ticked)
     ticked
@@ -134,11 +136,11 @@ class AccountDao(collection: MongoCollection)(implicit system: ActorSystem)
 
   def findByLinkedAccount(provider: String, id: String) = findOne(Map("linkedOAuthAccounts.provider" -> provider, "linkedOAuthAccounts.id" -> id))
 
-  def loginFromRemember(token: String): FieldValidation[Account] = {
+  def loginFromRemember(command: LoginFromRememberCommand): ModelValidation[Account] = {
     val key = fieldNames.remembered + "." + fieldNames.token
-    (findOne(Map(key -> token))
-      some (_.success[FieldError])
-      none InvalidToken().fail[Account])
+    command.token.validation.liftFailNel flatMap { token ⇒
+      findOne(Map(key -> token)).map(_.successNel[FieldError]).getOrElse(InvalidToken().failNel[Account])
+    }
   }
 
   def remember(owner: Account): FieldValidation[String] =
@@ -229,7 +231,7 @@ class AccountDao(collection: MongoCollection)(implicit system: ActorSystem)
 
   def confirm(cmd: ActivateAccountCommand): ModelValidation[Account] = {
     val key = fieldNames.confirmation + "." + fieldNames.token
-    cmd.token.validation.liftFailNel flatMap { tok =>
+    cmd.token.validation.liftFailNel flatMap { tok ⇒
       findOne(Map(key -> tok)) map { owner ⇒
         if (!owner.isConfirmed) {
           val upd = owner.copy(confirmedAt = DateTime.now)
@@ -240,45 +242,42 @@ class AccountDao(collection: MongoCollection)(implicit system: ActorSystem)
     }
   }
 
-  def forgot(loginOrEmail: Option[String]): FieldValidation[Account] = {
-    org.scalatra.command.Validation.nonEmptyString(fieldNames.login, ~loginOrEmail) flatMap { loe ⇒
+  def forgot(forgotCommand: ForgotCommand): ModelValidation[Account] = {
+    forgotCommand.login.validation.liftFailNel flatMap { loe ⇒
       findByLoginOrEmail(loe) map { owner ⇒
         val updated = owner.copy(reset = Token(), resetAt = MinDate)
         save(updated)
         if (!oauth.isTest) oauth.smtp.send(MailMessage(SendForgotPasswordMail(updated.name, updated.login, updated.email, updated.reset.token)))
-        updated.success[FieldError]
-      } getOrElse SimpleError("Account not found.").fail[Account]
+        updated.successNel
+      } getOrElse SimpleError("Account not found.").failNel
     }
   }
 
   /*_*/
-  def resetPassword(token: String, password: String, passwordConfirmation: String): ValidationNEL[FieldError, Account] = {
-    val r: ValidationNEL[FieldError, FieldValidation[Account]] = (validations.tokenRequired("reset", token).liftFailNel
-      |@| validations.passwordWithConfirmation(password, passwordConfirmation).liftFailNel)(doReset _)
-    (r fold (_.fail, _.liftFailNel))
+  def resetPassword(command: ResetCommand): ModelValidation[Account] = {
+    if (command.isValid) {
+      doReset(~command.token.converted, ~command.password.converted)
+    } else SimpleError("Password reset failed.").failNel
   }
   /*_*/
 
-  def changePassword(owner: Account, oldPassword: String, password: String, passwordConfirmation: String): FieldValidation[Account] = {
-    for {
-      o ← validations.validPassword(owner, oldPassword)
-      pwd ← validations.passwordWithConfirmation(password, passwordConfirmation)
-    } yield {
-      val upd = o.copy(password = BCryptPassword(password).encrypted, resetAt = DateTime.now, reset = Token())
-      save(upd)
-      upd
-    }
+  def changePassword(command: ChangePasswordCommand): ModelValidation[Account] = {
+    if (command.isValid) {
+      val u = command.user.copy(password = BCryptPassword(~command.password.converted).encrypted, resetAt = DateTime.now, reset = Token())
+      save(u)
+      u.successNel
+    } else FieldError("Changing password failed.").failNel
   }
 
-  private def doReset(token: String, password: String): FieldValidation[Account] = {
+  private def doReset(token: String, password: String): ModelValidation[Account] = {
     val key = fieldNames.reset + "." + fieldNames.token
     findOne(Map(key -> token)) map { owner ⇒
-      owner.isReset ? (InvalidToken(): FieldError).fail[Account] | {
+      owner.isReset ? (InvalidToken(): FieldError).failNel[Account] | {
         val upd = owner.copy(password = BCryptPassword(password).encrypted, resetAt = DateTime.now, reset = Token())
         save(upd)
-        upd.success[FieldError]
+        upd.successNel[FieldError]
       }
-    } getOrElse InvalidToken().fail
+    } getOrElse InvalidToken().failNel[Account]
   }
 
   override def save(t: Account, wc: WriteConcern) {
