@@ -12,9 +12,9 @@ class Scalatra extends LifeCycle {
     system = context.getOrElseUpdate(ActorSystemContextKey, ActorSystem(ActorSystemName)).asInstanceOf[ActorSystem]
     OAuth2Extension(system)
 
-    //    context mount (new HomeServlet, "/*")
-    //    context mount (new ClientsCrudApp, "/clients")
-    //    context mount (new PermissionsCrudApp, "/permissions")
+    context mount (new HomeServlet, "/*")
+    context mount (new ClientsCrudApp, "/clients")
+    context mount (new PermissionsCrudApp, "/permissions")
     //    context mount (new OAuthAuthentication, "/auth")
   }
 

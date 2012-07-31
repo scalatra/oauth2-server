@@ -2,13 +2,14 @@ package org.scalatra
 package oauth2
 package commands
 
-import model.{ BCryptPassword, Validations, Account, fieldNames }
+import model._
 import command._
 import util.{ MultiMap, MapWithIndifferentAccess, MultiMapHeadView }
 import scala.util.control.Exception.allCatch
 import scalaz._
 import Scalaz._
 import OAuth2Imports._
+import model.Account
 
 trait AccountModelCommands {
 
@@ -23,15 +24,14 @@ trait AccountModelCommands {
 
 }
 
-trait LoginParam extends OAuth2CommandPart {
-  this: OAuth2Command ⇒
+trait LoginParam extends OAuth2CommandPart { this: OAuth2Command[_] ⇒
 
   import oauth.userProvider.validations
 
   val login = bind[String](fieldNames.login) validate (validations.login(_: String, None))
 }
 
-trait PasswordParam extends OAuth2CommandPart { this: OAuth2Command ⇒
+trait PasswordParam extends OAuth2CommandPart { this: OAuth2Command[_] ⇒
 
   val password = bind[BCryptPassword](fieldNames.password) validate {
     case s ⇒
@@ -40,7 +40,7 @@ trait PasswordParam extends OAuth2CommandPart { this: OAuth2Command ⇒
 
 }
 
-trait RetrievingLoginParam { this: OAuth2Command ⇒
+trait RetrievingLoginParam { this: OAuth2Command[_] ⇒
 
   lazy val retrieved: FieldValidation[Account] = {
     val r = login.converted.flatMap(oauth.userProvider.findByLoginOrEmail(_))
@@ -56,7 +56,11 @@ trait RetrievingLoginParam { this: OAuth2Command ⇒
 
 }
 
-trait ConfirmedPasswordParams extends OAuth2CommandPart { this: OAuth2Command ⇒
+trait HasRequestIp { this: OAuth2Command[_] ⇒
+  def ipAddress: String
+}
+
+trait ConfirmedPasswordParams extends OAuth2CommandPart { this: OAuth2Command[_] ⇒
 
   import oauth.userProvider.validations
 
@@ -67,21 +71,21 @@ trait ConfirmedPasswordParams extends OAuth2CommandPart { this: OAuth2Command �
     validations.passwordWithConfirmation(_: String, ~passwordConfirmation.converted))
 }
 
-trait EmailParam extends OAuth2CommandPart { this: OAuth2Command ⇒
+trait EmailParam extends OAuth2CommandPart { this: OAuth2Command[_] ⇒
 
   import oauth.userProvider.validations
 
   val email = bind[String](fieldNames.email) validate (validations.email(_: String, None))
 }
 
-trait NameParam extends OAuth2CommandPart { this: OAuth2Command ⇒
+trait NameParam extends OAuth2CommandPart { this: OAuth2Command[_] ⇒
 
   import oauth.userProvider.validations
 
   val name = bind[String](fieldNames.name) validate (validations.name _)
 }
 
-class LoginCommand(oauth: OAuth2Extension, getIpAddress: ⇒ String) extends OAuth2Command(oauth) with RetrievingLoginParam {
+class LoginCommand(oauth: OAuth2Extension, getIpAddress: ⇒ String) extends OAuth2Command[AuthSession](oauth) with RetrievingLoginParam with HasRequestIp {
   val ipAddress = getIpAddress
   val password = {
     bind[BCryptPassword](fieldNames.password) validate { (s: BCryptPassword) ⇒
@@ -97,22 +101,26 @@ class LoginCommand(oauth: OAuth2Extension, getIpAddress: ⇒ String) extends OAu
 
 }
 
-class UserFieldsCommand(oauth: OAuth2Extension)
-  extends OAuth2Command(oauth) with LoginParam with NameParam with EmailParam
+class UserFieldsCommand[S: Manifest](oauth: OAuth2Extension)
+  extends OAuth2Command[S](oauth) with LoginParam with NameParam with EmailParam
 
-class RegisterCommand(oauth: OAuth2Extension) extends UserFieldsCommand(oauth) with ConfirmedPasswordParams
+class RegisterCommand(oauth: OAuth2Extension) extends UserFieldsCommand[Account](oauth) with ConfirmedPasswordParams
 
-class ForgotCommand(oauth: OAuth2Extension) extends OAuth2Command(oauth) with RetrievingLoginParam
+class ForgotCommand(oauth: OAuth2Extension) extends OAuth2Command[Account](oauth) with RetrievingLoginParam
 
-class ResetCommand(oauth: OAuth2Extension) extends OAuth2Command(oauth) with TokenFromParamsBagCommand with ConfirmedPasswordParams
+class ResetCommand(oauth: OAuth2Extension, getIpAddress: ⇒ String) extends OAuth2Command[AuthSession](oauth) with TokenFromParamsBagCommand with ConfirmedPasswordParams with HasRequestIp {
+  val ipAddress: String = getIpAddress
+}
 
-class OAuthInfoIncompleteCommand(oauth: OAuth2Extension) extends UserFieldsCommand(oauth)
+class OAuthInfoIncompleteCommand(oauth: OAuth2Extension, getIpAddress: ⇒ String) extends UserFieldsCommand[AuthSession](oauth) with HasRequestIp {
+  val ipAddress: String = getIpAddress
+}
 
-class ActivateAccountCommand(oauth: OAuth2Extension) extends OAuth2Command(oauth) with TokenFromParamsBagCommand
+class ActivateAccountCommand(oauth: OAuth2Extension, getIpAddress: ⇒ String) extends OAuth2Command[AuthSession](oauth) with TokenFromParamsBagCommand with HasRequestIp {
+  val ipAddress: String = getIpAddress
+}
 
-class LoginFromRememberCommand(oauth: OAuth2Extension) extends OAuth2Command(oauth) with TokenFromParamsBagCommand
-
-class ChangePasswordCommand(oauth: OAuth2Extension)(implicit val user: Account) extends OAuth2Command(oauth) with ConfirmedPasswordParams {
+class ChangePasswordCommand(oauth: OAuth2Extension)(implicit val user: Account) extends OAuth2Command[Account](oauth) with ConfirmedPasswordParams {
   val oldPassword =
     bind[BCryptPassword]("oldPassword") validate { (s: BCryptPassword) ⇒
       for {

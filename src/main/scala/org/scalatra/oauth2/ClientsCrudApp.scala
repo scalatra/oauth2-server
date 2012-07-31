@@ -1,4 +1,3 @@
-/*
 package org.scalatra
 package oauth2
 
@@ -93,4 +92,3 @@ class ClientsCrudApp(implicit protected val system: ActorSystem) extends OAuth2S
   def templateData(pairs: (String, Any)*) = (lists ++ Map(pairs: _*)).toSeq
 
 }
-*/

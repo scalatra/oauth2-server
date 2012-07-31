@@ -91,7 +91,7 @@ class AccountSpec extends AkkaSpecification { def is = sequential ^
 
     def resetsPassword = this {
       val reset = {
-        val c = new ResetCommand(oauth)
+        val c = new ResetCommand(oauth, "127.0.0.1")
         c.doBinding(Map("token" -> forgotten.reset.token, "password" -> "blah124", "passwordConfirmation" -> "blah124"))
         c
       }
@@ -99,7 +99,11 @@ class AccountSpec extends AkkaSpecification { def is = sequential ^
     }
 
     def resetsFailureCountAndTokenOnLogin = this {
-      val login = new LoginCommand(oauth, "127.0.0.1").doBinding(Map("login" -> "tommy", "password" -> "blah123"))
+      val login = {
+        val c = new LoginCommand(oauth, "127.0.0.1")
+        c.doBinding(Map("login" -> "tommy", "password" -> "blah123"))
+        c
+      }
       dao.login(login) must beSuccess and {
       val owner = dao.findByLoginOrEmail("tommy").toOption.get.get
         (owner.reset.token must_!= forgotten.reset.token) and {
@@ -110,7 +114,7 @@ class AccountSpec extends AkkaSpecification { def is = sequential ^
 
     def invalidTokenError = this {
       val reset = {
-        val c = new ResetCommand(oauth)
+        val c = new ResetCommand(oauth, "127.0.0.1")
         c.doBinding(Map("token" -> "plain wrong", "password" -> "blah124", "passwordConfirmation" -> "blah124"))
         c
       }
@@ -138,7 +142,7 @@ class AccountSpec extends AkkaSpecification { def is = sequential ^
 
     def activatesCorrectToken = this {
       val confirm = {
-        val c = new ActivateAccountCommand(oauth)
+        val c = new ActivateAccountCommand(oauth, "127.0.0.1")
         c.doBinding(Map("token" -> registered.confirmation.token))
         c
       }
@@ -151,7 +155,7 @@ class AccountSpec extends AkkaSpecification { def is = sequential ^
 
     def alreadyConfirmed = this {
       val confirm = {
-        val c = new ActivateAccountCommand(oauth)
+        val c = new ActivateAccountCommand(oauth, "127.0.0.1")
         c.doBinding(Map("token" -> registered.confirmation.token))
         c
       }
@@ -162,7 +166,7 @@ class AccountSpec extends AkkaSpecification { def is = sequential ^
 
     def invalidTokenError = this {
       val confirm = {
-        val c = new ActivateAccountCommand(oauth)
+        val c = new ActivateAccountCommand(oauth, "127.0.0.1")
         c.doBinding(Map("token" -> "plain wrong"))
         c
       }

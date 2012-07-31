@@ -74,7 +74,6 @@ case class Account(
     name: String,
     password: BCryptPassword,
     @Key("_id") id: ObjectId = new ObjectId,
-    remembered: Token = Token(),
     confirmation: Token = Token(),
     reset: Token = Token(),
     stats: AuthStats = AuthStats(),
@@ -90,10 +89,10 @@ case class Account(
 
 class AccountDao(collection: MongoCollection)(implicit system: ActorSystem)
     extends SalatCommandableDao[Account, ObjectId](collection = collection)
-    with UserProvider[Account]
-    with RememberMeProvider[Account]
-    with ForgotPasswordProvider[Account]
-    with AuthenticatedChangePasswordProvider[Account]
+    //    with UserProvider[Account]
+    //    with RememberMeProvider[Account]
+    //    with ForgotPasswordProvider[Account]
+    //    with AuthenticatedChangePasswordProvider[Account]
     with AccountModelCommands {
 
   private[this] val oauth = OAuth2Extension(system)
@@ -102,7 +101,6 @@ class AccountDao(collection: MongoCollection)(implicit system: ActorSystem)
   collection.ensureIndex(Map("email" -> 1), "email_idx", true)
   collection.ensureIndex(Map("confirmation.token" -> 1), "confirmation_token_idx")
   collection.ensureIndex(Map("reset.token" -> 1), "reset_token_idx")
-  collection.ensureIndex(Map("remembered.token" -> 1), "remembered_token_idx")
   collection.ensureIndex(Map("linkedOAuthAccounts.provider" -> 1, "linkedOAuthAccounts.id" -> 1), "linked_oauth_accounts_idx", true)
 
   def login(command: LoginCommand): ModelValidation[Account] = {
@@ -136,20 +134,6 @@ class AccountDao(collection: MongoCollection)(implicit system: ActorSystem)
 
   def findByLinkedAccount(provider: String, id: String) = findOne(Map("linkedOAuthAccounts.provider" -> provider, "linkedOAuthAccounts.id" -> id))
 
-  def loginFromRemember(command: LoginFromRememberCommand): ModelValidation[Account] = {
-    val key = fieldNames.remembered + "." + fieldNames.token
-    command.token.validation.liftFailNel flatMap { token ⇒
-      findOne(Map(key -> token)).map(_.successNel[FieldError]).getOrElse(InvalidToken().failNel[Account])
-    }
-  }
-
-  def remember(owner: Account): FieldValidation[String] =
-    allCatch.withApply(e ⇒ SimpleError(e.getMessage).fail) {
-      val token = Token()
-      save(owner.copy(remembered = token))
-      token.token.success
-    }
-
   object validations {
     import org.scalatra.command._
     import Validation._
@@ -182,7 +166,7 @@ class AccountDao(collection: MongoCollection)(implicit system: ActorSystem)
     def passwordWithConfirmation(password: String, passwordConfirmation: String): FieldValidation[String] =
       for {
         a ← this.password(password)
-        b ← validConfirmation(fieldNames.password, a, fieldNames.password + "Confirmation", passwordConfirmation)
+        b ← validConfirmation(fieldNames.password, a, fieldNames.passwordConfirmation, passwordConfirmation)
       } yield b
 
     def tokenRequired(tokenType: String, token: String): FieldValidation[String] =
@@ -203,27 +187,6 @@ class AccountDao(collection: MongoCollection)(implicit system: ActorSystem)
   }
 
   def register(cmd: RegisterCommand): ModelValidation[Account] = execute(cmd)
-  //  /*_*/
-  //  def register(
-  //    login: Option[String],
-  //    email: Option[String],
-  //    name: Option[String],
-  //    password: Option[String],
-  //    passwordConfirmation: Option[String]): ValidationNEL[FieldError, Account] = {
-  //    val newOwner: ValidationNEL[FieldError, Account] = (validations.login(~login).liftFailNel
-  //      |@| validations.email(~email).liftFailNel
-  //      |@| validations.name(~name).liftFailNel
-  //      |@| (validations
-  //        passwordWithConfirmation (~password, ~passwordConfirmation)
-  //        map (BCryptPassword(_).encrypted)).liftFailNel) { Account(_, _, _, _) }
-  //
-  //    newOwner foreach { o ⇒
-  //      save(o)
-  //      if (!oauth.isTest) oauth.smtp.send(MailMessage(ConfirmationMail(o.name, o.login, o.email, o.confirmation.token)))
-  //    }
-  //    newOwner
-  //  }
-  //  /*_*/
 
   private type Factory = (String, String, String) ⇒ Account
 

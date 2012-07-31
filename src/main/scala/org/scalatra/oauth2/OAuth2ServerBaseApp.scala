@@ -1,11 +1,11 @@
 package org.scalatra
 package oauth2
-/*
+
 import auth.{ DefaultAuthenticationSupport, ForgotPasswordAuthSupport, PasswordAuthSupport, AuthenticationSupport }
-import model.{ OAuth2ModelCommand, Account }
+import commands._
+import model.{ AuthSession, Account }
 import org.scalatra.scalate.ScalateSupport
 import akka.actor.ActorSystem
-import org.scalatra.servlet.ServletBase
 import javax.servlet.http.{ HttpServletRequestWrapper, HttpServletResponse, HttpServletRequest }
 import liftjson.{ LiftJsonSupport, LiftJsonRequestBody }
 import scalaz._
@@ -15,14 +15,20 @@ import OAuth2Imports._
 import java.io.PrintWriter
 import command.CommandSupport
 import extension.TypedParamSupport
+import service.AuthenticationService
 
-trait AuthenticationApp[UserClass >: Null <: AppUser[_]]
+trait AuthenticationApp[UserClass >: Null <: AppAuthSession]
     extends PasswordAuthSupport[UserClass]
     with ForgotPasswordAuthSupport[UserClass] {
-  self: ServletBase with LiftJsonSupport with FlashMapSupport with CookieSupport with ScalateSupport with DefaultAuthenticationSupport[UserClass] ⇒
+  self: ScalatraBase with LiftJsonSupport with FlashMapSupport with CookieSupport with ScalateSupport with DefaultAuthenticationSupport[UserClass] ⇒
+  protected def forgotCommand: ForgotCommand = commands.get[ForgotCommand](oauth)
 
+  protected def resetCommand: ResetCommand = commands.get[ResetCommand](oauth, request.remoteAddress)
+
+  protected def registerCommand: RegisterCommand = commands.get[RegisterCommand](oauth)
+
+  protected def activateCommand: ActivateAccountCommand = commands.get[ActivateAccountCommand](oauth, request.remoteAddress)
 }
-
 
 /**
  * Mixin for clients that only support a limited set of HTTP verbs.  If the
@@ -67,7 +73,7 @@ trait OAuth2ServerBaseApp extends ScalatraServlet
     with ScalateSupport
     with CorsSupport
     with LoadBalancedSslRequirement
-    //    with DefaultAuthenticationSupport[Account]
+    with DefaultAuthenticationSupport[AuthSession]
     with CommandSupport
     with TypedParamSupport {
 
@@ -77,13 +83,15 @@ trait OAuth2ServerBaseApp extends ScalatraServlet
 
   val oauth = OAuth2Extension(system)
 
-  protected val userManifest = manifest[Account]
+  val userManifest = manifest[AuthSession]
 
-  protected lazy val authProvider = oauth.userProvider
+  protected def authService: AuthenticationService = oauth.authService
 
   before() {
     logger.info("Requesting path: " + requestPath)
   }
+
+  protected def loginCommand: LoginCommand = commands.get[LoginCommand](oauth, this.remoteAddress)
 
   /**
    * Builds a full URL from the given relative path. Takes into account the port configuration, https, ...
@@ -170,9 +178,9 @@ trait OAuth2ServerBaseApp extends ScalatraServlet
    * For every command type, creation and binding is performed only once and then stored into
    * a request attribute.
    */
-  def oauth2Command[T <: OAuth2ModelCommand[_]](implicit mf: Manifest[T], system: ActorSystem): T = {
+  def oauth2Command[T <: OAuth2Command[_]](args: Any*)(implicit mf: Manifest[T], system: ActorSystem): T = {
     commandOption[T] getOrElse {
-      val newCommand = mf.erasure.getConstructor(classOf[ActorSystem]).newInstance(system).asInstanceOf[T]
+      val newCommand = commands.get[T](oauth, args: _*)
       format match {
         case "json" | "xml" ⇒
           logger.debug("Binding from json")
@@ -187,5 +195,3 @@ trait OAuth2ServerBaseApp extends ScalatraServlet
   }
 
 }
-
-*/

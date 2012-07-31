@@ -11,6 +11,7 @@ import _root_.scalaz._
 import Scalaz._
 import net.liftweb.json.Xml._
 import scala.Some
+import command.FieldError
 
 object OAuth2ResponseSupport {
   val JsonContentTypeHeader = Map("Content-Type" -> "application/json")

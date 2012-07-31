@@ -1,7 +1,7 @@
 package org.scalatra
 package oauth2
 
-import command._
+import _root_.org.scalatra.command._
 import model.{ BCryptPassword, Account, fieldNames }
 import OAuth2Imports._
 import util.conversion.TypeConverter
@@ -13,9 +13,11 @@ import liftjson.{ LiftJsonSupport, LiftJsonSupportWithoutFormats }
 
 package object commands {
 
-  def get[C <: OAuth2Command](oauth: OAuth2Extension)(implicit mf: Manifest[C]): C = {
-    val const = mf.erasure.getConstructor(classOf[OAuth2Extension])
-    const.newInstance(oauth).asInstanceOf[C]
+  def get[C <: OAuth2Command[_]](oauth: OAuth2Extension, args: Any*)(implicit mf: Manifest[C]): C = {
+    val argClasses = Seq[Class[_]](classOf[OAuth2Extension]) ++ args.map(_.getClass)
+    val allArgs = Seq[AnyRef](oauth) ++ args
+    val const = mf.erasure.getConstructor(argClasses: _*)
+    const.newInstance(allArgs.map(_.asInstanceOf[AnyRef]): _*).asInstanceOf[C]
   }
 
   trait IsValidMethod { self: ValidationSupport ⇒
@@ -129,8 +131,9 @@ package object commands {
 
   }*/
 
-  abstract class OAuth2Command(val oauth: OAuth2Extension) extends Command with ValidationSupport with CommandValidators with IsValidMethod with Growable[Command] with Shrinkable[Command] {
+  abstract class OAuth2Command[S: Manifest](val oauth: OAuth2Extension) extends Command with ValidationSupport with CommandValidators with IsValidMethod with Growable[Command] with Shrinkable[Command] {
 
+    type Result = S
     implicit def toValidator[T: Zero](fn: T ⇒ FieldValidation[T]): Validator[T] = { case s ⇒ fn(~s) }
 
     implicit val stringToWebDate: TypeConverter[DateTime] = DateFormats.parse _

@@ -14,8 +14,8 @@
     </encoder>
   </appender>
   <logger name="OAuth2 Server" level="DEBUG" />
-  <logger name="org.scalatra.oauth2" level="DEBUG" />
   <logger name="org.scalatra" level="INFO" />
+  <logger name="org.scalatra.oauth2" level="DEBUG" />
   <root level="INFO">
     <appender-ref ref="STDOUT"/>
   </root>

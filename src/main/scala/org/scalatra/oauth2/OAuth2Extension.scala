@@ -4,13 +4,12 @@ package oauth2
 import akka.actor._
 import model._
 import net.liftweb.json.Formats
-import service.SmtpTransport
+import service.{ AuthenticationService, SmtpTransport }
 import OAuth2Imports._
 import collection.JavaConverters._
 import org.scribe.builder.ServiceBuilder
 import org.scribe.builder.api.{ Api, FacebookApi }
 import com.typesafe.config.{ ConfigFactory, Config }
-import com.mongodb.casbah.MongoURI
 
 object OAuth2Extension extends ExtensionId[OAuth2Extension] with ExtensionIdProvider {
   def lookup() = OAuth2Extension
@@ -83,9 +82,11 @@ class OAuth2Extension(system: ExtendedActorSystem) extends Extension {
 
   val defaultFormats: Formats = new OAuth2Formats
 
+  lazy val authService = new AuthenticationService(this)
   lazy val userProvider = new AccountDao(mongo.db("resource_owners"))(system)
   lazy val clients = new ClientDao(mongo.db("clients"))(system)
   lazy val permissionDao = new PermissionDao(mongo.db("permissions"))(system)
+  lazy val authSessions = new AuthSessionDao(mongo.db("auth_sessions"))(system)
 
   val smtp = new SmtpTransport(SmtpConfig(
     cfg.getString("scalatra.smtp.host"),
@@ -115,6 +116,7 @@ class OAuth2Extension(system: ExtendedActorSystem) extends Extension {
 
   private[this] val provPath = "scalatra.auth.providers"
 
+  val authSessionTimeout = Duration(cfg.getMilliseconds("scalatra.auth.sessionTimeout"), Duration.timeUnit("ms"))
   val permissions = {
     cfg.getConfigList(confKey("permissions")).asScala map { cc ⇒
       Permission(cc.getString("code"), cc.getString("name"), cc.getString("description"), true)

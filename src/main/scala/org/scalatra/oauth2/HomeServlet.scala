@@ -1,34 +1,35 @@
-//package org.scalatra
-//package oauth2
-//
-//import model._
-//import akka.actor.ActorSystem
-//
-//class HomeServlet(implicit protected val system: ActorSystem)
-//    extends OAuth2ServerBaseApp
-//      with AuthenticationApp[Account]{
-//
-//  val guarded = Seq("", "login", "register", "forgot", "reset")
-//  guarded foreach (s ⇒ xsrfGuard("/" + s))
-//
-//  before("/") {
-//    if (isAnonymous) scentry.authenticate("remember_me")
-//  }
-//  before() {
-//    contentType = "text/html"
-//  }
-//
-//  def requiresHttps = oauth.web.sslRequired && !this.isHttps
-//
-//  before(requiresHttps) {
-//    halt(400, "The request needs to be secure")
-//  }
-//
-//  get("/") {
-//    jade("angular")
-//  }
-//
-//  get("/check_auth") {
-//    if (isAnonymous && scentry.authenticate().isEmpty) unauthenticated()
-//  }
-//}
+package org.scalatra
+package oauth2
+
+import model._
+import akka.actor.ActorSystem
+
+class HomeServlet(implicit protected val system: ActorSystem)
+    extends OAuth2ServerBaseApp
+    with AuthenticationApp[AuthSession] {
+
+  val guarded = Seq("", "login", "register", "forgot", "reset")
+  guarded foreach (s ⇒ xsrfGuard("/" + s))
+
+  before("/") {
+    if (isAnonymous) scentry.authenticate("remember_me")
+  }
+  before() {
+    contentType = "text/html"
+  }
+
+  def requiresHttps = oauth.web.sslRequired && !this.isHttps
+
+  before(requiresHttps) {
+    halt(400, "The request needs to be secure")
+  }
+
+  get("/") {
+    jade("angular")
+  }
+
+  get("/check_auth") {
+    if (isAnonymous && scentry.authenticate().isEmpty) unauthenticated()
+
+  }
+}

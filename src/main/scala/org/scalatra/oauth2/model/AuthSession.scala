@@ -16,6 +16,7 @@ import OAuth2Imports._
 import org.mindrot.jbcrypt.BCrypt
 import akka.actor.ActorSystem
 import command.{ FieldValidation, FieldError, SimpleError }
+import commands.{ HasRequestIp, LoginCommand }
 
 object AuthSession {
   val userId: Lens[AuthSession, ObjectId] = Lens(_.userId, (sess, uid) ⇒ sess copy (userId = uid))
@@ -35,11 +36,51 @@ case class AuthSession(
     rememberedAt: DateTime = MinDate,
     expiresAt: DateTime = MinDate,
     createdAt: DateTime = DateTime.now,
-    updatedAt: DateTime = DateTime.now) {
+    updatedAt: DateTime = DateTime.now) extends AppAuthSession {
 
-  val isExpired = expiresAt > MinDate && expiresAt < DateTime.now
+  val isExpired = expiresAt > MinDate && expiresAt <= DateTime.now
+  val isActive = !isExpired
   val isRemembered = rememberedAt > MinDate
 
+  val idString: String = id.toString
+  val userIdString: String = userId.toString
+
+  var account: Account = null
 }
 
-class AuthSessionDao
+class AuthSessionDao(collection: MongoCollection)(implicit system: ActorSystem)
+    extends SalatCommandableDao[AuthSession, ObjectId](collection = collection) with Logging {
+
+  val oauth = OAuth2Extension(system)
+  def newSession(cmd: HasRequestIp)(account: Account): ModelValidation[AuthSession] = {
+    (allCatch withApply saveError) {
+      val sess = AuthSession(account.id, cmd.ipAddress, expiresAt = DateTime.now + oauth.authSessionTimeout)
+      save(sess)
+      sess.account = account
+      logger debug "Created auth session: %s".format(sess)
+      sess.successNel
+    }
+  }
+
+  private[this] def saveError(ex: Throwable): ModelValidation[AuthSession] = {
+    logger.error("There was an error while saving an auth session.", ex)
+    ServerError("An error occurred while saving an auth session").failNel
+  }
+
+  def loginFromRemember(token: String): ModelValidation[AuthSession] = {
+    val key = fieldNames.token + "." + fieldNames.token
+    findOne(Map(key -> token)).map(_.successNel).getOrElse(InvalidToken().failNel)
+  }
+
+  def remember(session: AppAuthSession): FieldValidation[String] = {
+    allCatch.withApply(e ⇒ SimpleError(e.getMessage).fail) {
+      findOneById(new ObjectId(session.idString)) map { sess ⇒
+        val token = Token()
+        save(sess.copy(token = token, rememberedAt = DateTime.now))
+        token.token.success
+      } getOrElse NotFound("Session " + session.idString + " could not be found.").fail
+
+    }
+  }
+
+}

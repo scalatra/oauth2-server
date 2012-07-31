@@ -24,7 +24,7 @@ trait PermissionModelCommands {
     }
 }
 
-abstract class PermissionCommand(oauth: OAuth2Extension) extends OAuth2Command(oauth) {
+abstract class PermissionCommand(oauth: OAuth2Extension) extends OAuth2Command[Permission](oauth) {
 
   def code: ValidatedBinding[String]
 

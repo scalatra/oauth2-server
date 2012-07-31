@@ -7,12 +7,14 @@ import OAuth2Imports._
 import command.FieldError
 import collection.mutable
 
-case class AlreadyConfirmed(message: String = "This account has already been confirmed.") extends FieldError {
+sealed trait OAuth2FieldError extends FieldError {
   def args: Seq[Any] = Nil
 }
-case class InvalidToken(message: String = "The token is invalid") extends FieldError {
-  def args: Seq[Any] = Nil
-}
+case class AlreadyConfirmed(message: String = "This account has already been confirmed.") extends OAuth2FieldError
+case class InvalidToken(message: String = "The token is invalid.") extends OAuth2FieldError
+case class LoginFailed(message: String = "Username/password did not match.") extends OAuth2FieldError
+case class ServerError(message: String = "Unknown server error.") extends OAuth2FieldError
+case class NotFound(message: String = "Not found.") extends OAuth2FieldError
 
 object OAuth2Error {
   object Code extends Enumeration {

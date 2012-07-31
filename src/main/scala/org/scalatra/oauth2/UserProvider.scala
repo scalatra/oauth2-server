@@ -25,8 +25,10 @@ trait AppToken {
 
 trait AppAuthSession {
   def idString: String
-  def userId: String
+  def userIdString: String
   def token: AppToken
+
+  def account: AppUser[_]
 }
 
 trait UserProvider[UserClass <: AppUser[_]] {
@@ -42,7 +44,7 @@ trait UserProvider[UserClass <: AppUser[_]] {
 trait AuthSessionProvider[AuthSessionClass <: AppAuthSession]
 
 trait RememberMeProvider[UserClass <: AppUser[_]] {
-  def loginFromRemember(command: LoginFromRememberCommand): ValidationNEL[FieldError, UserClass]
+  def loginFromRemember(token: String): ValidationNEL[FieldError, UserClass]
   def remember(owner: UserClass): Validation[FieldError, String]
 }
 
