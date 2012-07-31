@@ -34,7 +34,8 @@ trait LoginParam extends OAuth2CommandPart {
 trait PasswordParam extends OAuth2CommandPart { this: OAuth2Command ⇒
 
   val password = bind[BCryptPassword](fieldNames.password) validate {
-    case s ⇒ s.map(_.success).getOrElse(FieldError(fieldNames.password, "Password is required.").fail)
+    case s ⇒
+      s.map(_.success).getOrElse(FieldError(fieldNames.password, "Password is required.").fail)
   }
 
 }
