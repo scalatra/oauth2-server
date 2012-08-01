@@ -21,13 +21,13 @@ trait AuthenticationApp[UserClass >: Null <: AppAuthSession[_ <: AppUser[_]]]
     extends PasswordAuthSupport[UserClass]
     with ForgotPasswordAuthSupport[UserClass] {
   self: ScalatraBase with LiftJsonSupport with FlashMapSupport with CookieSupport with ScalateSupport with DefaultAuthenticationSupport[UserClass] ⇒
-  protected def forgotCommand: ForgotCommand = commands.get[ForgotCommand](oauth)
+  protected def forgotCommand: ForgotCommand = new ForgotCommand(oauth)
 
-  protected def resetCommand: ResetCommand = commands.get[ResetCommand](oauth, request.remoteAddress)
+  protected def resetCommand: ResetCommand = new ResetCommand(oauth, request.remoteAddress)
 
-  protected def registerCommand: RegisterCommand = commands.get[RegisterCommand](oauth)
+  protected def registerCommand: RegisterCommand = new RegisterCommand(oauth)
 
-  protected def activateCommand: ActivateAccountCommand = commands.get[ActivateAccountCommand](oauth, request.remoteAddress)
+  protected def activateCommand: ActivateAccountCommand = new ActivateAccountCommand(oauth, request.remoteAddress)
 }
 
 /**
@@ -91,7 +91,7 @@ trait OAuth2ServerBaseApp extends ScalatraServlet
     logger.info("Requesting path: " + requestPath)
   }
 
-  protected def loginCommand: LoginCommand = commands.get[LoginCommand](oauth, this.remoteAddress)
+  protected def loginCommand: LoginCommand = new LoginCommand(oauth, this.remoteAddress)
 
   /**
    * Builds a full URL from the given relative path. Takes into account the port configuration, https, ...
