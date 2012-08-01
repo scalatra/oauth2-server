@@ -3,19 +3,27 @@ package oauth2
 
 import model._
 import akka.actor.ActorSystem
+import net.liftweb.json.Extraction
 
 class HomeServlet(implicit protected val system: ActorSystem)
     extends OAuth2ServerBaseApp
     with AuthenticationApp[AuthSession] {
 
-  val guarded = Seq("", "login", "register", "forgot", "reset")
-  guarded foreach (s ⇒ xsrfGuard("/" + s))
+  if (!oauth.isTest) {
+    val guarded = Seq("", "login", "register", "forgot", "reset")
+    guarded foreach (s ⇒ xsrfGuard("/" + s))
+  }
 
   before("/") {
     if (isAnonymous) scentry.authenticate("remember_me")
   }
   before() {
-    contentType = "text/html"
+    if (format != "json" || format != "xml")
+      contentType = "text/html"
+    else {
+      println("parsed body")
+      println(parsedBody)
+    }
   }
 
   def requiresHttps = oauth.web.sslRequired && !this.isHttps
@@ -25,11 +33,10 @@ class HomeServlet(implicit protected val system: ActorSystem)
   }
 
   get("/") {
-    jade("angular")
+    format match {
+      case "json" | "xml" if isAuthenticated ⇒ OAuth2Response(Extraction.decompose(user.account))
+      case _                                 ⇒ jade("angular")
+    }
   }
 
-  get("/check_auth") {
-    if (isAnonymous && scentry.authenticate().isEmpty) unauthenticated()
-
-  }
 }

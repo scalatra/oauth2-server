@@ -8,7 +8,7 @@ import org.scalatra.scalate.ScalateSupport
 import akka.actor.ActorSystem
 import javax.servlet.http.{ HttpServletRequestWrapper, HttpServletResponse, HttpServletRequest }
 import liftjson.{ LiftJsonSupport, LiftJsonRequestBody }
-import scalaz._
+import _root_.scalaz._
 import Scalaz._
 import net.liftweb.json._
 import OAuth2Imports._
@@ -17,10 +17,52 @@ import command.CommandSupport
 import extension.TypedParamSupport
 import service.AuthenticationService
 
+trait OAuth2CommandSupport { self: ScalatraBase with LiftJsonSupport with CommandSupport ⇒
+
+  protected def oauth: OAuth2Extension
+  /**
+   * Create and bind a [[org.scalatra.command.Command]] of the given type with the current Scalatra params.
+   *
+   * For every command type, creation and binding is performed only once and then stored into
+   * a request attribute.
+   */
+  def oauth2Command[T <: OAuth2Command[_]](args: Any*)(implicit mf: Manifest[T], system: ActorSystem): T = {
+    getCommand(commands.get[T](oauth, args: _*))
+  }
+
+  /**
+   * Create and bind a [[org.scalatra.command.Command]] of the given type with the current Scalatra params.
+   *
+   * For every command type, creation and binding is performed only once and then stored into
+   * a request attribute.
+   */
+  def getCommand[T <: OAuth2Command[_]](factory: ⇒ T)(implicit mf: Manifest[T], system: ActorSystem): T = {
+    commandOption[T] getOrElse {
+      val newCommand = factory
+      bindCommand(newCommand)
+    }
+  }
+
+  protected def bindCommand[T <: OAuth2Command[_]](command: T)(implicit mf: Manifest[T]): T = {
+    format match {
+      case "json" | "xml" ⇒
+        logger.debug("Binding from json")
+        command.doBinding(json = parsedBody, params = params)
+      case _ ⇒
+        logger.debug("Binding from params")
+        command.doBinding(params)
+    }
+    request("_command_" + mf.erasure.getName) = command
+    command
+  }
+
+}
+
 trait AuthenticationApp[UserClass >: Null <: AppAuthSession[_ <: AppUser[_]]]
     extends PasswordAuthSupport[UserClass]
     with ForgotPasswordAuthSupport[UserClass] {
-  self: ScalatraBase with LiftJsonSupport with FlashMapSupport with CookieSupport with ScalateSupport with DefaultAuthenticationSupport[UserClass] ⇒
+  self: ScalatraBase with LiftJsonSupport with FlashMapSupport with CookieSupport with ScalateSupport with DefaultAuthenticationSupport[UserClass] with OAuth2CommandSupport ⇒
+
   protected def forgotCommand: ForgotCommand = new ForgotCommand(oauth)
 
   protected def resetCommand: ResetCommand = new ResetCommand(oauth, request.remoteAddress)
@@ -70,6 +112,7 @@ trait OAuth2ServerBaseApp extends ScalatraServlet
     with OAuth2MethodOverride
     with FlashMapSupport
     with LiftJsonSupport
+    with OAuth2CommandSupport
     with ScalateSupport
     with CorsSupport
     with LoadBalancedSslRequirement
@@ -89,6 +132,7 @@ trait OAuth2ServerBaseApp extends ScalatraServlet
 
   before() {
     logger.info("Requesting path: " + requestPath)
+    logger.info("Request format: " + format)
   }
 
   protected def loginCommand: LoginCommand = new LoginCommand(oauth, this.remoteAddress)
@@ -114,6 +158,7 @@ trait OAuth2ServerBaseApp extends ScalatraServlet
   override protected def createRenderContext(req: HttpServletRequest, resp: HttpServletResponse, out: PrintWriter) = {
     val ctx = super.createRenderContext(req, resp, out)
     ctx.attributes("title") = "Scalatra OAuth2"
+    ctx.attributes.update("system", system)
     ctx
   }
 
@@ -172,26 +217,14 @@ trait OAuth2ServerBaseApp extends ScalatraServlet
     }
   }
 
-  /**
-   * Create and bind a [[org.scalatra.command.Command]] of the given type with the current Scalatra params.
-   *
-   * For every command type, creation and binding is performed only once and then stored into
-   * a request attribute.
-   */
-  def oauth2Command[T <: OAuth2Command[_]](args: Any*)(implicit mf: Manifest[T], system: ActorSystem): T = {
-    commandOption[T] getOrElse {
-      val newCommand = commands.get[T](oauth, args: _*)
-      format match {
-        case "json" | "xml" ⇒
-          logger.debug("Binding from json")
-          newCommand.doBinding(json = parsedBody, params = params)
-        case _ ⇒
-          logger.debug("Binding from params")
-          newCommand.doBinding(params)
-      }
-      request("_command_" + mf.erasure.getName) = newCommand
-      newCommand
+  override def parsedBody: JValue = request.get(LiftJsonSupport.ParsedBodyKey).map(_.asInstanceOf[JValue]) getOrElse {
+    val fmt = format
+    var bd: JValue = JNothing
+    if (fmt == "json" || fmt == "xml") {
+      bd = parseRequestBody(fmt)
+      request(LiftJsonSupport.ParsedBodyKey) = bd
     }
+    bd
   }
 
 }

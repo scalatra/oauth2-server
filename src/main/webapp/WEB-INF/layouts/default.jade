@@ -1,7 +1,7 @@
 -@ val title: String
 -@ val body: String
--@ val userOption: Option[org.scalatra.oauth2.model.Account] = None
--@ val user: org.scalatra.oauth2.model.Account = null
+-@ val userOption: Option[org.scalatra.oauth2.model.AuthSession] = None
+-@ val user: org.scalatra.oauth2.model.AuthSession = null
 
 !!! 5
 html(ng-app="app")
@@ -80,7 +80,7 @@ html(ng-app="app")
 
     - import net.liftweb.json._
     - implicit val jsonFormats: Formats = new OAuth2Formats
-    - val userJson = Serialization.write(user)
+    - val userJson = if (isAuthenticated) Serialization.write(user.account) else JNothing
 
     - if (isAuthenticated) {
       :!coffeescript

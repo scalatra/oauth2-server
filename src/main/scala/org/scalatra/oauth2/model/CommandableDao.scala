@@ -20,7 +20,8 @@ trait CommandableDao[ObjectType <: Product] {
       val f = cmd.errors.map(_.validation) collect {
         case Failure(e) ⇒ e
       }
-      nel(f.head, f.tail: _*).fail
+      if (f.nonEmpty) nel(f.head, f.tail: _*).fail
+      else ServerError("The command is invalid but no errors are shown").failNel
     }
   }
 

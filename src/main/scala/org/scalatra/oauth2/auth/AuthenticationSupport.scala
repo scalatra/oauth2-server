@@ -24,8 +24,10 @@ import akka.actor.ActorSystem
 
 class OAuthScentryConfig extends ScentryConfig
 
-trait PasswordAuthSupport[UserClass >: Null <: AppAuthSession[_ <: AppUser[_]]] { self: ScalatraBase with FlashMapSupport with CookieSupport with AuthenticationSupport[UserClass] with LiftJsonSupport ⇒
+trait PasswordAuthSupport[UserClass >: Null <: AppAuthSession[_ <: AppUser[_]]] {
+  self: ScalatraBase with FlashMapSupport with CookieSupport with AuthenticationSupport[UserClass] with LiftJsonSupport with OAuth2CommandSupport ⇒
 
+  protected def bindCommand[T <: OAuth2Command[_]](command: T)(implicit mf: Manifest[T]): T
   get("/login") {
     redirectIfAuthenticated()
     jade("angular")
@@ -59,7 +61,7 @@ trait PasswordAuthSupport[UserClass >: Null <: AppAuthSession[_ <: AppUser[_]]] 
   post("/register") {
     redirectIfAuthenticated()
     logger.debug("Registering user from " + format)
-    authService.execute(registerCommand)
+    authService.execute(getCommand(registerCommand))
     //    format match {
     //      case "json" | "xml" ⇒
     //        val json = parsedBody
@@ -105,7 +107,7 @@ trait PasswordAuthSupport[UserClass >: Null <: AppAuthSession[_ <: AppUser[_]]] 
 
   protected def activateCommand: ActivateAccountCommand
   get("/activate/:token") {
-    authService.execute(activateCommand)
+    authService.execute(getCommand(activateCommand))
     //    authProvider.confirm(params("token")).fold(
     //      m ⇒ {
     //        flash("error") = m.message
@@ -123,7 +125,8 @@ trait PasswordAuthSupport[UserClass >: Null <: AppAuthSession[_ <: AppUser[_]]] 
   }
 }
 
-trait ForgotPasswordAuthSupport[UserClass >: Null <: AppAuthSession[_ <: AppUser[_]]] { self: ScalatraBase with FlashMapSupport with AuthenticationSupport[UserClass] with LiftJsonSupport ⇒
+trait ForgotPasswordAuthSupport[UserClass >: Null <: AppAuthSession[_ <: AppUser[_]]] {
+  self: ScalatraBase with FlashMapSupport with AuthenticationSupport[UserClass] with LiftJsonSupport with OAuth2CommandSupport ⇒
   get("/forgot") {
     redirectIfAuthenticated()
     jade("angular")
@@ -132,7 +135,7 @@ trait ForgotPasswordAuthSupport[UserClass >: Null <: AppAuthSession[_ <: AppUser
   protected def forgotCommand: ForgotCommand
   post("/forgot") {
     redirectIfAuthenticated()
-    authService.execute(forgotCommand)
+    authService.execute(getCommand(forgotCommand))
     //    format match {
     //      case "json" | "xml" ⇒
     //        authProvider.forgot(jsonParam[String]("login")).fold(
@@ -156,7 +159,7 @@ trait ForgotPasswordAuthSupport[UserClass >: Null <: AppAuthSession[_ <: AppUser
   protected def resetCommand: ResetCommand
   post("/reset/:token") {
     redirectIfAuthenticated()
-    authService.execute(resetCommand)
+    authService.execute(getCommand(resetCommand))
     //    format match {
     //      case "json" | "xml" ⇒
     //        authProvider.resetPassword(params("token"), ~jsonParam[String]("password"), ~jsonParam[String]("passwordConfirmation")).fold(
@@ -191,7 +194,8 @@ trait ForgotPasswordAuthSupport[UserClass >: Null <: AppAuthSession[_ <: AppUser
 
 }
 
-trait AuthenticationSupport[UserClass >: Null <: AppAuthSession[_ <: AppUser[_]]] extends ScentrySupport[UserClass] with ScalateSupport { self: ScalatraBase with SessionSupport with FlashMapSupport with LiftJsonSupport ⇒
+trait AuthenticationSupport[UserClass >: Null <: AppAuthSession[_ <: AppUser[_]]] extends ScentrySupport[UserClass] with ScalateSupport {
+  self: ScalatraBase with SessionSupport with FlashMapSupport with LiftJsonSupport ⇒
 
   protected def fromSession = { case id: String ⇒ authService.loginFromRemember(id).toOption.map(_.asInstanceOf[UserClass]).orNull }
   protected def toSession = { case usr: AppAuthSession[_] ⇒ usr.token.token }
@@ -217,8 +221,14 @@ trait AuthenticationSupport[UserClass >: Null <: AppAuthSession[_ <: AppUser[_]]
 
   def loggedIn(authenticated: UserClass, message: String) = {
     if (userOption.isEmpty) scentry.user = authenticated
-    if (format == "html") flash("success") = message
-    redirectAuthenticated()
+    format match {
+      case "json" | "xml" ⇒
+        OAuth2Response(Extraction.decompose(authenticated.account))
+      case _ ⇒
+        if (format == "html") flash("success") = message
+        redirectAuthenticated()
+    }
+
   }
 
   override protected def createTemplateEngine(config: ConfigT) = {
@@ -244,6 +254,7 @@ trait AuthenticationSupport[UserClass >: Null <: AppAuthSession[_ <: AppUser[_]]
     ctx.attributes.update("params", ctx.params)
     ctx.attributes.update("multiParams", ctx.multiParams)
     ctx.attributes.getOrUpdate("title", "OAuth2 Server")
+    ctx.attributes.update("system", system)
     ctx
   }
 
@@ -258,7 +269,8 @@ trait AuthenticationSupport[UserClass >: Null <: AppAuthSession[_ <: AppUser[_]]
 
 }
 
-trait DefaultAuthenticationSupport[UserClass >: Null <: AppAuthSession[_ <: AppUser[_]]] extends AuthenticationSupport[UserClass] { self: ScalatraBase with SessionSupport with CookieSupport with FlashMapSupport with LiftJsonSupport ⇒
+trait DefaultAuthenticationSupport[UserClass >: Null <: AppAuthSession[_ <: AppUser[_]]] extends AuthenticationSupport[UserClass] {
+  self: ScalatraBase with SessionSupport with CookieSupport with FlashMapSupport with LiftJsonSupport with OAuth2CommandSupport ⇒
 
   protected def oauth: OAuth2Extension
 
@@ -277,8 +289,8 @@ trait DefaultAuthenticationSupport[UserClass >: Null <: AppAuthSession[_ <: AppU
   protected def loginCommand: LoginCommand
 
   override protected def registerAuthStrategies = {
-    scentry.register("user_password", _ ⇒ new PasswordStrategy(self, loginCommand, authService))
-    scentry.register("resource_owner_basic", _ ⇒ new AppUserBasicAuth(self, oauth.web.realm, loginCommand, authService))
+    scentry.register("user_password", _ ⇒ new PasswordStrategy(self, getCommand(loginCommand), authService))
+    scentry.register("resource_owner_basic", _ ⇒ new AppUserBasicAuth(self, oauth.web.realm, getCommand(loginCommand), authService))
     scentry.register("remember_me", _ ⇒ new RememberMeStrategy(self, authService))
 
   }

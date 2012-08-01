@@ -21,7 +21,7 @@ package object commands {
   }
 
   trait IsValidMethod { self: ValidationSupport ⇒
-    def isValid = valid == Some(true)
+    def isValid = errors.isEmpty
   }
 
   trait ValueBinder[S] {

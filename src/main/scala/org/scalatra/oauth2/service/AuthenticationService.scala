@@ -11,18 +11,19 @@ import akka.actor.ActorSystem
 
 trait CommandHandler { self: Logging ⇒
   def execute[S: Manifest](cmd: OAuth2Command[S]): ModelValidation[S] = {
-    logger.debug("Executing [%s]." format cmd.getClass.getName)
+    logger.debug("Executing [%s].\n%s" format (cmd.getClass.getName, cmd.bindings.mkString(", ")))
     if (cmd.isValid) {
-      val r = (allCatch withApply (serverError(cmd.getClass.getName, _))) {
+      val res = (allCatch withApply (serverError(cmd.getClass.getName, _))) {
         handle.lift(cmd).map(_.map(_.asInstanceOf[S])) | ServerError("Don't know how to handle: " + cmd.getClass.getName).failNel
       }
-      logger.debug("Command [%s] executed %s." format (cmd.getClass.getName, r.isSuccess ? "successfully" | "with failures."))
-      r
+      val ftext = "with %d failures\n%s".format(~res.fail.toOption.map(_.list.size), ~res.fail.toOption.map(_.list))
+      logger.debug("Command [%s] executed %s." format (cmd.getClass.getName, res.isSuccess ? "successfully." | ftext))
+      res
     } else {
       val f = cmd.errors.map(_.validation) collect {
         case Failure(e) ⇒ e
       }
-      logger.debug("Command [%s] executed with failures." format cmd.getClass.getName)
+      logger.debug("Command [%s] executed with %d failures.\n%s" format (cmd.getClass.getName, f.size, f.toList))
       nel(f.head, f.tail: _*).fail
     }
   }

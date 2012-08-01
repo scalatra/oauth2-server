@@ -116,7 +116,7 @@ class AccountDao(collection: MongoCollection)(implicit system: ActorSystem)
     allCatch {
       command.retrieved foreach { u ⇒ save(u.copy(stats = u.stats.tickFailures)) }
     }
-    FieldError("Login/password don't match").failNel[Account]
+    FieldError("Login/password don't match.").failNel[Account]
   }
 
   def loggedIn(owner: Account, ipAddress: String): Account = {

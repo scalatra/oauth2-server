@@ -58,7 +58,11 @@ case class AuthSession(
 class AuthSessionDao(collection: MongoCollection)(implicit system: ActorSystem)
     extends SalatCommandableDao[AuthSession, ObjectId](collection = collection) with Logging {
 
-  val oauth = OAuth2Extension(system)
+  private[this] val oauth = OAuth2Extension(system)
+  collection.ensureIndex(Map("userId" -> 1), "login_idx")
+  collection.ensureIndex(Map("token.token" -> 1), "token_idx")
+  collection.ensureIndex(Map("expiresAt" -> 1), "expires_at_idx")
+
   def newSession(ipAddress: String)(account: Account): FieldValidation[AuthSession] = {
     (allCatch withApply (_ ⇒ ServerError("An error occurred while saving an auth session").fail)) {
       val sess = AuthSession(account.id, ipAddress, expiresAt = DateTime.now + oauth.authSessionTimeout)

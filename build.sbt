@@ -1,6 +1,7 @@
 import scala.xml.Group
 import com.typesafe.startscript.StartScriptPlugin
 import scalariform.formatter.preferences._
+
 //import RequireJsKeys._
 import StartScriptPlugin._
 import ScalateKeys._
@@ -43,7 +44,7 @@ libraryDependencies ++= Seq(
   "org.scalatra"            % "scalatra-lift-json"   % "2.1.0-RC1",
   "org.scalatra"            % "scalatra-swagger"     % "2.1.0-RC1",
   "org.scalatra"            % "scalatra-slf4j"       % "2.1.0-RC1",
-  "org.scalatra"            % "contrib-validation"   % "1.0.5-RC1",
+//  "org.scalatra"            % "contrib-validation"   % "1.0.5-RC1",
   "net.liftweb"            %% "lift-json-scalaz"     % "2.4",
   "org.mozilla"             % "rhino"                % "1.7R4",
   "org.jruby"               % "jruby"                % "1.6.7.2",
@@ -172,6 +173,7 @@ scalateBindings ++= Seq(
   Binding("multiParams", "org.scalatra.MultiParams"),
   Binding("userOption", "Option[Account]", defaultValue = "None"),
   Binding("user", "Account", defaultValue = "null"),
+  Binding("system", "akka.actor.ActorSystem", isImplicit =  true),
   Binding("isAnonymous", "Boolean", defaultValue = "true"),
   Binding("isAuthenticated", "Boolean", defaultValue = "false"))
 
@@ -197,7 +199,7 @@ watchSources <++= (sourceDirectory in Compile) map (d => (d / "webapp" ** "*").g
 
 seq(wro4jSettings: _*)
 
-//compile in Compile <<= (compile in Compile).dependsOn(generateResources in Compile)
+compile in Compile <<= (compile in Compile).dependsOn(generateResources in Compile)
 
 (webappResources in Compile) <+= (targetFolder in generateResources in Compile)
 
