@@ -89,7 +89,7 @@ abstract class BasicAuthStrategy[UserType <: AnyRef](protected val app: Scalatra
   }
 }
 
-class AppUserBasicAuth[UserClass >: Null <: AppAuthSession](
+class AppUserBasicAuth[UserClass >: Null <: AppAuthSession[_ <: AppUser[_]]](
   app: ScalatraBase with AuthenticationSupport[UserClass],
   realm: String,
   command: LoginCommand,

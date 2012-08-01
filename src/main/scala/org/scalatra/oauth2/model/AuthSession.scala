@@ -36,7 +36,7 @@ case class AuthSession(
     rememberedAt: DateTime = MinDate,
     expiresAt: DateTime = MinDate,
     createdAt: DateTime = DateTime.now,
-    updatedAt: DateTime = DateTime.now) extends AppAuthSession {
+    updatedAt: DateTime = DateTime.now) extends AppAuthSession[Account] {
 
   val isExpired = expiresAt > MinDate && expiresAt <= DateTime.now
   val isActive = !isExpired
@@ -45,18 +45,35 @@ case class AuthSession(
   val idString: String = id.toString
   val userIdString: String = userId.toString
 
-  var account: Account = null
+  private[this] var _account: Account = null
+  def account_=(acc: Account) = _account = acc
+
+  def account(implicit system: ActorSystem) = {
+    if (_account == null) {
+      OAuth2Extension(system).userProvider.findOneById(userId) | Account(null, null, null, null)
+    } else _account
+  }
 }
 
 class AuthSessionDao(collection: MongoCollection)(implicit system: ActorSystem)
     extends SalatCommandableDao[AuthSession, ObjectId](collection = collection) with Logging {
 
   val oauth = OAuth2Extension(system)
+  def newSession(ipAddress: String)(account: Account): FieldValidation[AuthSession] = {
+    (allCatch withApply (_ ⇒ ServerError("An error occurred while saving an auth session").fail)) {
+      val sess = AuthSession(account.id, ipAddress, expiresAt = DateTime.now + oauth.authSessionTimeout)
+      save(sess)
+      sess.account_=(account)
+      logger debug "Created auth session: %s".format(sess)
+      sess.success
+    }
+  }
+
   def newSession(cmd: HasRequestIp)(account: Account): ModelValidation[AuthSession] = {
     (allCatch withApply saveError) {
       val sess = AuthSession(account.id, cmd.ipAddress, expiresAt = DateTime.now + oauth.authSessionTimeout)
       save(sess)
-      sess.account = account
+      sess.account_=(account)
       logger debug "Created auth session: %s".format(sess)
       sess.successNel
     }
@@ -72,7 +89,7 @@ class AuthSessionDao(collection: MongoCollection)(implicit system: ActorSystem)
     findOne(Map(key -> token)).map(_.successNel).getOrElse(InvalidToken().failNel)
   }
 
-  def remember(session: AppAuthSession): FieldValidation[String] = {
+  def remember(session: AppAuthSession[_]): FieldValidation[String] = {
     allCatch.withApply(e ⇒ SimpleError(e.getMessage).fail) {
       findOneById(new ObjectId(session.idString)) map { sess ⇒
         val token = Token()

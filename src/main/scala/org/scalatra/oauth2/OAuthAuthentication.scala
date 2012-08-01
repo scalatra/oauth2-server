@@ -1,4 +1,3 @@
-/*
 package org.scalatra
 package oauth2
 
@@ -6,12 +5,11 @@ import auth.{ OAuthToken, ScribeAuthSupport }
 import akka.actor.ActorSystem
 import dispatch._
 import dispatch.oauth._
-import dispatch.liftjson.Js._
-import model.{ LinkedOAuthAccount, BCryptPassword, Account }
+import model._
+import model.Account
+import model.LinkedOAuthAccount
 import scalaz._
 import Scalaz._
-import java.security.SecureRandom
-import org.apache.commons.codec.binary.Hex
 import OAuth2Imports._
 import org.scribe.builder.api.{ TwitterApi, FacebookApi }
 import net.liftweb.json._
@@ -19,37 +17,55 @@ import org.scalatra.{ CookieOptions, CookieSupport, FlashMapSupport, ScalatraSer
 import annotation.tailrec
 import command.FieldError
 import org.scalatra.liftjson.LiftJsonSupport
+import service.AuthenticationService
+import com.ning.http.client.oauth.{ RequestToken, ConsumerKey }
 
 class FacebookApiCalls(accessToken: OAuthToken)(implicit formats: Formats) {
-  private val urlBase = "https://graph.facebook.com/"
+  private val urlBase = :/("graph.facebook.com/").secure
   private val atParams = Map("access_token" -> accessToken.token)
 
+  val http = dispatch.Http
   def getProfile(id: Option[Int] = None): JValue = {
-    Http(url(urlBase + "/" + (id some (_.toString) none "me")) <<? atParams ># identity)
+    http(urlBase / (id some (_.toString) none "me") <<? atParams OK oauth2.as.JValue)()
   }
 }
 
-class TwitterApiCalls(accessToken: OAuthToken, provider: OAuthProvider)(implicit formats: Formats) {
-  import OAuth._
-  private val consumer = dispatch.oauth.Consumer(provider.clientId, provider.clientSecret)
-  private val token = dispatch.oauth.Token(accessToken.token, accessToken.secret)
+trait TwitterApiUrls extends oauth.SomeEndpoints {
+  val requestToken: String = "https://api.twitter.com/oauth/request_token"
 
-  private val urlBase = "https://api.twitter.com/1/"
+  val accessToken: String = "https://api.twitter.com/oauth/access_token"
+
+  val authorize: String = "https://api.twitter.com/oauth/authorize"
+}
+
+class TwitterApiCalls(accessToken: OAuthToken, provider: OAuthProvider, val callback: String)(implicit formats: Formats)
+    extends oauth.SomeHttp with oauth.SomeCallback with oauth.SomeConsumer with oauth.Exchange with TwitterApiUrls {
+
+  val consumer: ConsumerKey = new ConsumerKey(provider.clientId, provider.clientSecret)
+
+  val http: Executor = dispatch.Http
+
+  private val token = new RequestToken(accessToken.token, accessToken.secret)
+
+  private val urlBase = :/("api.twitter.com").secure / "1"
 
   def getProfile(id: Option[Int] = None): JValue = {
-    Http(url(urlBase) / "account/verify_credentials.json" <@ (consumer, token) ># identity)
+    val u = urlBase / "account" / "verify_credentials.json"
+    http(u <@ (consumer, token) OK oauth2.as.JValue)()
   }
 }
 
-class OAuthAuthentication(implicit system: ActorSystem)
-    extends ScalatraServlet with XsrfTokenSupport with FlashMapSupport with CookieSupport with LiftJsonSupport with ScribeAuthSupport[Account] {
+class OAuthAuthentication(implicit protected val system: ActorSystem)
+    extends ScalatraServlet with XsrfTokenSupport with FlashMapSupport with CookieSupport with LiftJsonSupport with ScribeAuthSupport[AuthSession] {
 
   val oauth = OAuth2Extension(system)
-  protected val authProvider = oauth.userProvider
+  protected val authProvider: AccountDao = oauth.userProvider
   override protected lazy val jsonVulnerabilityGuard: Boolean = true
   override implicit val jsonFormats: Formats = new OAuth2Formats
 
-  protected val userManifest = manifest[Account]
+  protected def authService: AuthenticationService = oauth.authService
+
+  val userManifest = manifest[AuthSession]
 
   protected lazy val authCookieOptions = cookieOptions.copy(
     domain = (if (oauth.web.domain == ".localhost") "localhost" else oauth.web.domain),
@@ -79,12 +95,12 @@ class OAuthAuthentication(implicit system: ActorSystem)
           confirmedAt = DateTime.now)
       })
       val linkedAccounts = (LinkedOAuthAccount("facebook", (fbUser \ "username").extract[String]) :: usr.linkedOAuthAccounts).distinct
-      authProvider.loggedIn(usr.copy(linkedOAuthAccounts = linkedAccounts), request.remoteAddress).success[FieldError]
+      authService.loggedIn(usr.copy(linkedOAuthAccounts = linkedAccounts), request.remoteAddress)
     }
 
     val twitterProvider = oauth.providers("twitter")
     registerOAuthService(twitterProvider.name, twitterProvider.service[TwitterApi](callbackUrlFormat)) { token ⇒
-      val twitterUser = new TwitterApiCalls(token, twitterProvider).getProfile()
+      val twitterUser = new TwitterApiCalls(token, twitterProvider, callbackUrlFormat.format(twitterProvider.name)).getProfile()
       val twLogin = (twitterUser \ "screen_name").extract[String]
       val owner = authProvider.findByLinkedAccount(twitterProvider.name, twLogin) getOrElse Account(
         login = createName(twLogin, 0),
@@ -93,15 +109,14 @@ class OAuthAuthentication(implicit system: ActorSystem)
         password = BCryptPassword.random,
         confirmedAt = DateTime.now)
       val linkedAccounts = (LinkedOAuthAccount("twitter", twLogin) :: owner.linkedOAuthAccounts).distinct
-      authProvider.loggedIn(owner.copy(linkedOAuthAccounts = linkedAccounts), request.remoteAddress).success[FieldError]
+      authService.loggedIn(owner.copy(linkedOAuthAccounts = linkedAccounts), request.remoteAddress)
     }
   }
 
   protected def trySavingCompletedProfile() = {
-    val usr = user.copy(login = ~params.get("login"), email = ~params.get("email"), name = ~params.get("name"))
-    val validated = authProvider.validate(usr)
-    validated foreach authProvider.save
-    validated
+    val usr = user.account.copy(login = ~params.get("login"), email = ~params.get("email"), name = ~params.get("name"), password = BCryptPassword.random)
+    val validated = authService.validate(usr)
+    validated flatMap (u ⇒ authService.completedProfile(u, this.remoteAddress))
   }
 
   private[this] def urlWithContextPath(path: String, params: Iterable[(String, Any)] = Iterable.empty): String = {
@@ -141,4 +156,3 @@ class OAuthAuthentication(implicit system: ActorSystem)
   }
 
 }
-*/

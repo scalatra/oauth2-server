@@ -20,10 +20,11 @@ import commands._
 import service.AuthenticationService
 import model.ApiErrorList
 import model.OAuth2Response
+import akka.actor.ActorSystem
 
 class OAuthScentryConfig extends ScentryConfig
 
-trait PasswordAuthSupport[UserClass >: Null <: AppAuthSession] { self: ScalatraBase with FlashMapSupport with CookieSupport with AuthenticationSupport[UserClass] with LiftJsonSupport ⇒
+trait PasswordAuthSupport[UserClass >: Null <: AppAuthSession[_ <: AppUser[_]]] { self: ScalatraBase with FlashMapSupport with CookieSupport with AuthenticationSupport[UserClass] with LiftJsonSupport ⇒
 
   get("/login") {
     redirectIfAuthenticated()
@@ -122,7 +123,7 @@ trait PasswordAuthSupport[UserClass >: Null <: AppAuthSession] { self: ScalatraB
   }
 }
 
-trait ForgotPasswordAuthSupport[UserClass >: Null <: AppAuthSession] { self: ScalatraBase with FlashMapSupport with AuthenticationSupport[UserClass] with LiftJsonSupport ⇒
+trait ForgotPasswordAuthSupport[UserClass >: Null <: AppAuthSession[_ <: AppUser[_]]] { self: ScalatraBase with FlashMapSupport with AuthenticationSupport[UserClass] with LiftJsonSupport ⇒
   get("/forgot") {
     redirectIfAuthenticated()
     jade("angular")
@@ -190,14 +191,15 @@ trait ForgotPasswordAuthSupport[UserClass >: Null <: AppAuthSession] { self: Sca
 
 }
 
-trait AuthenticationSupport[UserClass >: Null <: AppAuthSession] extends ScentrySupport[UserClass] with ScalateSupport { self: ScalatraBase with SessionSupport with FlashMapSupport with LiftJsonSupport ⇒
+trait AuthenticationSupport[UserClass >: Null <: AppAuthSession[_ <: AppUser[_]]] extends ScentrySupport[UserClass] with ScalateSupport { self: ScalatraBase with SessionSupport with FlashMapSupport with LiftJsonSupport ⇒
 
   protected def fromSession = { case id: String ⇒ authService.loginFromRemember(id).toOption.map(_.asInstanceOf[UserClass]).orNull }
-  protected def toSession = { case usr: AppAuthSession ⇒ usr.token.token }
+  protected def toSession = { case usr: AppAuthSession[_] ⇒ usr.token.token }
 
   type ScentryConfiguration = OAuthScentryConfig
   protected val scentryConfig = new OAuthScentryConfig
 
+  protected implicit def system: ActorSystem
   protected def authService: AuthenticationService
   def userManifest: Manifest[UserClass]
   implicit override protected def user = scentry.user
@@ -256,7 +258,7 @@ trait AuthenticationSupport[UserClass >: Null <: AppAuthSession] extends Scentry
 
 }
 
-trait DefaultAuthenticationSupport[UserClass >: Null <: AppAuthSession] extends AuthenticationSupport[UserClass] { self: ScalatraBase with SessionSupport with CookieSupport with FlashMapSupport with LiftJsonSupport ⇒
+trait DefaultAuthenticationSupport[UserClass >: Null <: AppAuthSession[_ <: AppUser[_]]] extends AuthenticationSupport[UserClass] { self: ScalatraBase with SessionSupport with CookieSupport with FlashMapSupport with LiftJsonSupport ⇒
 
   protected def oauth: OAuth2Extension
 

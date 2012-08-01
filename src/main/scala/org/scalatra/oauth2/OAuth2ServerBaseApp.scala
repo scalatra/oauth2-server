@@ -17,7 +17,7 @@ import command.CommandSupport
 import extension.TypedParamSupport
 import service.AuthenticationService
 
-trait AuthenticationApp[UserClass >: Null <: AppAuthSession]
+trait AuthenticationApp[UserClass >: Null <: AppAuthSession[_ <: AppUser[_]]]
     extends PasswordAuthSupport[UserClass]
     with ForgotPasswordAuthSupport[UserClass] {
   self: ScalatraBase with LiftJsonSupport with FlashMapSupport with CookieSupport with ScalateSupport with DefaultAuthenticationSupport[UserClass] ⇒

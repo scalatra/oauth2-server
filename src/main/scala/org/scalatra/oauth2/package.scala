@@ -47,4 +47,8 @@ package object oauth2 extends _root_.org.scalatra.servlet.ServletApiImplicits {
   val ActorSystemName = "oauth2server"
 
   private[oauth2] def confKey(path: String) = "scalatra.oauth2." + path
+
+  object as {
+    val JValue = dispatch.as.String.andThen(net.liftweb.json.parse)
+  }
 }

@@ -15,7 +15,7 @@ class Scalatra extends LifeCycle {
     context mount (new HomeServlet, "/*")
     context mount (new ClientsCrudApp, "/clients")
     context mount (new PermissionsCrudApp, "/permissions")
-    //    context mount (new OAuthAuthentication, "/auth")
+    context mount (new OAuthAuthentication, "/auth")
   }
 
   override def destroy(context: ServletContext) {

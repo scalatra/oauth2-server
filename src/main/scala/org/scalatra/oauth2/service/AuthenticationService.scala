@@ -43,7 +43,14 @@ final class AuthenticationService(oauth: OAuth2Extension) extends Logging with C
   private val authSessions = oauth.authSessions
 
   def loginFromRemember(token: String): ModelValidation[AuthSession] = authSessions loginFromRemember token
-  def remember(session: AppAuthSession): command.FieldValidation[String] = authSessions remember session
+  def remember(session: AppAuthSession[_]): command.FieldValidation[String] = authSessions remember session
+  def validate(account: Account) = accounts.validate(account)
+  def completedProfile(account: Account, ipAddress: String): ModelValidation[AuthSession] = {
+    accounts.save(account)
+    authSessions.newSession(ipAddress)(account).liftFailNel
+  }
+  def loggedIn(account: Account, ipAddress: String): command.FieldValidation[AuthSession] =
+    authSessions.newSession(ipAddress)(accounts.loggedIn(account, ipAddress))
 
   protected val handle: Handler = {
     case c: LoginCommand               ⇒ accounts.login(c) flatMap (authSessions.newSession(c) _)

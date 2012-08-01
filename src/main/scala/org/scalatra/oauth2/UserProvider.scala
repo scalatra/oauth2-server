@@ -5,6 +5,7 @@ import command.FieldError
 import commands._
 import scalaz._
 import Scalaz._
+import akka.actor.ActorSystem
 
 trait AppUser[TPassword] {
   def idString: String
@@ -23,12 +24,12 @@ trait AppToken {
   def token: String
 }
 
-trait AppAuthSession {
+trait AppAuthSession[UserClass <: AppUser[_]] {
   def idString: String
   def userIdString: String
   def token: AppToken
 
-  def account: AppUser[_]
+  def account(implicit system: ActorSystem): UserClass
 }
 
 trait UserProvider[UserClass <: AppUser[_]] {
@@ -41,7 +42,7 @@ trait UserProvider[UserClass <: AppUser[_]] {
 
 }
 
-trait AuthSessionProvider[AuthSessionClass <: AppAuthSession]
+trait AuthSessionProvider[AuthSessionClass <: AppAuthSession[_ <: AppUser[_]]]
 
 trait RememberMeProvider[UserClass <: AppUser[_]] {
   def loginFromRemember(token: String): ValidationNEL[FieldError, UserClass]

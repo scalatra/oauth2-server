@@ -9,6 +9,7 @@ import org.scalatra.auth.ScentryStrategy
 import OAuth2Imports._
 import commands.OAuth2Command
 import service.{ AuthenticationService, CommandHandler }
+import akka.actor.ActorSystem
 
 object RememberMeStrategy {
   val CookieKey = "scalatra.oauth2.remember"
@@ -17,10 +18,10 @@ object RememberMeStrategy {
 /**
  * Authentication strategy to authenticate a user from a cookie.
  */
-class RememberMeStrategy[UserClass <: AppAuthSession](
+class RememberMeStrategy[UserClass <: AppAuthSession[_ <: AppUser[_]]](
   protected val app: ScalatraBase with CookieSupport,
   service: AuthenticationService,
-  cookieKey: String = RememberMeStrategy.CookieKey)
+  cookieKey: String = RememberMeStrategy.CookieKey)(implicit system: ActorSystem)
     extends ScentryStrategy[UserClass] {
 
   override val name = "remember_me"

@@ -119,7 +119,7 @@ class AccountDao(collection: MongoCollection)(implicit system: ActorSystem)
     FieldError("Login/password don't match").failNel[Account]
   }
 
-  private def loggedIn(owner: Account, ipAddress: String): Account = {
+  def loggedIn(owner: Account, ipAddress: String): Account = {
     // This ticks the login counter and changes the reset token because if we get here
     // the user clearly remembered the password.
     val ticked = owner.copy(stats = owner.stats.tick(ipAddress), reset = Token())

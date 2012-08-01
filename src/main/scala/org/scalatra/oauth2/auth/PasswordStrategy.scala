@@ -11,7 +11,7 @@ import scalaz._
 import Scalaz._
 import OAuth2Imports._
 
-class PasswordStrategy[UserClass <: AppAuthSession](
+class PasswordStrategy[UserClass <: AppAuthSession[_ <: AppUser[_]]](
     protected val app: ScalatraBase with LiftJsonSupport,
     command: LoginCommand,
     handler: CommandHandler) extends ScentryStrategy[UserClass] {
