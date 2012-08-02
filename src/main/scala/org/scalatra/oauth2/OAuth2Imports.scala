@@ -12,11 +12,11 @@ import java.util.concurrent.TimeUnit
 import org.joda.time._
 import format.DateTimeFormatter
 import mojolly.inflector.InflectorImports
-import net.liftweb.json.JsonAST.JValue
+import net.liftweb.json._
 import query.dsl.FluidQueryBarewordOps
 import query.{ ValidDateOrNumericTypeHolder, ValidNumericTypeHolder, ValidDateTypeHolder, ValidBarewordExpressionArgTypeHolder }
 import org.scalatra.oauth2.DateFormats.DateFormat
-import scalaz._
+import _root_.scalaz._
 import Scalaz._
 
 object OAuth2Imports
@@ -146,4 +146,6 @@ object OAuth2Imports
   implicit def stringToDateConversion(source: String) = new DateTimeConversion(source)
 
   implicit val bcryptZero = zero(BCryptPassword(""))
+
+  implicit def dateTime2JValue(d: DateTime): JValue = JString(d.toString(DateFormats.Iso8601NoMillis.dateTimeformat))
 }

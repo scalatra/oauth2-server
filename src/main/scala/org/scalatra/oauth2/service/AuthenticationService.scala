@@ -58,7 +58,7 @@ final class AuthenticationService(oauth: OAuth2Extension) extends Logging with C
     case c: ActivateAccountCommand     ⇒ accounts.confirm(c) flatMap (authSessions.newSession(c) _)
     case c: ResetCommand               ⇒ accounts.resetPassword(c) flatMap (authSessions.newSession(c) _)
     case c: OAuthInfoIncompleteCommand ⇒ ServerError("Not Implemented").failNel[AuthSession] // TODO: Implement OAuthInfoIncompleteCommand handler
-    case c: RegisterCommand            ⇒ accounts.register(c)
+    case c: RegisterCommand            ⇒ accounts.register(c) flatMap (authSessions.newSession(c) _)
     case c: ForgotCommand              ⇒ accounts.forgot(c)
     case c: ChangePasswordCommand      ⇒ accounts.changePassword(c)
   }

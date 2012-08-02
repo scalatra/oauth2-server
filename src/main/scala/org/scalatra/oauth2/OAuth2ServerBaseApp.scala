@@ -1,13 +1,13 @@
 package org.scalatra
 package oauth2
 
-import auth.{ DefaultAuthenticationSupport, ForgotPasswordAuthSupport, PasswordAuthSupport, AuthenticationSupport }
+import auth.{ DefaultAuthenticationSupport, ForgotPasswordAuthSupport, PasswordAuthSupport }
 import commands._
-import model.{ AuthSession, Account }
+import model.AuthSession
 import org.scalatra.scalate.ScalateSupport
 import akka.actor.ActorSystem
 import javax.servlet.http.{ HttpServletRequestWrapper, HttpServletResponse, HttpServletRequest }
-import liftjson.{ LiftJsonSupport, LiftJsonRequestBody }
+import liftjson.LiftJsonSupport
 import _root_.scalaz._
 import Scalaz._
 import net.liftweb.json._
@@ -67,7 +67,7 @@ trait AuthenticationApp[UserClass >: Null <: AppAuthSession[_ <: AppUser[_]]]
 
   protected def resetCommand: ResetCommand = new ResetCommand(oauth, request.remoteAddress)
 
-  protected def registerCommand: RegisterCommand = new RegisterCommand(oauth)
+  protected def registerCommand: RegisterCommand = new RegisterCommand(oauth, request.remoteAddress)
 
   protected def activateCommand: ActivateAccountCommand = new ActivateAccountCommand(oauth, request.remoteAddress)
 }
@@ -118,7 +118,8 @@ trait OAuth2ServerBaseApp extends ScalatraServlet
     with LoadBalancedSslRequirement
     with DefaultAuthenticationSupport[AuthSession]
     with CommandSupport
-    with TypedParamSupport {
+    with TypedParamSupport
+    with OAuth2RendererSupport {
 
   implicit protected def system: ActorSystem
   override implicit val jsonFormats: Formats = new OAuth2Formats
@@ -183,7 +184,7 @@ trait OAuth2ServerBaseApp extends ScalatraServlet
 
   override protected def contentTypeInferrer = inferFromFormats orElse inferFromJValue orElse super.contentTypeInferrer
 
-  override protected def renderPipeline = renderOAuth2Response orElse super.renderPipeline
+  override protected def renderPipeline = renderValidation orElse renderOAuth2Response orElse super.renderPipeline
 
   override protected def isScalateErrorPageEnabled = isDevelopmentMode
 

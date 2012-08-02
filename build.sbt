@@ -46,6 +46,7 @@ libraryDependencies ++= Seq(
   "org.scalatra"            % "scalatra-slf4j"       % "2.1.0-RC1",
 //  "org.scalatra"            % "contrib-validation"   % "1.0.5-RC1",
   "net.liftweb"            %% "lift-json-scalaz"     % "2.4",
+  "net.liftweb"            %% "lift-json-ext"        % "2.4",
   "org.mozilla"             % "rhino"                % "1.7R4",
   "org.jruby"               % "jruby"                % "1.6.7.2",
   "net.databinder.dispatch" % "core_2.9.1"           % "0.9.0",

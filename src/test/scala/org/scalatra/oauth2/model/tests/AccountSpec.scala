@@ -69,7 +69,7 @@ class AccountSpec extends AkkaSpecification { def is = sequential ^
 
   class ResetPasswordSpecContext extends AccountSpecContextBase {
     val cmd = {
-      val c = new RegisterCommand(oauth)
+      val c = new RegisterCommand(oauth, "127.0.0.1")
       c.doBinding(
         Map(
           "login" -> "tommy",
@@ -125,7 +125,7 @@ class AccountSpec extends AkkaSpecification { def is = sequential ^
 
   class ActivationSpecContext extends AccountSpecContextBase {
     val cmd = {
-      val c = new RegisterCommand(oauth)
+      val c = new RegisterCommand(oauth, "127.0.0.1")
       c.doBinding(
         Map(
           "login" -> "tommy",
@@ -177,7 +177,7 @@ class AccountSpec extends AkkaSpecification { def is = sequential ^
   class LoginSpecContext extends AccountSpecContextBase {
 
     val cmd = {
-      val c = new RegisterCommand(oauth)
+      val c = new RegisterCommand(oauth, "127.0.0.1")
       c.doBinding(
         Map(
           "login" -> "tommy",
@@ -234,7 +234,7 @@ class AccountSpec extends AkkaSpecification { def is = sequential ^
   class RegistrationSpecContext extends AccountSpecContextBase {
 
     def reg(login: String, email: String, name: String, password: String, passwordConfirmation: String) = {
-      val c = new RegisterCommand(oauth)
+      val c = new RegisterCommand(oauth, "127.0.0.1")
       c.doBinding(
         Map(
           "login" -> login,
@@ -249,7 +249,7 @@ class AccountSpec extends AkkaSpecification { def is = sequential ^
       dao.register(reg("tommy", "tommy@hiltfiger.no", "Tommy Hiltfiger", "blah123", "blah123"))
       val res = dao.register(reg("tommy", "tommy2@hiltfiger.no", "Tommy2 Hiltfiger", "blah123", "blah123"))
       (res.isFailure must beTrue) and {
-        res.fail.toOption.get.list must haveTheSameElementsAs(nel(ValidationError("Login exists already.", "login")).list)
+        res.fail.toOption.get.list must haveTheSameElementsAs(nel(NotUnique("Login exists already.", "login")).list)
       }
     }
 
@@ -257,7 +257,7 @@ class AccountSpec extends AkkaSpecification { def is = sequential ^
       dao.register(reg("tommy", "tommy@hiltfiger.no", "Tommy Hiltfiger", "blah123", "blah123"))
       val res = dao.register(reg("tommy2", "tommy@hiltfiger.no", "Tommy2 Hiltfiger", "blah123", "blah123"))
       (res.isFailure must beTrue) and {
-        res.fail.toOption.get.list must haveTheSameElementsAs(nel(ValidationError("Email exists already.", "email")).list)
+        res.fail.toOption.get.list must haveTheSameElementsAs(nel(NotUnique("Email exists already.", "email")).list)
       }
     }
 

@@ -13,8 +13,13 @@ sealed trait OAuth2FieldError extends FieldError {
 case class AlreadyConfirmed(message: String = "This account has already been confirmed.") extends OAuth2FieldError
 case class InvalidToken(message: String = "The token is invalid.") extends OAuth2FieldError
 case class LoginFailed(message: String = "Username/password did not match.") extends OAuth2FieldError
-case class ServerError(message: String = "Unknown server error.") extends OAuth2FieldError
 case class NotFound(message: String = "Not found.") extends OAuth2FieldError
+case class NotUnique(message: String, field: String) extends OAuth2FieldError
+case class ServerError(message: String = "Unknown server error.") extends OAuth2FieldError
+case class NotImplementedError(message: String = "Not implemented.") extends OAuth2FieldError
+case class BadGatewayError(message: String = "Bad gateway.") extends OAuth2FieldError
+case class ServiceUnavailable(message: String = "Service unavailable.") extends OAuth2FieldError
+case class GatewayTimeout(message: String = "Gateway timeout.") extends OAuth2FieldError
 
 object OAuth2Error {
   object Code extends Enumeration {

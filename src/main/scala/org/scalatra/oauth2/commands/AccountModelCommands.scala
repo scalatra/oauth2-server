@@ -104,7 +104,9 @@ class LoginCommand(oauth: OAuth2Extension, getIpAddress: ⇒ String) extends OAu
 class UserFieldsCommand[S: Manifest](oauth: OAuth2Extension)
   extends OAuth2Command[S](oauth) with LoginParam with NameParam with EmailParam
 
-class RegisterCommand(oauth: OAuth2Extension) extends UserFieldsCommand[Account](oauth) with ConfirmedPasswordParams
+class RegisterCommand(oauth: OAuth2Extension, getIpAddress: ⇒ String) extends UserFieldsCommand[AuthSession](oauth) with ConfirmedPasswordParams with HasRequestIp {
+  val ipAddress: String = getIpAddress
+}
 
 class ForgotCommand(oauth: OAuth2Extension) extends OAuth2Command[Account](oauth) with RetrievingLoginParam
 

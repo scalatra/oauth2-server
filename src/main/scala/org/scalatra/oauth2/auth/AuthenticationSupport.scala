@@ -61,7 +61,14 @@ trait PasswordAuthSupport[UserClass >: Null <: AppAuthSession[_ <: AppUser[_]]] 
   post("/register") {
     redirectIfAuthenticated()
     logger.debug("Registering user from " + format)
-    authService.execute(getCommand(registerCommand))
+    val res = authService.execute(getCommand(registerCommand))
+    format match {
+      case "json" | "xml" ⇒ res
+      case _ ⇒
+        res.fold(
+          errs ⇒ jade("angular", "errors" -> errs.list),
+          sess ⇒ loggedIn(sess.asInstanceOf[UserClass], "Registered and logged in."))
+    }
     //    format match {
     //      case "json" | "xml" ⇒
     //        val json = parsedBody
