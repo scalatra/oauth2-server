@@ -11,16 +11,16 @@ import org.scalatra.scalate.{ ScalatraRenderContext, ScalateSupport }
 import org.scalatra.auth._
 import ScentryAuthStore.CookieAuthStore
 import command._
-import model.{ ApiErrorList, OAuth2Response, ApiError }
+import model._
 import net.liftweb.json.Extraction
 import liftjson.{ LiftJsonSupport }
 import OAuth2Imports._
 import net.liftweb.json.JsonAST.JNull
 import commands._
 import service.AuthenticationService
-import model.ApiErrorList
-import model.OAuth2Response
 import akka.actor.ActorSystem
+import model.OAuth2Response
+import model.ApiErrorList
 
 class OAuthScentryConfig extends ScentryConfig
 
@@ -119,45 +119,38 @@ trait ForgotPasswordAuthSupport[UserClass >: Null <: AppAuthSession[_ <: AppUser
 
   get("/reset/?:token?") {
     redirectIfAuthenticated()
-    jade("angular")
+    requiresToken {
+      jade("angular")
+    }
+  }
+
+  private def requiresToken(res: ⇒ Any) = {
+    params.get("token").flatMap(_.blankOption).flatMap(tok ⇒ oauth.userProvider.findOne(Map("reset.token" -> tok))) map { _ ⇒
+      res
+    } getOrElse InvalidToken().fail
   }
 
   protected def resetCommand: ResetCommand
-  post("/reset/:token") {
+  post("/reset/?:token?/?") {
     redirectIfAuthenticated()
-    authService.execute(getCommand(resetCommand))
-    //    format match {
-    //      case "json" | "xml" ⇒
-    //        authProvider.resetPassword(params("token"), ~jsonParam[String]("password"), ~jsonParam[String]("passwordConfirmation")).fold(
-    //          err ⇒ {
-    //            val e = ApiErrorList((err.list map {
-    //              case er: ValidationError ⇒ ApiError(er.field, er.message)
-    //              case er                  ⇒ ApiError(er.message)
-    //            }).toList)
-    //            BadRequest(OAuth2Response(parsedBody, e.toJValue))
-    //          },
-    //          loggedIn(_, "Password reset successfully"))
-    //      case _ ⇒
-    //        authProvider.resetPassword(params("token"), ~params.get("password"), ~params.get("password_confirmation")).fold(
-    //          err ⇒ {
-    //            (err.list.filter {
-    //              case a: ValidationError ⇒ false
-    //              case _                  ⇒ true
-    //            }).headOption foreach { m ⇒ flash.now("error") = m.message }
-    //            jade("reset", "errors" -> err.list.collect { case a: ValidationError ⇒ a })
-    //          },
-    //          loggedIn(_, "Password reset successfully"))
-    //
-    //    }
+    requiresToken {
+      val res = authService.execute(getCommand(resetCommand))
+      format match {
+        case "json" | "xml" ⇒ res
+        case _ ⇒ res.fold(
+          errs ⇒ {
+            (errs.list.filter {
+              case a: ValidationError ⇒ false
+              case _                  ⇒ true
+            }).headOption foreach { m ⇒ flash.now("error") = m.message }
+            jade("angular", "errors" -> errs.list.collect { case a: ValidationError ⇒ a })
 
+          },
+          owner ⇒ loggedIn(owner.asInstanceOf[UserClass], "Password reset successfully"))
+
+      }
+    }
   }
-  //
-  //  private def jsonParam[TParam](key: String)(implicit mf: Manifest[TParam]): Option[TParam] = {
-  //    val r = (parsedBody \ key).extractOpt[TParam]
-  //    if (mf == manifest[String]) r.flatMap(_.asInstanceOf[String].blankOption).asInstanceOf[Option[TParam]]
-  //    else r
-  //  }
-
 }
 
 trait AuthenticationSupport[UserClass >: Null <: AppAuthSession[_ <: AppUser[_]]] extends ScentrySupport[UserClass] with ScalateSupport {
