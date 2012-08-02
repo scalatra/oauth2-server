@@ -104,4 +104,11 @@ class AuthSessionDao(collection: MongoCollection)(implicit system: ActorSystem)
     }
   }
 
+  def logout(token: String) = {
+    val sess = findOne(Map("token.token" -> token)).get
+    allCatch {
+      save(sess.copy(token = Token(), rememberedAt = MinDate, expiresAt = DateTime.now), WriteConcern.Safe)
+    }
+  }
+
 }

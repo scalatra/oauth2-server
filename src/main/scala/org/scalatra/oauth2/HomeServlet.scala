@@ -20,10 +20,6 @@ class HomeServlet(implicit protected val system: ActorSystem)
   before() {
     if (format != "json" || format != "xml")
       contentType = "text/html"
-    else {
-      println("parsed body")
-      println(parsedBody)
-    }
   }
 
   def requiresHttps = oauth.web.sslRequired && !this.isHttps

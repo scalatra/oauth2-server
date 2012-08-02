@@ -11,6 +11,8 @@ import commands.LoginCommand
 import java.net.HttpCookie
 import org.scalatra.auth.Scentry
 import collection.JavaConverters._
+import org.scalatra.test.ClientResponse
+import org.specs2.execute.Result
 
 trait AuthenticationSpec {
   this: AkkaSpecification with BaseScalatraSpec =>
@@ -31,7 +33,7 @@ trait AuthenticationSpec {
     val (_, authSession) = authenticate("Johnny", "johnny@localhost.blah", "Johnny", "password")
     get(path, headers = Map(authenticatedHeader(authSession))) {
       (status must_== 302) and {
-        header("Location") must startWith("http://test.localhost:8080;jsessionid=")
+        header("Location") must startWith("http://test.local:8080;jsessionid=")
       }
     }
   }
@@ -86,6 +88,10 @@ trait AuthenticationSpec {
       ((resp \ "data" \ "email").extract[String] must_== account.email) and
       ((resp \ "data" \ "name").extract[String] must_== account.name)
   }
+  
+  def cookieJar(response: ClientResponse) = 
+    Map(response.getHeaderValues("Set-Cookie").asScala.flatMap(HttpCookie.parse(_).asScala).map(c => c.getName() -> c).toSeq:_*)
+  
 
   def loginWith(params: Map[String, String], json: Boolean = true) = {
     clearDB
@@ -98,16 +104,14 @@ trait AuthenticationSpec {
             (verifyJsonAccount(parse(body), account))
           } else {
             val token = oauth.authSessions.findOne(Map("userId" -> account.id)).get.token.token
-            val cookies = Map((response.getHeaderValues("Set-Cookie").asScala
-                                flatMap(HttpCookie.parse(_).asScala)
-                                map(c => c.getName() -> c.getValue())).toSeq:_*)
-            cookies(Scentry.scentryAuthKey) must_== token
+            val cookies = cookieJar(response)
+            cookies(Scentry.scentryAuthKey).getValue must_== token
           }
         }
       }
     } else {
       post("/login", params = params) {
-        (status must_== 302) and (header("Location") must startWith("http://test.localhost:8080;jsessionid="))
+        (status must_== 302) and (header("Location") must startWith("http://test.local:8080;jsessionid="))
       }
     }
   }
@@ -124,9 +128,76 @@ trait AuthenticationSpec {
     }
   }
   
-//  def loggedIn(thunk: => Any) = {
-//    post
-//  }
+  def loggedIn[T <% Result](thunk: (AuthSession, String) => T) = {
+    clearDB
+    val params = Map("login" -> "timmy", "password" -> "password")
+    val account = createAccount(params("login"), "thefrog@fff.feo", "Timmy The Frog", params("password"))
+    val js = Serialization.writePretty(params)
+    session {
+      var cookie: HttpCookie = null
+      post("/login", body = js, headers = h.json) {
+        cookie = cookieJar(response)(Scentry.scentryAuthKey)
+      }
+      val sess = oauth.authSessions.findOne(Map("userId" -> account.id)).get
+      thunk(sess, cookie.getValue)
+    }
+  }
+  
+  def logoutChangesTokenInCookie() = {
+    loggedIn { (_, token) =>
+      get("/logout", headers = h.json) {
+        val newCookie = cookieJar(response)(Scentry.scentryAuthKey)
+        val newToken = newCookie.getValue
+        (newToken must_!= token) and (newToken.trim must not(beEmpty))
+      }
+    }
+  }
+  
+  def logoutExpiresCookie() = {
+    loggedIn { (_, token) =>
+      get("/logout", headers = h.json) {
+        val newCookie = cookieJar(response)(Scentry.scentryAuthKey)
+        newCookie.getMaxAge must be_<(0L)
+      }
+    }
+  }
+
+  def changesSessionToken = {
+    loggedIn { (sess, token) =>
+      get("/logout", headers = h.json) {
+        val newSession = oauth.authSessions.findOneById(sess.id).get
+        newSession.token.token must_!= token
+      }
+    }
+  }
+
+  def differentTokensOnLogout = {
+    loggedIn { (sess, token) =>
+      get("/logout", headers = h.json) {
+        val newCookie = cookieJar(response)(Scentry.scentryAuthKey)
+        val newToken = newCookie.getValue
+        val newSession = oauth.authSessions.findOneById(sess.id).get
+        newSession.token.token must_!= newToken
+      }
+    }
+  }
+
+  def returnsNullForUserOnLogout = {
+    loggedIn { (_, _) =>
+      get("/logout", headers = h.json) {
+        val jv = parse(body) \ "data"
+        jv must_== JNull
+      }
+    }
+  }
+
+  def redirectsToLoginOnLogout = {
+    loggedIn { (sess, token) =>
+      get("/logout") {
+        (status must_== 302) and (header("Location") must startWith("http://test.local:8080/login"))
+      }
+    }
+  }
 
   def loginFragments = sequential ^
     "when getting /login" ^
@@ -145,11 +216,13 @@ trait AuthenticationSpec {
       "when credentials are valid" ^
         "return user json for a json request" ! loginWith(Map("login" -> "timmy", "password" -> "password")) ^
         "redirect to home on login" ! loginWith(Map("login" -> "timmy", "password" -> "password"), json = false) ^
-        "set a cookie when remember me is ticked" ! loginWith(Map("login" -> "timmy", "password" -> "password", "remember" -> "true")) ^
+        "set a cookie when remember me is ticked" ! loginWith(Map("login" -> "timmy", "password" -> "password", "remember" -> "true")) ^ bt ^
     "when getting /logout" ^
-      "changes to auth cookie to have an invalid token" ! pending ^
-      "changes to auth cookie to have a date in the past" ! pending ^ 
-      "returns the user as null in the response for a json request" ! pending ^ 
-      "redirects to login for a html request" ! pending ^ bt ^ bt ^ p
+      "changes the auth cookie to have an invalid token" ! logoutChangesTokenInCookie ^
+      "changes the auth cookie to have a date in the past" ! logoutExpiresCookie ^
+      "changes the token in the session" ! changesSessionToken ^
+      "the session token and cookie token are different" ! differentTokensOnLogout ^
+      "returns the user as null in the response for a json request" ! returnsNullForUserOnLogout ^
+      "redirects to login for a html request" ! redirectsToLoginOnLogout ^ bt ^ bt ^ p
       
 }

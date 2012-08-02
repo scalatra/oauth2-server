@@ -126,7 +126,7 @@ class OAuthAuthentication(implicit protected val system: ActorSystem)
     }
     val pairs = params map { case (key, value) ⇒ key.urlEncode + "=" + value.toString.urlEncode }
     val queryString = if (pairs.isEmpty) "" else pairs.mkString("?", "&", "")
-    println("The url with context path: %s" format newPath)
+    logger.debug("The url with context path: %s" format newPath)
     newPath + queryString
   }
 

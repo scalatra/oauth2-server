@@ -53,6 +53,8 @@ final class AuthenticationService(oauth: OAuth2Extension) extends Logging with C
   def loggedIn(account: Account, ipAddress: String): command.FieldValidation[AuthSession] =
     authSessions.newSession(ipAddress)(accounts.loggedIn(account, ipAddress))
 
+  def logout(token: String) = authSessions.logout(token)
+
   protected val handle: Handler = {
     case c: LoginCommand               ⇒ accounts.login(c) flatMap (authSessions.newSession(c) _)
     case c: ActivateAccountCommand     ⇒ accounts.confirm(c) flatMap (authSessions.newSession(c) _)

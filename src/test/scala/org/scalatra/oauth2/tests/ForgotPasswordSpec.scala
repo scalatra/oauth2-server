@@ -62,7 +62,7 @@ trait ForgotPasswordSpec { this: HomeServletSpec =>
     } else {
       post("/reset/"+account.reset.token, params = params) {
         (status must_== 302) and {
-          header("Location") must startWith("http://test.localhost:8080;jsessionid=")
+          header("Location") must startWith("http://test.local:8080;jsessionid=")
         }
       }
     }
@@ -106,7 +106,7 @@ trait ForgotPasswordSpec { this: HomeServletSpec =>
 
     } else {
       post("/forgot", params) {
-        (status must_== 302) and (header("Location") must startWith("http://test.localhost:8080;jsessionid="))
+        (status must_== 302) and (header("Location") must startWith("http://test.local:8080;jsessionid="))
       }
     }
   }

@@ -26,7 +26,7 @@ trait RegistrationSpec { self: HomeServletSpec =>
       }
     } else {
       post("/register", params) {
-        (status must_== 302) and (header("Location") must startWith("http://test.localhost:8080;jsessionid="))
+        (status must_== 302) and (header("Location") must startWith("http://test.local:8080;jsessionid="))
       }
     }
   }

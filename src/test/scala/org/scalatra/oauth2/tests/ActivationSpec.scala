@@ -25,7 +25,7 @@ trait ActivationSpec { this: HomeServletSpec =>
       if (checkStatus)
         status must_== 302
       else {
-        (header("Location") must startWith("http://test.localhost:8080/login;jsessionid="))
+        (header("Location") must startWith("http://test.local:8080/login;jsessionid="))
       }
     }
   }
@@ -36,7 +36,7 @@ trait ActivationSpec { this: HomeServletSpec =>
     (account.isConfirmed must beFalse) and {
       get("/activate/" + account.confirmation.token, headers = h.json) {
         (checkStatus, checkLocation) match {
-          case (_, true) => header("Location") must startWith("http://test.localhost:8080/login;jsessionid=")
+          case (_, true) => header("Location") must startWith("http://test.local:8080/login;jsessionid=")
           case (true, _) => status must_== 302
           case (false, false) => oauth.userProvider.findOneById(account.id).get.isConfirmed must beTrue
         }

@@ -73,7 +73,10 @@ trait PasswordAuthSupport[UserClass >: Null <: AppAuthSession[_ <: AppUser[_]]] 
 
   get("/logout") {
     logOut()
-    redirect(scentryConfig.failureUrl)
+    format match {
+      case "xml" | "json" ⇒ OAuth2Response(JNull)
+      case _              ⇒ redirect(scentryConfig.login)
+    }
   }
 
   protected def activateCommand: ActivateAccountCommand
@@ -226,6 +229,10 @@ trait AuthenticationSupport[UserClass >: Null <: AppAuthSession[_ <: AppUser[_]]
    */
   protected def buildFullUrl(path: String): String
 
+  override protected def logOut() {
+    authService logout scentry.store.get
+    super.logOut()
+  }
 }
 
 trait DefaultAuthenticationSupport[UserClass >: Null <: AppAuthSession[_ <: AppUser[_]]] extends AuthenticationSupport[UserClass] {
@@ -238,10 +245,14 @@ trait DefaultAuthenticationSupport[UserClass >: Null <: AppAuthSession[_ <: AppU
    */
   override protected def configureScentry {
     val authCookieOptions = cookieOptions.copy(
-      domain = (if (oauth.web.domain == ".localhost") "localhost" else oauth.web.domain),
+      domain = (if (oauth.web.domain == ".localhost" || oauth.isTest) "" else oauth.web.domain),
       secure = oauth.web.sslRequired,
       httpOnly = true)
-    scentry.store = new CookieAuthStore(self)(authCookieOptions)
+    scentry.store = new CookieAuthStore(self)(authCookieOptions) {
+      override def invalidate() {
+        cookies.update(Scentry.scentryAuthKey, Token().token)(authCookieOptions.copy(maxAge = 0))
+      }
+    }
     scentry.unauthenticated { unauthenticated() }
   }
 
