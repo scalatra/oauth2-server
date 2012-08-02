@@ -10,6 +10,7 @@ import OAuth2Imports._
 import commands.LoginCommand
 import java.net.HttpCookie
 import org.scalatra.auth.Scentry
+import collection.JavaConverters._
 
 trait AuthenticationSpec {
   this: AkkaSpecification with BaseScalatraSpec =>
@@ -96,9 +97,11 @@ trait AuthenticationSpec {
           if (params.get("remember") != Some("true")) {
             (verifyJsonAccount(parse(body), account))
           } else {
-            val cookie = HttpCookie.parse(response.getHeader("Set-Cookie")).get(0)
-            val token = oauth.authSessions.findOne(Map("userId" -> account.id))
-            (cookie.getName must_== Scentry.scentryAuthKey) and (cookie.getValue must_== token)
+            val token = oauth.authSessions.findOne(Map("userId" -> account.id)).get.token.token
+            val cookies = Map((response.getHeaderValues("Set-Cookie").asScala
+                                flatMap(HttpCookie.parse(_).asScala)
+                                map(c => c.getName() -> c.getValue())).toSeq:_*)
+            cookies(Scentry.scentryAuthKey) must_== token
           }
         }
       }
@@ -120,6 +123,10 @@ trait AuthenticationSpec {
       body must /("errors") */ ("Username or password is incorrect")
     }
   }
+  
+//  def loggedIn(thunk: => Any) = {
+//    post
+//  }
 
   def loginFragments = sequential ^
     "when getting /login" ^
@@ -138,5 +145,11 @@ trait AuthenticationSpec {
       "when credentials are valid" ^
         "return user json for a json request" ! loginWith(Map("login" -> "timmy", "password" -> "password")) ^
         "redirect to home on login" ! loginWith(Map("login" -> "timmy", "password" -> "password"), json = false) ^
-        "set a cookie when remember me is ticked" ! loginWith(Map("login" -> "timmy", "password" -> "password", "remmber" -> "true")) ^ bt ^ bt ^ p
+        "set a cookie when remember me is ticked" ! loginWith(Map("login" -> "timmy", "password" -> "password", "remember" -> "true")) ^
+    "when getting /logout" ^
+      "changes to auth cookie to have an invalid token" ! pending ^
+      "changes to auth cookie to have a date in the past" ! pending ^ 
+      "returns the user as null in the response for a json request" ! pending ^ 
+      "redirects to login for a html request" ! pending ^ bt ^ bt ^ p
+      
 }
