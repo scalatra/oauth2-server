@@ -16,12 +16,12 @@ class HomeServletSpec extends AkkaSpecification with BaseScalatraSpec
 
   def is = sequential ^
     "A HomeServlet should" ^ bt ^ p ^
-      "when getting /" ^
-        "get a html page for a html format request" ! renderAngular("/") ^
-        "get the user json for an authenticated json request" ! rootAuthenticatedJson ^ bt ^ p ^
-      loginFragments ^
-      registrationFragments ^
-      activationFragments ^
+//      "when getting /" ^
+//        "get a html page for a html format request" ! renderAngular("/") ^
+//        "get the user json for an authenticated json request" ! rootAuthenticatedJson ^ bt ^ p ^
+//      loginFragments ^
+//      registrationFragments ^
+//      activationFragments ^
       forgotPasswordFragments ^
     end
 }

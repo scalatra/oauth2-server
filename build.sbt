@@ -219,3 +219,7 @@ propertiesFile in (Compile, generateResources) <<= (baseDirectory)(_ / "project"
 //}
 //
 //generateResources in Compile <<= (generateResources in Compile).dependsOn(TaskKey[Seq[File]]("coffee-jade"))
+
+resolvers += "scct-repo" at "http://mtkopone.github.com/scct/maven-repo/"
+
+seq(instrumentSettings:_*)

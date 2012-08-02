@@ -105,20 +105,16 @@ trait ForgotPasswordAuthSupport[UserClass >: Null <: AppAuthSession[_ <: AppUser
   protected def forgotCommand: ForgotCommand
   post("/forgot") {
     redirectIfAuthenticated()
-    authService.execute(getCommand(forgotCommand))
-    //    format match {
-    //      case "json" | "xml" ⇒
-    //        authProvider.forgot(jsonParam[String]("login")).fold(
-    //          err ⇒ ApiError(err.message),
-    //          owner ⇒ OAuth2Response(Extraction.decompose(owner)))
-    //      case _ ⇒
-    //        authProvider.forgot(params.get("login")).fold(
-    //          err ⇒ jade("forgot", "error" -> err.message),
-    //          owner ⇒ {
-    //            flash("info") = "Password reset link has been sent to <a href=\"mailto:%s\">%s</a>.".format(owner.email, owner.email)
-    //            redirectAuthenticated()
-    //          })
-    //    }
+    val res = authService.execute(getCommand(forgotCommand))
+    format match {
+      case "json" | "xml" ⇒ res.map(_ ⇒ JNull)
+      case _ ⇒ res.fold(
+        errs ⇒ jade("angular", "errors" -> errs.list),
+        owner ⇒ {
+          flash("info") = "Password reset link has been sent to <a href=\"mailto:%s\">%s</a>.".format(owner.email, owner.email)
+          redirect (session.get(scentryConfig.returnToKey).map(_.toString) | scentryConfig.returnTo)
+        })
+    }
   }
 
   get("/reset/?:token?") {

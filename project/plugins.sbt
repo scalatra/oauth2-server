@@ -38,3 +38,5 @@ libraryDependencies <+= sbtVersion(v => "com.github.siasia" %% "xsbt-web-plugin"
 libraryDependencies += "net.liftweb" %% "lift-json" % "2.4"
 
 addSbtPlugin("com.bowlingx" % "xsbt-wro4j-plugin" % "0.1.0-SNAPSHOT")
+
+resolvers += "scct-repo" at "http://mtkopone.github.com/scct/maven-repo/"
