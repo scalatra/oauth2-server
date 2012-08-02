@@ -69,37 +69,6 @@ trait PasswordAuthSupport[UserClass >: Null <: AppAuthSession[_ <: AppUser[_]]] 
           errs ⇒ jade("angular", "errors" -> errs.list),
           sess ⇒ loggedIn(sess.asInstanceOf[UserClass], "Registered and logged in."))
     }
-    //    format match {
-    //      case "json" | "xml" ⇒
-    //        val json = parsedBody
-    //        val regResult =
-    //          authProvider.register(
-    //            (json \ "login").extractOpt[String].flatMap(_.blankOption),
-    //            (json \ "email").extractOpt[String].flatMap(_.blankOption),
-    //            (json \ "name").extractOpt[String].flatMap(_.blankOption),
-    //            (json \ "password").extractOpt[String].flatMap(_.blankOption),
-    //            (json \ "passwordConfirmation").extractOpt[String].flatMap(_.blankOption))
-    //        regResult.fold(
-    //          errs ⇒ {
-    //            val e = ApiErrorList((errs.list map {
-    //              case er: ValidationError ⇒ ApiError(er.field, er.message)
-    //              case er                  ⇒ ApiError(er.message)
-    //            }).toList)
-    //            BadRequest(OAuth2Response(parsedBody, e.toJValue))
-    //          },
-    //          loggedIn(_, "Registered and logged in."))
-    //      case _ ⇒
-    //        val regResult =
-    //          authProvider.register(
-    //            params.get("login"),
-    //            params.get("email"),
-    //            params.get("name"),
-    //            params.get("password"),
-    //            params.get("password_confirmation"))
-    //        regResult.fold(
-    //          errs ⇒ jade("register", "errors" -> errs.list),
-    //          loggedIn(_, "Registered and logged in."))
-    //    }
   }
 
   get("/logout") {
@@ -107,23 +76,17 @@ trait PasswordAuthSupport[UserClass >: Null <: AppAuthSession[_ <: AppUser[_]]] 
     redirect(scentryConfig.failureUrl)
   }
 
-  get("/activate") {
-    flash("error") = "The token is required"
-    redirect(scentryConfig.login)
-  }
-
   protected def activateCommand: ActivateAccountCommand
-  get("/activate/:token") {
-    authService.execute(getCommand(activateCommand))
-    //    authProvider.confirm(params("token")).fold(
-    //      m ⇒ {
-    //        flash("error") = m.message
-    //        redirect(scentryConfig.login)
-    //      },
-    //      owner ⇒ {
-    //        flash("success") = "Account confirmed!"
-    //        redirect(scentryConfig.login)
-    //      })
+  get("/activate/?:token?") {
+    authService.execute(getCommand(activateCommand)).fold(
+      m ⇒ {
+        flash("error") = m.head.message
+        redirect(scentryConfig.login)
+      },
+      owner ⇒ {
+        flash("success") = "Account confirmed!"
+        redirect(scentryConfig.login)
+      })
   }
 
   get("/unauthenticated") {
@@ -158,7 +121,7 @@ trait ForgotPasswordAuthSupport[UserClass >: Null <: AppAuthSession[_ <: AppUser
     //    }
   }
 
-  get("/reset/:token") {
+  get("/reset/?:token?") {
     redirectIfAuthenticated()
     jade("angular")
   }
