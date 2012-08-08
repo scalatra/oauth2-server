@@ -30,25 +30,22 @@ libraryDependencies ++= Seq(
   compilerPlugin("org.scala-tools.sxr" % "sxr_2.9.0" % "0.2.7")
 )
 
-ivyXML :=
-  <dependencies>
-    <exclude org="org.eclipse.jetty.orbit" />    
-  </dependencies>
-
 seq(webSettings:_*)
 
+classpathTypes ~= (_ + "orbit")
+
 libraryDependencies ++= Seq(
-  "org.scalatra"            % "scalatra"               % "2.1.0-RC3" intransitive(),
-  "org.scalatra"            % "scalatra-auth"          % "2.1.0-RC3" intransitive(),
-  "org.scalatra"            % "scalatra-scalate"       % "2.1.0-RC3" intransitive(),
-  "org.scalatra"            % "scalatra-lift-json"     % "2.1.0-RC3" intransitive(),
-  "org.scalatra"            % "scalatra-swagger"       % "2.1.0-RC3" intransitive(),
-  "org.scalatra"            % "scalatra-slf4j"         % "2.1.0-RC3" intransitive(),
-  "org.scalatra"            % "contrib-commons"        % "1.0.5-RC3" intransitive(),
-  "org.scalatra"            % "contrib-validation"     % "1.0.5-RC3" intransitive(),
-  "net.liftweb"             % "lift-json_2.9.1"        % "2.4" exclude("org.scala-lang", "scalap"),
-  "net.liftweb"             % "lift-json-scalaz_2.9.1" % "2.4" intransitive(),
-  "net.liftweb"             % "lift-json-ext_2.9.1"    % "2.4" intransitive(),
+  "org.scalatra"            % "scalatra"               % "2.2.0-SNAPSHOT",
+  "org.scalatra"            % "scalatra-auth"          % "2.2.0-SNAPSHOT",
+  "org.scalatra"            % "scalatra-scalate"       % "2.2.0-SNAPSHOT",
+  "org.scalatra"            % "scalatra-lift-json"     % "2.2.0-SNAPSHOT",
+  "org.scalatra"            % "scalatra-swagger"       % "2.2.0-SNAPSHOT",
+  "org.scalatra"            % "scalatra-slf4j"         % "2.2.0-SNAPSHOT",
+  "org.scalatra"            % "contrib-commons"        % "1.1.0-SNAPSHOT",
+  "org.scalatra"            % "contrib-validation"     % "1.1.0-SNAPSHOT",
+  // "net.liftweb"             % "lift-json_2.9.1"        % "2.4" exclude("org.scala-lang", "scalap"),
+  // "net.liftweb"             % "lift-json-scalaz_2.9.1" % "2.4",
+  // "net.liftweb"             % "lift-json-ext_2.9.1"    % "2.4",
   "org.scalaz"             %% "scalaz"                 % "6.0.4",
   "org.mozilla"             % "rhino"                  % "1.7R4",
   "org.jruby"               % "jruby"                  % "1.6.7.2",
@@ -68,7 +65,8 @@ libraryDependencies ++= Seq(
   "junit"                   % "junit"                  % "4.10"                % "test",
   "ch.qos.logback"          % "logback-classic"        % "1.0.6",
   "org.eclipse.jetty"       % "jetty-webapp"           % "8.1.5.v20120716"     % "container",
-  "javax.servlet"           % "javax.servlet-api"      % "3.0.1"               % "container;provided",
+  "org.eclipse.jetty"       % "test-jetty-servlet"     % "8.1.5.v20120716"     % "test",
+  "org.eclipse.jetty.orbit" % "javax.servlet"          % "3.0.0.v201112011016" % "container;provided;test" artifacts (Artifact("javax.servlet", "jar", "jar")),
   "com.novus"              %% "salat"                  % "1.9.0"
 )
 
@@ -226,6 +224,6 @@ resolvers += "scct-repo" at "http://mtkopone.github.com/scct/maven-repo/"
 seq(instrumentSettings:_*)
 
 
-uniqueVersionSettings
+seq(uniqueVersionSettings:_*)
 
 uniqueVersion := true

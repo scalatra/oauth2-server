@@ -1,7 +1,6 @@
 package org.scalatra
 package oauth2
 
-import org.eclipse.jetty.http.HttpHeaders
 import net.iharder.Base64
 import scalaz._
 import Scalaz._
@@ -10,7 +9,7 @@ import javax.servlet.http.HttpServletRequest
 
 class OAuthRequest(req: HttpServletRequest) {
 
-  private[this] def authorizationKey = req.headers.get(HttpHeaders.AUTHORIZATION).flatMap(_.blankOption)
+  private[this] def authorizationKey = req.headers.get("Authorization").flatMap(_.blankOption)
   /**
    * A flag to indicate this request has the OAuth2 Authorization header
    */
