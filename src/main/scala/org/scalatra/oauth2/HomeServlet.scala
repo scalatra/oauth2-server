@@ -10,13 +10,14 @@ class HomeServlet(implicit protected val system: ActorSystem)
     with AuthenticationApp[AuthSession] {
 
   if (!oauth.isTest) {
-    val guarded = Seq("", "login", "register", "forgot", "reset")
+    val guarded = Seq("", "login", "register", "forgot", "reset", "logout")
     guarded foreach (s ⇒ xsrfGuard("/" + s))
   }
 
   before("/") {
     if (isAnonymous) scentry.authenticate("remember_me")
   }
+
   before() {
     if (format != "json" || format != "xml")
       contentType = "text/html"

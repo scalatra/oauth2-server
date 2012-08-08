@@ -22,7 +22,6 @@ App.config([
   $routeProvider
     .when("/", {templateUrl: '/templates/home.html', controller: 'HomeController'})
     .when("/login", {templateUrl: '/templates/login.html', controller: 'LoginController'})
-    .when("/logout", { templateUrl: '/external/logout.html' })
     .when("/forgot", {templateUrl: '/templates/forgot.html', controller: 'ForgotController'})
     .when("/reset/:token", {templateUrl: '/templates/reset.html', controller: "ResetController"})
     .when("/register", { templateUrl: '/templates/register.html', controller: 'RegisterController' })

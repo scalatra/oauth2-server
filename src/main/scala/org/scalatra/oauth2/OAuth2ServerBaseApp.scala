@@ -130,11 +130,11 @@ trait OAuth2ServerBaseApp extends ScalatraServlet
   val userManifest = manifest[AuthSession]
 
   protected def authService: AuthenticationService = oauth.authService
-
-  before() {
-    logger.info("Requesting path: " + requestPath)
-    logger.info("Request format: " + format)
-  }
+  //
+  //  before() {
+  //    logger.info("Requesting path: " + requestPath)
+  //    logger.info("Request format: " + format)
+  //  }
 
   protected def loginCommand: LoginCommand = new LoginCommand(oauth, this.remoteAddress)
 
@@ -195,7 +195,6 @@ trait OAuth2ServerBaseApp extends ScalatraServlet
    */
   override def redirect(path: String) = {
     val url = buildFullUrl(path)
-    logger debug ("redirecting to [%s]" format url)
     super.redirect(url)
   }
 

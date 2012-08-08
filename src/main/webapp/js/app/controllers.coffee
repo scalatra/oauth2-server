@@ -4,10 +4,11 @@ mod = {}
 
 mod.AppController = [
   '$scope'
+  '$http'
   '$location'
   'loginService'
   'notificationService'
-  ($scope, $location, loginService, notificationService) ->
+  ($scope, $http, $location, loginService, notificationService) ->
     $scope.pageTitle = "Scalatra OAuth2"
 
     $scope.errorClass = (field) ->
@@ -17,6 +18,8 @@ mod.AppController = [
     $scope.$on "authenticated", (sc, user) ->
       notificationService.notify "info", {message: ("Welcome, " + user.name)}      
       $location.path("/")
+
+    $scope.logOut = loginService.logOut
 
     # $scope.loadView = ->
     #   console.log("Loading view")
@@ -42,7 +45,7 @@ mod.LoginController = [
         .success (response) ->
           loginService.authenticated(response.data)
         .error (response, status, headers) ->
-          loginService.logout()
+          loginService.logOut()
           $scope.credentials =
             login: response.data.login
             remember: response.data.remember
@@ -85,37 +88,39 @@ mod.ResetController = [
 
 ]
 
-mod.RegisterController = ['$scope', '$http', '$timeout', "$location", "notificationService", ($scope, $http, $timeout, $location, notificationService) ->
-  $scope.user = {}
-  $scope.validationErrors = []
-  removePasswordKeys = (obj) ->
-    delete obj['password']
-    delete obj['password_confirmation']
-
-  $scope.register =  (user) ->
-    $http
-      .post("/register", user)
-      .success (response, status, headers, config) ->
-        u = angular.copy(response.data)
-        removePasswordKeys(u)
-        $scope.user = u
-        $scope.errors = response.errors
-        $location.url("/login") if response.errors.isEmpty
-
-      .error (response, status, headers, config) ->
-        removePasswordKeys($scope.user)
-        notificationService.errors(response.errors)
-
-
-  $scope.reset = () ->
+mod.RegisterController = [
+  '$scope',
+  '$http',
+  '$timeout',
+  "$location",
+  "notificationService",
+  "loginService",
+  ($scope, $http, $timeout, $location, notificationService, loginService) ->
     $scope.user = {}
-    $location.url("/login")
+    $scope.validationErrors = []
+    removePasswordKeys = (obj) ->
+      delete obj['password']
+      delete obj['password_confirmation']
 
-  $scope.isValidForm = () ->
-    $scope.registerUserForm.password.$setValidity(
-      "sameAs",
-      $scope.password == $scope.confirmation) if $scope.registerUserForm.password?
-    $scope.registerUserForm.$invalid
+    $scope.register =  (user) ->
+      $http
+        .post("/register", user)
+        .success (response, status, headers, config) ->
+          $location.url("/login")
+
+        .error (response, status, headers, config) ->
+          removePasswordKeys($scope.user)
+          notificationService.errors(response.errors)
+
+    $scope.reset = () ->
+      $scope.user = {}
+      $location.url("/login")
+
+    $scope.isValidForm = () ->
+      $scope.registerUserForm.password.$setValidity(
+        "sameAs",
+        $scope.password == $scope.confirmation) if $scope.registerUserForm.password?
+      $scope.registerUserForm.$invalid
 
 ]
 

@@ -186,7 +186,14 @@ class AccountDao(collection: MongoCollection)(implicit system: ActorSystem)
     /*_*/
   }
 
-  def register(cmd: RegisterCommand): ModelValidation[Account] = execute(cmd)
+  def register(cmd: RegisterCommand): ModelValidation[Account] = {
+    val res = execute(cmd)
+    if (!oauth.isTest && cmd.isValid)
+      res foreach { o ⇒
+        oauth.smtp.send(MailMessage(ConfirmationMail(o.name, o.login, o.email, o.confirmation.token)))
+      }
+    res
+  }
 
   private type Factory = (String, String, String) ⇒ Account
 

@@ -3,7 +3,6 @@ package oauth2
 
 import akka.actor.ActorSystem
 import java.net.URI
-import org.eclipse.jetty.http.HttpHeaders
 import org.scalatra.{ Initializable, ResponseStatus, ScalatraBase, Handler }
 import javax.servlet.http.{ HttpServletResponse, HttpServletRequest }
 
@@ -16,7 +15,7 @@ trait LoadBalancedSslRequirement extends Handler with LoadBalancerPing { self: S
       val oldUri = req.uri
       val url = new URI("https", oldUri.getAuthority, oldUri.getPath, oldUri.getQuery, oldUri.getFragment).toASCIIString
       res.status = ResponseStatus(301)
-      res.headers(HttpHeaders.LOCATION) = url
+      res.headers("Location") = url
       res.outputStream.close()
     } else {
       super.handle(req, res)

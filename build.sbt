@@ -1,7 +1,7 @@
 import scala.xml.Group
 import com.typesafe.startscript.StartScriptPlugin
 import scalariform.formatter.preferences._
-
+import UniqueVersionKeys._ // put this at the top
 //import RequireJsKeys._
 import StartScriptPlugin._
 import ScalateKeys._
@@ -13,9 +13,9 @@ organization := "org.scalatra.oauth2"
 
 name := "oauth2-server"
 
-version := "0.1.0-SNAPSHOT"
+version := "0.2.0-SNAPSHOT"
 
-scalaVersion := "2.9.1"
+scalaVersion := "2.9.2"
 
 //javacOptions ++= Seq("-Xlint:unchecked", "-source", "1.7", "-target", "1.7", "-Xlint:deprecation")
 
@@ -26,47 +26,50 @@ scalacOptions ++= Seq("-optimize", "-unchecked", "-deprecation", "-Xcheckinit", 
 autoCompilerPlugins := true
 
 libraryDependencies ++= Seq(
-  compilerPlugin("org.scala-lang.plugins" % "continuations" % "2.9.1"),
+  compilerPlugin("org.scala-lang.plugins" % "continuations" % "2.9.2"),
   compilerPlugin("org.scala-tools.sxr" % "sxr_2.9.0" % "0.2.7")
 )
 
 ivyXML :=
   <dependencies>
-    <exclude org="org.eclipse.jetty.orbit" />
+    <exclude org="org.eclipse.jetty.orbit" />    
   </dependencies>
 
 seq(webSettings:_*)
 
 libraryDependencies ++= Seq(
-  "org.scalatra"            % "scalatra"             % "2.1.0-RC1",
-  "org.scalatra"            % "scalatra-auth"        % "2.1.0-RC1",
-  "org.scalatra"            % "scalatra-scalate"     % "2.1.0-RC1",
-  "org.scalatra"            % "scalatra-lift-json"   % "2.1.0-RC1",
-  "org.scalatra"            % "scalatra-swagger"     % "2.1.0-RC1",
-  "org.scalatra"            % "scalatra-slf4j"       % "2.1.0-RC1",
-//  "org.scalatra"            % "contrib-validation"   % "1.0.5-RC1",
-  "net.liftweb"            %% "lift-json-scalaz"     % "2.4",
-  "net.liftweb"            %% "lift-json-ext"        % "2.4",
-  "org.mozilla"             % "rhino"                % "1.7R4",
-  "org.jruby"               % "jruby"                % "1.6.7.2",
-  "net.databinder.dispatch" % "core_2.9.1"           % "0.9.0",
-  "org.clapper"             % "scalasti_2.9.1"       % "0.5.8",
-  "org.mindrot"             % "jbcrypt"              % "0.3m",
-  "org.scribe"              % "scribe"               % "1.3.1",
-  "javax.mail"              % "mail"                 % "1.4.5",
-  "commons-codec"           % "commons-codec"        % "1.6",
+  "org.scalatra"            % "scalatra"               % "2.1.0-RC3" intransitive(),
+  "org.scalatra"            % "scalatra-auth"          % "2.1.0-RC3" intransitive(),
+  "org.scalatra"            % "scalatra-scalate"       % "2.1.0-RC3" intransitive(),
+  "org.scalatra"            % "scalatra-lift-json"     % "2.1.0-RC3" intransitive(),
+  "org.scalatra"            % "scalatra-swagger"       % "2.1.0-RC3" intransitive(),
+  "org.scalatra"            % "scalatra-slf4j"         % "2.1.0-RC3" intransitive(),
+  "org.scalatra"            % "contrib-commons"        % "1.0.5-RC3" intransitive(),
+  "org.scalatra"            % "contrib-validation"     % "1.0.5-RC3" intransitive(),
+  "net.liftweb"             % "lift-json_2.9.1"        % "2.4" exclude("org.scala-lang", "scalap"),
+  "net.liftweb"             % "lift-json-scalaz_2.9.1" % "2.4" intransitive(),
+  "net.liftweb"             % "lift-json-ext_2.9.1"    % "2.4" intransitive(),
+  "org.scalaz"             %% "scalaz"                 % "6.0.4",
+  "org.mozilla"             % "rhino"                  % "1.7R4",
+  "org.jruby"               % "jruby"                  % "1.6.7.2",
+  "net.databinder.dispatch" % "core_2.9.2"             % "0.9.0",
+  "org.clapper"             % "scalasti_2.9.1"         % "0.5.8",
+  "org.mindrot"             % "jbcrypt"                % "0.3m",
+  "org.scribe"              % "scribe"                 % "1.3.1",
+  "javax.mail"              % "mail"                   % "1.4.5",
+  "commons-codec"           % "commons-codec"          % "1.6",
 //  "ro.isdc.wro4j"           % "wro4j-core"           % "1.4.7" exclude("log4j", "log4j") exclude("org.slf4j", "slf4j-log4j12"),
 //  "ro.isdc.wro4j"           % "wro4j-extensions"     % "1.4.7" exclude("log4j", "log4j") exclude("org.slf4j", "slf4j-log4j12"),
-  "com.typesafe.akka"       % "akka-actor"           % "2.0.2",
-  "com.typesafe.akka"       % "akka-testkit"         % "2.0.2"               % "test",
-  "org.fusesource.scalate"  % "scalate-markdownj"    % "1.5.3",
-  "org.scala-tools.time"    % "time_2.9.1"           % "0.5",
-  "org.scalatra"            % "scalatra-specs2"      % "2.1.0-RC1"           % "test",
-  "junit"                   % "junit"                % "4.10"                % "test",
-  "ch.qos.logback"          % "logback-classic"      % "1.0.6",
-  "org.eclipse.jetty"       % "jetty-webapp"         % "8.1.3.v20120416"     % "container",
-  "javax.servlet"           % "javax.servlet-api"    % "3.0.1"               % "container;provided",
-  "com.novus"               % "salat_2.9.1"          % "1.9.0"
+  "com.typesafe.akka"       % "akka-actor"             % "2.0.2",
+  "com.typesafe.akka"       % "akka-testkit"           % "2.0.2"               % "test",
+  "org.fusesource.scalate"  % "scalate-markdownj"      % "1.5.3",
+  "org.scala-tools.time"    % "time_2.9.1"             % "0.5",
+  "org.scalatra"            % "scalatra-specs2"        % "2.1.0-RC3"           % "test",
+  "junit"                   % "junit"                  % "4.10"                % "test",
+  "ch.qos.logback"          % "logback-classic"        % "1.0.6",
+  "org.eclipse.jetty"       % "jetty-webapp"           % "8.1.5.v20120716"     % "container",
+  "javax.servlet"           % "javax.servlet-api"      % "3.0.1"               % "container;provided",
+  "com.novus"              %% "salat"                  % "1.9.0"
 )
 
 resolvers += "sonatype oss snapshots" at "https://oss.sonatype.org/content/repositories/snapshots/"
@@ -168,8 +171,8 @@ scalateImports ++= Seq(
 
 scalateBindings ++= Seq(
   Binding("flash", "scala.collection.Map[String, Any]", defaultValue = "Map.empty"),
-  Binding("session", "org.scalatra.servlet.RichSession"),
-  Binding("sessionOption", "scala.Option[org.scalatra.servlet.RichSession]"),
+  Binding("session", "javax.servlet.http.HttpSession"),
+  Binding("sessionOption", "scala.Option[javax.servlet.http.HttpSession]"),
   Binding("params", "scala.collection.Map[String, String]"),
   Binding("multiParams", "org.scalatra.MultiParams"),
   Binding("userOption", "Option[Account]", defaultValue = "None"),
@@ -188,13 +191,11 @@ buildInfoPackage := "org.scalatra.oauth2"
 
 seq(startScriptForWarSettings: _*)
 
-startScriptJettyVersion in Compile := "8.1.3.v20120416"
+startScriptJettyVersion in Compile := "8.1.5.v20120716"
 
-startScriptJettyChecksum in Compile := "4bf0cbebe7681d254a8d7e9a4cd7449b3f5ebac8"
+startScriptJettyChecksum in Compile := "83ab4d014f4f5c6e378df783d680d4e2aeff3883"
 
 startScriptJettyURL in Compile <<= (startScriptJettyVersion in Compile) { (version) => "http://download.eclipse.org/jetty/" + version + "/dist/jetty-distribution-" + version + ".zip" }
-
-externalResolvers <<= resolvers map { Resolver.withDefaultResolvers(_, scalaTools = false) }
 
 watchSources <++= (sourceDirectory in Compile) map (d => (d / "webapp" ** "*").get)
 
@@ -223,3 +224,8 @@ propertiesFile in (Compile, generateResources) <<= (baseDirectory)(_ / "project"
 resolvers += "scct-repo" at "http://mtkopone.github.com/scct/maven-repo/"
 
 seq(instrumentSettings:_*)
+
+
+uniqueVersionSettings
+
+uniqueVersion := true

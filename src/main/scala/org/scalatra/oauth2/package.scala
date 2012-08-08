@@ -1,7 +1,7 @@
 package org.scalatra
 
 import org.slf4j.LoggerFactory
-import scalaz._
+import _root_.scalaz._
 import Scalaz._
 import java.util.Locale
 import org.joda.time._

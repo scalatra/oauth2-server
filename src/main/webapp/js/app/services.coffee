@@ -10,33 +10,47 @@ mod.Permission = ['$resource', ($resource) ->
   $resource("/permissions/:id", {id: "@id"})
 ]
 
-mod.loginService = ['$rootScope', '$http', '$log', 'notificationService', ($rootScope, $http, $log, notificationService) ->
-  svc = 
-    authenticated: (user) ->
-      if user?
-        $rootScope.currentUser = user
-      else
-        angular.isObject($rootScope.currentUser)
-    logout: ->
-      $rootScope.currentUser = null
-    anonymous: ->
-      not $rootScope.currentUser?
-    restoreAuth: ->
-      $http
-        .get("/check_auth")
-        .success (response, status, headers, config) ->
-          @authenticated response.data
-        .error (response, status, headers, config) ->
-          @logout()
+mod.loginService = [
+  '$rootScope'
+  '$http'
+  '$location'
+  '$log'
+  'notificationService'
+  ($rootScope, $http, $location, $log, notificationService) ->
+    svc =
+      authenticated: (user) ->
+        if user?
+          $rootScope.currentUser = user
+        else
+          angular.isObject($rootScope.currentUser)
+      logOut: (redirect) ->
+        $http
+          .get("/logout")
+          .success (response) ->
+            $rootScope.currentUser = null
+            if redirect
+              notificationService.notify('info', { message: 'Logged out.'})
+              $location.path("/login")
+          .error (response) ->
+            notificationService.errors(response.errors||[])
+      anonymous: ->
+        not $rootScope.currentUser?
+      restoreAuth: ->
+        $http
+          .get("/")
+          .success (response, status, headers, config) ->
+            @authenticated response.data
+          .error (response, status, headers, config) ->
+            @logOut()
 
 
-  $rootScope.$watch "currentUser", (newValue, oldValue) ->
-    unless angular.equals(oldValue, newValue)
-      $log.info("changing user from " + angular.toJson(oldValue, true) + " to " + angular.toJson(newValue, true))
-      evt = if angular.isObject(newValue) then ["authenticated", newValue] else ["loggedOut", oldValue]
-      $rootScope.$broadcast(evt[0], evt[1])
+    $rootScope.$watch "currentUser", (newValue, oldValue) ->
+      unless angular.equals(oldValue, newValue)
+        $log.info("changing user from " + angular.toJson(oldValue, true) + " to " + angular.toJson(newValue, true))
+        evt = if angular.isObject(newValue) then ["authenticated", newValue] else ["loggedOut", oldValue]
+        $rootScope.$broadcast(evt[0], evt[1])
 
-  svc
+    svc
 ]
 
 mod.notificationService = ['$rootScope', '$log', ($rootScope, $log) ->
