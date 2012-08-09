@@ -6,7 +6,10 @@ package tests
 import org.specs2._
 import net.liftweb.json._
 import JsonDSL._
+import org.junit.runner._
+import org.specs2.runner._
 
+@RunWith(classOf[JUnitRunner])
 class JValuePathReaderSpec extends Specification {
   def is =
     "A JValuePathReader should" ^

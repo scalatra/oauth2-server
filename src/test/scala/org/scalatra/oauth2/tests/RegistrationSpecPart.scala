@@ -2,7 +2,7 @@ package org.scalatra.oauth2.tests
 
 import net.liftweb.json._
 
-trait RegistrationSpec { self: HomeServletSpec =>
+trait RegistrationSpecPart { self: HomeServletSpec =>
 
   def registrationFragments =
     "when getting /register" ^

@@ -2,6 +2,9 @@ import sbt._
 import Keys._
 
 object OAuth2ServerBuild extends Build {
+
+  // val sbtGenPom = uri("git://github.com/geishatokyo/sbt-pom-gen-plugin.git#176f70039e3b592a4bd897090c1c8f32b0484322")
+
 //  val dispatchLiftJson =
 //         uri("git://github.com/backchatio/dispatch-lift-json")
 

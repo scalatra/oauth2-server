@@ -4,14 +4,15 @@ package tests
 
 import test.specs2.BaseScalatraSpec
 import net.liftweb.json._
+import org.junit.runner._
+import org.specs2.runner._
 
-
-
+@RunWith(classOf[JUnitRunner])
 class HomeServletSpec extends AkkaSpecification with BaseScalatraSpec
-                                with AuthenticationSpec
-                                with ActivationSpec
-                                with ForgotPasswordSpec
-                                with RegistrationSpec {
+                                with AuthenticationSpecPart
+                                with ActivationSpecPart
+                                with ForgotPasswordSpecPart
+                                with RegistrationSpecPart {
 
 
   def is = sequential ^

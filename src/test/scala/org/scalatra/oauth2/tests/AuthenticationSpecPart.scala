@@ -14,7 +14,7 @@ import collection.JavaConverters._
 import org.scalatra.test.ClientResponse
 import org.specs2.execute.Result
 
-trait AuthenticationSpec {
+trait AuthenticationSpecPart {
   this: AkkaSpecification with BaseScalatraSpec =>
   val oauth = OAuth2Extension(system)
   implicit val formats: Formats = new OAuth2Formats

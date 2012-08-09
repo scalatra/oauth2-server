@@ -6,7 +6,7 @@ import net.liftweb.json._
 import net.liftweb.json.Serialization
 import java.lang.Boolean
 
-trait ForgotPasswordSpec { this: HomeServletSpec =>
+trait ForgotPasswordSpecPart { this: HomeServletSpec =>
   
   def forgotPasswordFragments =
     "when getting /forgot" ^

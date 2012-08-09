@@ -4,7 +4,7 @@ package tests
 
 import OAuth2Imports._
 
-trait ActivationSpec { this: HomeServletSpec =>
+trait ActivationSpecPart { this: HomeServletSpec =>
 
   def activationFragments =
     "when getting /activate/:token" ^

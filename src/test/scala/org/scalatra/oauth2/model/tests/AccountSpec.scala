@@ -11,7 +11,10 @@ import org.specs2.specification.After
 import org.scalatra.command.ValidationError
 import commands._
 import java.util.concurrent.atomic.AtomicInteger
+import org.junit.runner._
+import org.specs2.runner._
 
+@RunWith(classOf[JUnitRunner])
 class AccountSpec extends AkkaSpecification { def is = sequential ^
   "An account dao should" ^
     "when registering" ^

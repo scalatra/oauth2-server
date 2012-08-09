@@ -9,9 +9,10 @@ import org.scalatra.oauth2.OAuth2Imports._
 import scalaz._
 import Scalaz._
 import org.scalatra.command.ValidationError
+import org.junit.runner._
+import org.specs2.runner._
 
-
-
+@RunWith(classOf[JUnitRunner])
 class PermissionsSpec extends AkkaSpecification { def is =
   "A permission should" ^
     "not validate when the name is empty" ! validate.failsEmptyName ^ bt ^

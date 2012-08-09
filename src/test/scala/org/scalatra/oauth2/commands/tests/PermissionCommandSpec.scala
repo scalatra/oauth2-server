@@ -10,8 +10,10 @@ import command.{SimpleError, ValidationError}
 import net.liftweb.json._
 import JsonDSL._
 import com.mongodb.casbah.WriteConcern
+import org.junit.runner._
+import org.specs2.runner._
 
-
+@RunWith(classOf[JUnitRunner])
 class PermissionCommandSpec extends AkkaSpecification { def is = sequential ^
   "A create permission command should" ^
      "when binding from params" ^ createPermissionSpecs(asJson = false) ^

@@ -35,39 +35,39 @@ seq(webSettings:_*)
 classpathTypes ~= (_ + "orbit")
 
 libraryDependencies ++= Seq(
-  "org.scalatra"            % "scalatra"               % "2.2.0-SNAPSHOT",
-  "org.scalatra"            % "scalatra-auth"          % "2.2.0-SNAPSHOT",
-  "org.scalatra"            % "scalatra-scalate"       % "2.2.0-SNAPSHOT",
-  "org.scalatra"            % "scalatra-lift-json"     % "2.2.0-SNAPSHOT",
-  "org.scalatra"            % "scalatra-swagger"       % "2.2.0-SNAPSHOT",
-  "org.scalatra"            % "scalatra-slf4j"         % "2.2.0-SNAPSHOT",
-  "org.scalatra"            % "contrib-commons"        % "1.1.0-SNAPSHOT",
-  "org.scalatra"            % "contrib-validation"     % "1.1.0-SNAPSHOT",
+  "org.scalatra"             % "scalatra"               % "2.2.0-SNAPSHOT",
+  "org.scalatra"             % "scalatra-auth"          % "2.2.0-SNAPSHOT",
+  "org.scalatra"             % "scalatra-scalate"       % "2.2.0-SNAPSHOT",
+  "org.scalatra"             % "scalatra-lift-json"     % "2.2.0-SNAPSHOT",
+  "org.scalatra"             % "scalatra-swagger"       % "2.2.0-SNAPSHOT",
+  "org.scalatra"             % "scalatra-slf4j"         % "2.2.0-SNAPSHOT",
+  "org.scalatra"             % "contrib-commons"        % "1.1.0-SNAPSHOT",
+  "org.scalatra"             % "contrib-validation"     % "1.1.0-SNAPSHOT",
   // "net.liftweb"             % "lift-json_2.9.1"        % "2.4" exclude("org.scala-lang", "scalap"),
   // "net.liftweb"             % "lift-json-scalaz_2.9.1" % "2.4",
   // "net.liftweb"             % "lift-json-ext_2.9.1"    % "2.4",
-  "org.scalaz"             %% "scalaz"                 % "6.0.4",
-  "org.mozilla"             % "rhino"                  % "1.7R4",
-  "org.jruby"               % "jruby"                  % "1.6.7.2",
-  "net.databinder.dispatch" % "core_2.9.2"             % "0.9.0",
-  "org.clapper"             % "scalasti_2.9.1"         % "0.5.8",
-  "org.mindrot"             % "jbcrypt"                % "0.3m",
-  "org.scribe"              % "scribe"                 % "1.3.1",
-  "javax.mail"              % "mail"                   % "1.4.5",
-  "commons-codec"           % "commons-codec"          % "1.6",
-//  "ro.isdc.wro4j"           % "wro4j-core"           % "1.4.7" exclude("log4j", "log4j") exclude("org.slf4j", "slf4j-log4j12"),
-//  "ro.isdc.wro4j"           % "wro4j-extensions"     % "1.4.7" exclude("log4j", "log4j") exclude("org.slf4j", "slf4j-log4j12"),
-  "com.typesafe.akka"       % "akka-actor"             % "2.0.2",
-  "com.typesafe.akka"       % "akka-testkit"           % "2.0.2"               % "test",
-  "org.fusesource.scalate"  % "scalate-markdownj"      % "1.5.3",
-  "org.scala-tools.time"    % "time_2.9.1"             % "0.5",
-  "org.scalatra"            % "scalatra-specs2"        % "2.1.0-RC3"           % "test",
-  "junit"                   % "junit"                  % "4.10"                % "test",
-  "ch.qos.logback"          % "logback-classic"        % "1.0.6",
-  "org.eclipse.jetty"       % "jetty-webapp"           % "8.1.5.v20120716"     % "container",
-  "org.eclipse.jetty"       % "test-jetty-servlet"     % "8.1.5.v20120716"     % "test",
-  "org.eclipse.jetty.orbit" % "javax.servlet"          % "3.0.0.v201112011016" % "container;provided;test" artifacts (Artifact("javax.servlet", "jar", "jar")),
-  "com.novus"              %% "salat"                  % "1.9.0"
+  "org.scalaz"              %% "scalaz"                 % "6.0.4",
+  "org.mozilla"              % "rhino"                  % "1.7R4",
+  "org.jruby"                % "jruby"                  % "1.6.7.2",
+  "net.databinder.dispatch" %% "core"                   % "0.9.0",
+  "org.clapper"              % "scalasti_2.9.1"         % "0.5.8",
+  "org.mindrot"              % "jbcrypt"                % "0.3m",
+  "org.scribe"               % "scribe"                 % "1.3.1",
+  "javax.mail"               % "mail"                   % "1.4.5",
+  "commons-codec"            % "commons-codec"          % "1.6",
+//  "ro.isdc.wro4j"            % "wro4j-core"           % "1.4.7" exclude("log4j", "log4j") exclude("org.slf4j", "slf4j-log4j12"),
+//  "ro.isdc.wro4j"            % "wro4j-extensions"     % "1.4.7" exclude("log4j", "log4j") exclude("org.slf4j", "slf4j-log4j12"),
+  "com.typesafe.akka"        % "akka-actor"             % "2.0.2",
+  "com.typesafe.akka"        % "akka-testkit"           % "2.0.2"               % "test",
+  "org.fusesource.scalate"   % "scalate-markdownj"      % "1.5.3",
+  "org.scala-tools.time"     % "time_2.9.1"             % "0.5",
+  "org.scalatra"             % "scalatra-specs2"        % "2.1.0-RC3"           % "test",
+  "junit"                    % "junit"                  % "4.10"                % "test",
+  "ch.qos.logback"           % "logback-classic"        % "1.0.6",
+  "org.eclipse.jetty"        % "jetty-webapp"           % "8.1.5.v20120716"     % "container",
+  "org.eclipse.jetty"        % "test-jetty-servlet"     % "8.1.5.v20120716"     % "test",
+  "org.eclipse.jetty.orbit"  % "javax.servlet"          % "3.0.0.v201112011016" % "container;provided;test" artifacts (Artifact("javax.servlet", "jar", "jar")),
+  "com.novus"               %% "salat"                  % "1.9.0" exclude("org.scala-lang", "scalap")
 )
 
 resolvers += "sonatype oss snapshots" at "https://oss.sonatype.org/content/repositories/snapshots/"
@@ -227,3 +227,5 @@ seq(instrumentSettings:_*)
 seq(uniqueVersionSettings:_*)
 
 uniqueVersion := true
+
+seq(pomGenSettings:_*)
