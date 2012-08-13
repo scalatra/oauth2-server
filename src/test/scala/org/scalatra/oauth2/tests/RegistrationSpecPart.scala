@@ -2,19 +2,19 @@ package org.scalatra.oauth2.tests
 
 import net.liftweb.json._
 
-trait RegistrationSpecPart { self: HomeServletSpec =>
+trait RegistrationSpecPart { self: HomeServletSpec ⇒
 
   def registrationFragments =
     "when getting /register" ^
       "redirect to home if authenticated" ! redirectAuthenticated("/register") ^
       "render a register form if not authenticated" ! renderAngular("/register") ^
-    "when posting to /register" ^
+      "when posting to /register" ^
       "when the data is invalid" ^
-        "return status 422" ! registerInvalid(Map("login" -> "blah"), verifyStatus = true) ^
-        "response contains error messages" ! registerInvalid(Map("login" -> "blah")) ^ bt ^
+      "return status 422" ! registerInvalid(Map("login" -> "blah"), verifyStatus = true) ^
+      "response contains error messages" ! registerInvalid(Map("login" -> "blah")) ^ bt ^
       "when the data is valid" ^
-        "redirects to login for a html request" ! registersSuccessfully(json = false) ^
-        "returns the user json for a json request" ! registersSuccessfully(json = true) ^ bt ^ bt ^ p
+      "redirects to login for a html request" ! registersSuccessfully(json = false) ^
+      "returns the user json for a json request" ! registersSuccessfully(json = true) ^ bt ^ bt ^ p
 
   def registersSuccessfully(json: Boolean) = {
     clearDB

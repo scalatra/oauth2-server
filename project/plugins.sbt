@@ -33,3 +33,5 @@ addSbtPlugin("com.bowlingx" % "xsbt-wro4j-plugin" % "0.1.0-SNAPSHOT")
 resolvers += "scct-repo" at "http://mtkopone.github.com/scct/maven-repo/"
 
 addSbtPlugin("com.eed3si9n" % "sbt-unique-version" % "latest.integration")
+
+addSbtPlugin("com.github.casualjim" % "sbt-jelastic-deploy" % "0.1.2")

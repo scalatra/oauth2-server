@@ -5,7 +5,11 @@
       <jetty.version>8.1.5.v20120716</jetty.version>
       <wro4j.version>1.4.7</wro4j.version>
       <scalatra.version>2.1.0-RC3</scalatra.version>
+      <scalatra.contrib.version>1.0.5-RC3</scalatra.contrib.version>
       <akka.version>2.0.2</akka.version>
+      <casbah.version>2.4.1</casbah.version>
+      <salat.version>1.9.0</salat.version>
+      <scalaz.version>6.0.4</scalaz.version>
     </properties>
 
     <description>oauth2-server</description>
@@ -275,6 +279,41 @@
             </plugin>
 
         </plugins>
+        <pluginManagement>
+        	<plugins>
+        		<!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself.-->
+        		<plugin>
+        			<groupId>org.eclipse.m2e</groupId>
+        			<artifactId>lifecycle-mapping</artifactId>
+        			<version>1.0.0</version>
+        			<configuration>
+        				<lifecycleMappingMetadata>
+        					<pluginExecutions>
+        						<pluginExecution>
+        							<pluginExecutionFilter>
+        								<groupId>
+        									org.fusesource.scalate
+        								</groupId>
+        								<artifactId>
+        									maven-scalate-plugin
+        								</artifactId>
+        								<versionRange>
+        									[1.5.3,)
+        								</versionRange>
+        								<goals>
+        									<goal>precompile</goal>
+        								</goals>
+        							</pluginExecutionFilter>
+        							<action>
+        								<ignore></ignore>
+        							</action>
+        						</pluginExecution>
+        					</pluginExecutions>
+        				</lifecycleMappingMetadata>
+        			</configuration>
+        		</plugin>
+        	</plugins>
+        </pluginManagement>
     </build>
     
     <dependencies>
@@ -323,19 +362,19 @@
         <dependency>
             <groupId>org.scalatra</groupId>
             <artifactId>contrib-commons</artifactId>
-            <version>1.1.0-SNAPSHOT</version>
+            <version>${scalatra.contrib.version}</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>org.scalatra</groupId>
             <artifactId>contrib-validation</artifactId>
-            <version>1.1.0-SNAPSHOT</version>
+            <version>${scalatra.contrib.version}</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>org.scalaz</groupId>
             <artifactId>scalaz_${scala.version}</artifactId>
-            <version>6.0.4</version>
+            <version>${scalaz.version}</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
@@ -443,7 +482,7 @@
         <dependency>
           <groupId>com.novus</groupId>
           <artifactId>salat-core_${scala.version}</artifactId>
-          <version>1.9.0</version>
+          <version>${salat.version}</version>
           <exclusions>
             <exclusion>
               <groupId>org.mongodb</groupId>
@@ -454,37 +493,37 @@
         <dependency>
           <groupId>com.novus</groupId>
           <artifactId>salat-util_${scala.version}</artifactId>
-          <version>1.9.0</version>
+          <version>${salat.version}</version>
           <scope>compile</scope>
         </dependency>
         <dependency>
           <groupId>org.mongodb</groupId>
           <artifactId>casbah-util_${scala.version}</artifactId>
-          <version>2.4.1</version>
+          <version>${casbah.version}</version>
           <scope>compile</scope>
         </dependency>        
         <dependency>
           <groupId>org.mongodb</groupId>
           <artifactId>casbah-commons_${scala.version}</artifactId>
-          <version>2.4.1</version>
+          <version>${casbah.version}</version>
           <scope>compile</scope>
         </dependency>        
         <dependency>
           <groupId>org.mongodb</groupId>
           <artifactId>casbah-core_${scala.version}</artifactId>
-          <version>2.4.1</version>
+          <version>${casbah.version}</version>
           <scope>compile</scope>
         </dependency>        
         <dependency>
           <groupId>org.mongodb</groupId>
           <artifactId>casbah-query_${scala.version}</artifactId>
-          <version>2.4.1</version>
+          <version>${casbah.version}</version>
           <scope>compile</scope>
         </dependency>        
         <dependency>
           <groupId>org.mongodb</groupId>
           <artifactId>casbah-gridfs_${scala.version}</artifactId>
-          <version>2.4.1</version>
+          <version>${casbah.version}</version>
           <scope>compile</scope>
         </dependency>     
         <!-- <dependency>

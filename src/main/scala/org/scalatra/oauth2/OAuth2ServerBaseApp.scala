@@ -14,7 +14,6 @@ import net.liftweb.json._
 import OAuth2Imports._
 import java.io.PrintWriter
 import command.CommandSupport
-import extension.TypedParamSupport
 import service.AuthenticationService
 
 trait OAuth2CommandSupport { self: ScalatraBase with LiftJsonSupport with CommandSupport ⇒
@@ -215,16 +214,6 @@ trait OAuth2ServerBaseApp extends ScalatraServlet
       case (false, true)  ⇒ "/" + candidate.dropRight(1)
       case (false, false) ⇒ "/" + candidate
     }
-  }
-
-  override def parsedBody: JValue = request.get(LiftJsonSupport.ParsedBodyKey).map(_.asInstanceOf[JValue]) getOrElse {
-    val fmt = format
-    var bd: JValue = JNothing
-    if (fmt == "json" || fmt == "xml") {
-      bd = parseRequestBody(fmt)
-      request(LiftJsonSupport.ParsedBodyKey) = bd
-    }
-    bd
   }
 
 }

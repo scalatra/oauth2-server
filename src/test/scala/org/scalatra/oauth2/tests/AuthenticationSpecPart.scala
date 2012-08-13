@@ -4,7 +4,7 @@ package tests
 
 import test.specs2.BaseScalatraSpec
 import net.liftweb.json._
-import org.scalatra.oauth2.{commands, OAuth2Imports, model}
+import org.scalatra.oauth2.{ commands, OAuth2Imports, model }
 import model._
 import OAuth2Imports._
 import commands.LoginCommand
@@ -15,7 +15,7 @@ import org.scalatra.test.ClientResponse
 import org.specs2.execute.Result
 
 trait AuthenticationSpecPart {
-  this: AkkaSpecification with BaseScalatraSpec =>
+  this: AkkaSpecification with BaseScalatraSpec ⇒
   val oauth = OAuth2Extension(system)
   implicit val formats: Formats = new OAuth2Formats
   servletContextHandler.setResourceBase("src/main/webapp")
@@ -42,11 +42,11 @@ trait AuthenticationSpecPart {
 
   def clearDB = {
     oauth.userProvider.collection foreach {
-      acc =>
+      acc ⇒
         oauth.userProvider.remove(acc, WriteConcern.Safe)
     }
     oauth.authSessions.collection foreach {
-      acc =>
+      acc ⇒
         oauth.authSessions.remove(acc, WriteConcern.Safe)
     }
     oauth.userProvider.collection.dropIndexes()
@@ -72,7 +72,7 @@ trait AuthenticationSpecPart {
   }
 
   def renderAngular(path: String) = get(path) {
-    body must contain( """<div ng-view></div>""")
+    body must contain("""<div ng-view></div>""")
   }
 
   def rootAuthenticatedJson = {
@@ -88,10 +88,9 @@ trait AuthenticationSpecPart {
       ((resp \ "data" \ "email").extract[String] must_== account.email) and
       ((resp \ "data" \ "name").extract[String] must_== account.name)
   }
-  
-  def cookieJar(response: ClientResponse) = 
-    Map(response.getHeaderValues("Set-Cookie").asScala.flatMap(HttpCookie.parse(_).asScala).map(c => c.getName() -> c).toSeq:_*)
-  
+
+  def cookieJar(response: ClientResponse) =
+    Map(response.getHeaderValues("Set-Cookie").asScala.flatMap(HttpCookie.parse(_).asScala).map(c ⇒ c.getName() -> c).toSeq: _*)
 
   def loginWith(params: Map[String, String], json: Boolean = true) = {
     clearDB
@@ -127,8 +126,8 @@ trait AuthenticationSpecPart {
       body must /("errors") */ ("Username or password is incorrect")
     }
   }
-  
-  def loggedIn[T <% Result](thunk: (AuthSession, String) => T) = {
+
+  def loggedIn[T <% Result](thunk: (AuthSession, String) ⇒ T) = {
     clearDB
     val params = Map("login" -> "timmy", "password" -> "password")
     val account = createAccount(params("login"), "thefrog@fff.feo", "Timmy The Frog", params("password"))
@@ -142,9 +141,9 @@ trait AuthenticationSpecPart {
       thunk(sess, cookie.getValue)
     }
   }
-  
+
   def logoutChangesTokenInCookie() = {
-    loggedIn { (_, token) =>
+    loggedIn { (_, token) ⇒
       get("/logout", headers = h.json) {
         val newCookie = cookieJar(response)(Scentry.scentryAuthKey)
         val newToken = newCookie.getValue
@@ -152,9 +151,9 @@ trait AuthenticationSpecPart {
       }
     }
   }
-  
+
   def logoutExpiresCookie() = {
-    loggedIn { (_, token) =>
+    loggedIn { (_, token) ⇒
       get("/logout", headers = h.json) {
         val newCookie = cookieJar(response)(Scentry.scentryAuthKey)
         newCookie.getMaxAge must be_<(0L)
@@ -163,7 +162,7 @@ trait AuthenticationSpecPart {
   }
 
   def changesSessionToken = {
-    loggedIn { (sess, token) =>
+    loggedIn { (sess, token) ⇒
       get("/logout", headers = h.json) {
         val newSession = oauth.authSessions.findOneById(sess.id).get
         newSession.token.token must_!= token
@@ -172,7 +171,7 @@ trait AuthenticationSpecPart {
   }
 
   def differentTokensOnLogout = {
-    loggedIn { (sess, token) =>
+    loggedIn { (sess, token) ⇒
       get("/logout", headers = h.json) {
         val newCookie = cookieJar(response)(Scentry.scentryAuthKey)
         val newToken = newCookie.getValue
@@ -183,7 +182,7 @@ trait AuthenticationSpecPart {
   }
 
   def returnsNullForUserOnLogout = {
-    loggedIn { (_, _) =>
+    loggedIn { (_, _) ⇒
       get("/logout", headers = h.json) {
         val jv = parse(body) \ "data"
         jv must_== JNull
@@ -192,7 +191,7 @@ trait AuthenticationSpecPart {
   }
 
   def redirectsToLoginOnLogout = {
-    loggedIn { (sess, token) =>
+    loggedIn { (sess, token) ⇒
       get("/logout") {
         (status must_== 302) and (header("Location") must startWith("http://test.local:8080/login"))
       }
@@ -201,28 +200,28 @@ trait AuthenticationSpecPart {
 
   def loginFragments = sequential ^
     "when getting /login" ^
-      "render a login form if not authenticated" ! renderAngular("/login") ^
-      "redirect to home if authenticated" ! redirectAuthenticated("/login") ^ bt ^
+    "render a login form if not authenticated" ! renderAngular("/login") ^
+    "redirect to home if authenticated" ! redirectAuthenticated("/login") ^ bt ^
     "when posting to /login" ^
-      "if login is missing" ^
-        "return status 401" ! failLoginStatus(Map("password" -> "blah")) ^
-        "return login/password invalid error" ! failLoginMessage(Map("password" -> "blah")) ^ bt ^
-      "if password is missing" ^
-        "return status 401" ! failLoginStatus(Map("login" -> "blah")) ^
-        "return login/password invalid error" ! failLoginMessage(Map("login" -> "blah")) ^ bt ^
-      "when credentials are invalid" ^
-        "return status 401" ! failLoginStatus(Map("login" -> "blah", "password" -> "blah")) ^
-        "return login/password invalid error" ! failLoginMessage(Map("login" -> "blah", "password" -> "blah")) ^ bt ^
-      "when credentials are valid" ^
-        "return user json for a json request" ! loginWith(Map("login" -> "timmy", "password" -> "password")) ^
-        "redirect to home on login" ! loginWith(Map("login" -> "timmy", "password" -> "password"), json = false) ^
-        "set a cookie when remember me is ticked" ! loginWith(Map("login" -> "timmy", "password" -> "password", "remember" -> "true")) ^ bt ^
+    "if login is missing" ^
+    "return status 401" ! failLoginStatus(Map("password" -> "blah")) ^
+    "return login/password invalid error" ! failLoginMessage(Map("password" -> "blah")) ^ bt ^
+    "if password is missing" ^
+    "return status 401" ! failLoginStatus(Map("login" -> "blah")) ^
+    "return login/password invalid error" ! failLoginMessage(Map("login" -> "blah")) ^ bt ^
+    "when credentials are invalid" ^
+    "return status 401" ! failLoginStatus(Map("login" -> "blah", "password" -> "blah")) ^
+    "return login/password invalid error" ! failLoginMessage(Map("login" -> "blah", "password" -> "blah")) ^ bt ^
+    "when credentials are valid" ^
+    "return user json for a json request" ! loginWith(Map("login" -> "timmy", "password" -> "password")) ^
+    "redirect to home on login" ! loginWith(Map("login" -> "timmy", "password" -> "password"), json = false) ^
+    "set a cookie when remember me is ticked" ! loginWith(Map("login" -> "timmy", "password" -> "password", "remember" -> "true")) ^ bt ^
     "when getting /logout" ^
-      "changes the auth cookie to have an invalid token" ! logoutChangesTokenInCookie ^
-      "changes the auth cookie to have a date in the past" ! logoutExpiresCookie ^
-      "changes the token in the session" ! changesSessionToken ^
-      "the session token and cookie token are different" ! differentTokensOnLogout ^
-      "returns the user as null in the response for a json request" ! returnsNullForUserOnLogout ^
-      "redirects to login for a html request" ! redirectsToLoginOnLogout ^ bt ^ bt ^ p
-      
+    "changes the auth cookie to have an invalid token" ! logoutChangesTokenInCookie ^
+    "changes the auth cookie to have a date in the past" ! logoutExpiresCookie ^
+    "changes the token in the session" ! changesSessionToken ^
+    "the session token and cookie token are different" ! differentTokensOnLogout ^
+    "returns the user as null in the response for a json request" ! returnsNullForUserOnLogout ^
+    "redirects to login for a html request" ! redirectsToLoginOnLogout ^ bt ^ bt ^ p
+
 }

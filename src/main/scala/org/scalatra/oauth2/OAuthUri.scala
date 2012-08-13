@@ -4,8 +4,6 @@ package oauth2
 import OAuth2Imports._
 import java.net.URI
 import rl._
-import scala.Some
-import rl.AbsolutePath
 
 class OAuthUri(uri: URI) {
 
