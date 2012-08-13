@@ -208,6 +208,8 @@ trait AuthenticationSupport[UserClass >: Null <: AppAuthSession[_ <: AppUser[_]]
     val ctx = super.createRenderContext(req, resp, out).asInstanceOf[ScalatraRenderContext]
     ctx.attributes.update("userOption", userOption)
     ctx.attributes.update("user", user)
+    ctx.attributes.update("accountOption", userOption.map(_.account))
+    ctx.attributes.update("account", userOption.map(_.account).orNull)
     ctx.attributes.update("isAnonymous", isAnonymous)
     ctx.attributes.update("isAuthenticated", isAuthenticated)
     ctx.attributes.update("session", ctx.session)

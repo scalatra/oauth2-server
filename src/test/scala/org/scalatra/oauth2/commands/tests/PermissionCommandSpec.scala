@@ -103,7 +103,7 @@ class PermissionCommandSpec extends AkkaSpecification { def is = sequential ^
         cmd.doBinding(Map("name" -> "The first permission", "code" -> "first-permission"))
 
       (cmd.valid must beSome(true)) and {
-        cmd.model must_== Permission("first-permission", "The first permission", "")
+        cmd.model must_== Permission("first-permission", "The first permission", null)
       }
     }
 
@@ -114,7 +114,7 @@ class PermissionCommandSpec extends AkkaSpecification { def is = sequential ^
         cmd.doBinding(Map("name" -> "The first permission", "code" -> ""))
 
       (cmd.valid must beSome(false)) and {
-        cmd.model must_== Permission("", "The first permission", "")
+        cmd.model must_== Permission("", "The first permission", null)
       }
     }
 
@@ -155,7 +155,7 @@ class PermissionCommandSpec extends AkkaSpecification { def is = sequential ^
         cmd.doBinding(Map("name" -> "The first permission", "id" -> "first-permission"))
 
       (cmd.valid must beSome(true)) and {
-        cmd.model must_== Permission("first-permission", "The first permission", "")
+        cmd.model must_== Permission("first-permission", "The first permission", null)
       }
     }
 

@@ -42,6 +42,7 @@ libraryDependencies ++= Seq(
   "org.scalatra"             % "scalatra-lift-json"     % "2.2.0-SNAPSHOT",
   "org.scalatra"             % "scalatra-swagger"       % "2.2.0-SNAPSHOT",
   "org.scalatra"             % "scalatra-slf4j"         % "2.2.0-SNAPSHOT",
+  "org.scalatra"             % "scalatra-specs2"        % "2.2.0-SNAPSHOT"      % "test",
   "org.scalatra"             % "contrib-validation"     % "1.1.0-SNAPSHOT",
   "com.novus"               %% "salat"                  % "1.9.0" exclude("org.scala-lang", "scalap"),
   "org.scalaz"              %% "scalaz"                 % "6.0.4",
@@ -57,14 +58,11 @@ libraryDependencies ++= Seq(
   "com.typesafe.akka"        % "akka-testkit"           % "2.0.2"               % "test",
   "org.fusesource.scalate"   % "scalate-markdownj"      % "1.5.3",
   "org.scala-tools.time"     % "time_2.9.1"             % "0.5",
-  "org.scalatra"             % "scalatra-specs2"        % "2.2.0-SNAPSHOT"      % "test",
   "junit"                    % "junit"                  % "4.10"                % "test",
   "ch.qos.logback"           % "logback-classic"        % "1.0.6",
   "org.eclipse.jetty"        % "jetty-webapp"           % "8.1.5.v20120716"     % "container",
   "org.eclipse.jetty"        % "test-jetty-servlet"     % "8.1.5.v20120716"     % "test",
-  "org.eclipse.jetty.orbit"  % "javax.servlet"          % "3.0.0.v201112011016" % "container;provided;test" artifacts (Artifact("javax.servlet", "jar", "jar"))
-
-)
+  "org.eclipse.jetty.orbit"  % "javax.servlet"          % "3.0.0.v201112011016" % "container;provided;test" artifacts (Artifact("javax.servlet", "jar", "jar")))
 
 resolvers += "sonatype oss snapshots" at "https://oss.sonatype.org/content/repositories/snapshots/"
 
@@ -171,6 +169,8 @@ scalateBindings ++= Seq(
   Binding("multiParams", "org.scalatra.MultiParams"),
   Binding("userOption", "Option[AuthSession]", defaultValue = "None"),
   Binding("user", "AuthSession", defaultValue = "null"),
+  Binding("accountOption", "Option[Account]", defaultValue = "None"),
+  Binding("account", "Account", defaultValue = "null"),
   Binding("system", "akka.actor.ActorSystem", isImplicit =  true),
   Binding("isAnonymous", "Boolean", defaultValue = "true"),
   Binding("isAuthenticated", "Boolean", defaultValue = "false"))

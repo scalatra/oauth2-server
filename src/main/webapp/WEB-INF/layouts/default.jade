@@ -78,7 +78,7 @@ html(ng-app="app")
 
     - import net.liftweb.json._
     - implicit val jsonFormats: Formats = new OAuth2Formats
-    - val userJson = if (isAuthenticated) Serialization.write(user.account) else JNothing
+    - val userJson = if (isAuthenticated) Serialization.write(account) else JNothing
 
     - if (isAuthenticated) {
       :!coffeescript
