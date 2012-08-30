@@ -14,6 +14,7 @@ class HomeServletSpec extends AkkaSpecification with BaseScalatraSpec
                                 with ForgotPasswordSpecPart
                                 with RegistrationSpecPart {
 
+  implicit val jsonFormats: Formats = new OAuth2Formats
 
   def is = sequential ^
     "A HomeServlet should" ^ bt ^ p ^

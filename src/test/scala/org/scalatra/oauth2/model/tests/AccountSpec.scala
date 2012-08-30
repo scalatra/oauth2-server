@@ -8,11 +8,15 @@ import scalaz._
 import Scalaz._
 import com.mongodb.casbah.commons.conversions.scala.RegisterJodaTimeConversionHelpers
 import org.specs2.specification.After
-import org.scalatra.command.ValidationError
+import org.scalatra.validation.{ValidationError, FieldName}
 import commands._
 import java.util.concurrent.atomic.AtomicInteger
 import org.junit.runner._
 import org.specs2.runner._
+import org.json4s.native
+import util.ParamsValueReaderProperties
+import org.scalatra.json.NativeJsonValueReaderProperty
+import databinding.JsonBindingImports
 
 @RunWith(classOf[JUnitRunner])
 class AccountSpec extends AkkaSpecification { def is = sequential ^
@@ -51,7 +55,7 @@ class AccountSpec extends AkkaSpecification { def is = sequential ^
   end
 
   RegisterJodaTimeConversionHelpers()
-  implicit val formats = new OAuth2Formats
+//  implicit val formats = new OAuth2Formats
 
   val oauth = OAuth2Extension(system)
   def registration = new RegistrationSpecContext
@@ -59,10 +63,13 @@ class AccountSpec extends AkkaSpecification { def is = sequential ^
   def activation = new ActivationSpecContext
   def passwordReset = new ResetPasswordSpecContext
 
-  trait AccountSpecContextBase extends After {
+  trait AccountSpecContextBase extends After with native.JsonMethods with ParamsValueReaderProperties with NativeJsonValueReaderProperty {
 
     val dao = oauth.userProvider
     dao.collection.drop()
+    implicit val jsonFormats = new OAuth2Formats
+    
+    val imports = new JsonBindingImports
 
     def after = {
 
@@ -71,9 +78,10 @@ class AccountSpec extends AkkaSpecification { def is = sequential ^
   }
 
   class ResetPasswordSpecContext extends AccountSpecContextBase {
+    import imports._
     val cmd = {
       val c = new RegisterCommand(oauth, "127.0.0.1")
-      c.doBinding(
+      c.bindTo(
         Map(
           "login" -> "tommy",
           "email" -> "tommy@hiltfiger.no",
@@ -87,7 +95,7 @@ class AccountSpec extends AkkaSpecification { def is = sequential ^
     dao.save(registered.copy(confirmedAt = DateTime.now))
     val forgot = {
       val c = new ForgotCommand(oauth)
-      c.doBinding(Map("login" -> registered.login))
+      c.bindTo(Map("login" -> registered.login))
       c
     }
     val forgotten = dao.forgot(forgot).toOption.get
@@ -95,7 +103,7 @@ class AccountSpec extends AkkaSpecification { def is = sequential ^
     def resetsPassword = this {
       val reset = {
         val c = new ResetCommand(oauth, "127.0.0.1")
-        c.doBinding(Map("token" -> forgotten.reset.token, "password" -> "blah124", "passwordConfirmation" -> "blah124"))
+        c.bindTo(Map("token" -> forgotten.reset.token, "password" -> "blah124", "passwordConfirmation" -> "blah124"))
         c
       }
       dao.resetPassword(reset) must beSuccess[Account]
@@ -104,7 +112,7 @@ class AccountSpec extends AkkaSpecification { def is = sequential ^
     def resetsFailureCountAndTokenOnLogin = this {
       val login = {
         val c = new LoginCommand(oauth, "127.0.0.1")
-        c.doBinding(Map("login" -> "tommy", "password" -> "blah123"))
+        c.bindTo(Map("login" -> "tommy", "password" -> "blah123"))
         c
       }
       dao.login(login) must beSuccess and {
@@ -118,18 +126,19 @@ class AccountSpec extends AkkaSpecification { def is = sequential ^
     def invalidTokenError = this {
       val reset = {
         val c = new ResetCommand(oauth, "127.0.0.1")
-        c.doBinding(Map("token" -> "plain wrong", "password" -> "blah124", "passwordConfirmation" -> "blah124"))
+        c.bindTo(Map("token" -> "plain wrong", "password" -> "blah124", "passwordConfirmation" -> "blah124"))
         c
       }
-      dao.resetPassword(reset) must beFailure[InvalidToken]
+      dao.resetPassword(reset) must beFailure[ValidationError]
     }
 
   }
 
   class ActivationSpecContext extends AccountSpecContextBase {
+    import imports._
     val cmd = {
       val c = new RegisterCommand(oauth, "127.0.0.1")
-      c.doBinding(
+      c.bindTo(
         Map(
           "login" -> "tommy",
           "email" -> "tommy@hiltfiger.no",
@@ -146,7 +155,7 @@ class AccountSpec extends AkkaSpecification { def is = sequential ^
     def activatesCorrectToken = this {
       val confirm = {
         val c = new ActivateAccountCommand(oauth, "127.0.0.1")
-        c.doBinding(Map("token" -> registered.confirmation.token))
+        c.bindTo(Map("token" -> registered.confirmation.token))
         c
       }
       val res = dao.confirm(confirm)
@@ -159,29 +168,30 @@ class AccountSpec extends AkkaSpecification { def is = sequential ^
     def alreadyConfirmed = this {
       val confirm = {
         val c = new ActivateAccountCommand(oauth, "127.0.0.1")
-        c.doBinding(Map("token" -> registered.confirmation.token))
+        c.bindTo(Map("token" -> registered.confirmation.token))
         c
       }
       dao.confirm(confirm)
       val res = dao.confirm(confirm)
-      res must beFailure[AlreadyConfirmed]
+      res must beFailure[ValidationError]
     }
 
     def invalidTokenError = this {
       val confirm = {
         val c = new ActivateAccountCommand(oauth, "127.0.0.1")
-        c.doBinding(Map("token" -> "plain wrong"))
+        c.bindTo(Map("token" -> "plain wrong"))
         c
       }
-      dao.confirm(confirm) must beFailure[InvalidToken]
+      dao.confirm(confirm) must beFailure[ValidationError]
     }
   }
 
   class LoginSpecContext extends AccountSpecContextBase {
 
+    import imports._
     val cmd = {
       val c = new RegisterCommand(oauth, "127.0.0.1")
-      c.doBinding(
+      c.bindTo(
         Map(
           "login" -> "tommy",
           "email" -> "tommy@hiltfiger.no",
@@ -196,7 +206,7 @@ class AccountSpec extends AkkaSpecification { def is = sequential ^
 
     def loginCommand(login: String, password: String, ipAddress: String) = {
       val c = new LoginCommand(oauth, ipAddress)
-      c.doBinding(Map("login" -> login, "password" -> password))
+      c.bindTo(Map("login" -> login, "password" -> password))
       c
     }
 
@@ -206,7 +216,7 @@ class AccountSpec extends AkkaSpecification { def is = sequential ^
 //    def logsUserInFromRemember = this {
 //      val remember = {
 //        val c = new LoginFromRememberCommand(oauth)
-//        c.doBinding(Map("token" -> registered.remember.token))
+//        c.bindTo(Map("token" -> registered.remember.token))
 //        c
 //      }
 //      val tok = dao.remember(registered).toOption.get
@@ -235,10 +245,10 @@ class AccountSpec extends AkkaSpecification { def is = sequential ^
   }
 
   class RegistrationSpecContext extends AccountSpecContextBase {
-
+    import imports._
     def reg(login: String, email: String, name: String, password: String, passwordConfirmation: String) = {
       val c = new RegisterCommand(oauth, "127.0.0.1")
-      c.doBinding(
+      c.bindTo(
         Map(
           "login" -> login,
           "email" -> email,
@@ -252,7 +262,7 @@ class AccountSpec extends AkkaSpecification { def is = sequential ^
       dao.register(reg("tommy", "tommy@hiltfiger.no", "Tommy Hiltfiger", "blah123", "blah123"))
       val res = dao.register(reg("tommy", "tommy2@hiltfiger.no", "Tommy2 Hiltfiger", "blah123", "blah123"))
       (res.isFailure must beTrue) and {
-        res.fail.toOption.get.list must haveTheSameElementsAs(nel(NotUnique("Login exists already.", "login")).list)
+        res.fail.toOption.get.list must haveTheSameElementsAs(nel(ValidationError("Login exists already.", FieldName("login"), NotUnique)).list)
       }
     }
 
@@ -260,37 +270,37 @@ class AccountSpec extends AkkaSpecification { def is = sequential ^
       dao.register(reg("tommy", "tommy@hiltfiger.no", "Tommy Hiltfiger", "blah123", "blah123"))
       val res = dao.register(reg("tommy2", "tommy@hiltfiger.no", "Tommy2 Hiltfiger", "blah123", "blah123"))
       (res.isFailure must beTrue) and {
-        res.fail.toOption.get.list must haveTheSameElementsAs(nel(NotUnique("Email exists already.", "email")).list)
+        res.fail.toOption.get.list must haveTheSameElementsAs(nel(ValidationError("Email exists already.", FieldName("email"), NotUnique)).list)
       }
     }
 
     def failsRegistrationEmptyPassword = this {
       val res = dao.register(reg("tommy", "aaa@bbb.com", "name", "", "password"))
       (res.isFailure must beTrue) and {
-        res.fail.toOption.get.list must haveTheSameElementsAs(nel(ValidationError("Password must be present.", "password")).list)
+        res.fail.toOption.get.list must haveTheSameElementsAs(nel(ValidationError("Password must be present.", FieldName("password"))).list)
       }
     }
     def failsRegistrationTooShortPassword = this {
       val res = dao.register(reg("tommy", "aaa@bbb.com", "name", "abc", "password"))
        (res.isFailure must beTrue) and {
-        res.fail.toOption.get.list must haveTheSameElementsAs(nel(ValidationError("Password must be at least 6 characters long.", "password")).list)
+        res.fail.toOption.get.list must haveTheSameElementsAs(nel(ValidationError("Password must be at least 6 characters long.", FieldName("password"))).list)
       }
     }
 
     def failsRegistrationPasswordMismatch = this {
       val res = dao.register(reg("tommy", "aaa@bbb.com", "name", "blah123", "password"))
       (res.isFailure must beTrue) and {
-        res.fail.toOption.get.list must haveTheSameElementsAs(nel(ValidationError("Password must match password confirmation.", "password")).list)
+        res.fail.toOption.get.list must haveTheSameElementsAs(nel(ValidationError("Password must match password confirmation.", FieldName("password"))).list)
       }
     }
 
     def failsRegistrationAll = this {
       val res = dao.register(reg(" ", "", "", "blah123", "password"))
       val exp = nel(
-        ValidationError("Login must be present.", "login"),
-        ValidationError("Email must be present.", "email"),
-        ValidationError("Name must be present.", "name"),
-        ValidationError("Password must match password confirmation.", "password"))
+        ValidationError("Login must be present.", FieldName("login")),
+        ValidationError("Email must be present.", FieldName("email")),
+        ValidationError("Name must be present.", FieldName("name")),
+        ValidationError("Password must match password confirmation.", FieldName("password")))
       (res.isFailure must beTrue) and {
         res.fail.toOption.get.list must haveTheSameElementsAs(exp.list)
       }
@@ -318,35 +328,35 @@ class AccountSpec extends AkkaSpecification { def is = sequential ^
     def failsRegistrationEmptyLogin = this {
       val res = dao.register(reg(" ", "tommy@hiltfiger.no", "Tommy Hiltfiger", "blah123", "blah123"))
       (res.isFailure must beTrue) and {
-        res.fail.toOption.get.list must haveTheSameElementsAs(nel(ValidationError("Login must be present.", "login")).list)
+        res.fail.toOption.get.list must haveTheSameElementsAs(nel(ValidationError("Login must be present.", FieldName("login"))).list)
       }
     }
 
     def failsRegistrationMissingLogin = this {
       val res = dao.register(reg(null, "tommy@hiltfiger.no", "Tommy Hiltfiger", "blah123", "blah123"))
       (res.isFailure must beTrue) and {
-        res.fail.toOption.get.list must haveTheSameElementsAs(nel(ValidationError("Login must be present.", "login")).list)
+        res.fail.toOption.get.list must haveTheSameElementsAs(nel(ValidationError("Login must be present.", FieldName("login"))).list)
       }
     }
 
     def failsRegistrationInvalidLogin = this {
       val res = dao.register(reg("a b", "tommy@hiltfiger.no", "Tommy Hiltfiger", "blah123", "blah123"))
       (res.isFailure must beTrue) and {
-        res.fail.toOption.get.list must haveTheSameElementsAs(nel(ValidationError("Login can only contain letters, numbers, underscores and dots.", "login")).list)
+        res.fail.toOption.get.list must haveTheSameElementsAs(nel(ValidationError("Login can only contain letters, numbers, underscores and dots.", FieldName("login"))).list)
       }
     }
 
     def failsRegistrationEmptyEmail =  this {
       val res = dao.register(reg("tommy", "", "Tommy Hiltfiger", "blah123", "blah123"))
       (res.isFailure must beTrue) and {
-        res.fail.toOption.get.list must haveTheSameElementsAs(nel(ValidationError("Email must be present.", "email")).list)
+        res.fail.toOption.get.list must haveTheSameElementsAs(nel(ValidationError("Email must be present.", FieldName("email"))).list)
       }
     }
 
     def failsRegistrationInvalidEmail = this {
       val res = dao.register(reg("tommy", "bad", "Tommy Hiltfiger", "blah123", "blah123"))
       (res.isFailure must beTrue) and {
-        res.fail.toOption.get.list must haveTheSameElementsAs(nel(ValidationError("Email must be a valid email.", "email")).list)
+        res.fail.toOption.get.list must haveTheSameElementsAs(nel(ValidationError("Email must be a valid email.", FieldName("email"))).list)
       }
     }
   }

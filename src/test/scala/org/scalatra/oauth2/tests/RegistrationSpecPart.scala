@@ -1,6 +1,7 @@
 package org.scalatra.oauth2.tests
 
 import org.json4s._
+import native.Serialization
 
 trait RegistrationSpecPart { self: HomeServletSpec ⇒
 

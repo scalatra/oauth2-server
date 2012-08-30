@@ -13,8 +13,11 @@ import org.scalatra.auth.Scentry
 import collection.JavaConverters._
 import org.scalatra.test.ClientResponse
 import org.specs2.execute.Result
+import util.ParamsValueReaderProperties
+import org.scalatra.json.NativeJsonValueReaderProperty
+import native.Serialization
 
-trait AuthenticationSpecPart {
+trait AuthenticationSpecPart extends ParamsValueReaderProperties with native.JsonMethods with NativeJsonValueReaderProperty {
   this: AkkaSpecification with BaseScalatraSpec ⇒
   val oauth = OAuth2Extension(system)
   implicit val formats: Formats = new OAuth2Formats
@@ -62,7 +65,7 @@ trait AuthenticationSpecPart {
 
   def createAuthSession(login: String, password: String) = {
     val loginCmd = new LoginCommand(oauth, "127.0.0.1")
-    loginCmd.doBinding(Map("login" -> login, "password" -> password))
+    loginCmd.bindTo(Map("login" -> login, "password" -> password))
     oauth.authService.execute(loginCmd).toOption.get
   }
 

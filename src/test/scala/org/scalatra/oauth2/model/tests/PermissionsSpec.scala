@@ -8,7 +8,7 @@ import org.specs2.specification.After
 import org.scalatra.oauth2.OAuth2Imports._
 import scalaz._
 import Scalaz._
-import org.scalatra.command.ValidationError
+import org.scalatra.validation.{ValidationError, FieldName}
 import org.junit.runner._
 import org.specs2.runner._
 
@@ -36,21 +36,21 @@ class PermissionsSpec extends AkkaSpecification { def is =
     def failsEmptyName = this {
       val res = dao.validate(Permission("blah", "", ""))
       (res.isFailure must beTrue) and {
-        res.fail.toOption.get.list must haveTheSameElementsAs(nel(ValidationError("Name must be present.", "name")).list)
+        res.fail.toOption.get.list must haveTheSameElementsAs(nel(ValidationError("Name must be present.", FieldName("name"))).list)
       }
     }
 
     def failsEmptyCode = this {
       val res = dao.validate(Permission("", "yada", ""))
       (res.isFailure must beTrue) and {
-        res.fail.toOption.get.list must haveTheSameElementsAs(nel(ValidationError("Code must be present.", "code")).list)
+        res.fail.toOption.get.list must haveTheSameElementsAs(nel(ValidationError("Code must be present.", FieldName("code"))).list)
       }
     }
 
     def invalidCodeFormat = this {
       val res = dao.validate(Permission("***", "yada", ""))
       (res.isFailure must beTrue) and {
-        res.fail.toOption.get.list must haveTheSameElementsAs(nel(ValidationError("Code can only contain letters, numbers, underscores and hyphens.", "code")).list)
+        res.fail.toOption.get.list must haveTheSameElementsAs(nel(ValidationError("Code can only contain letters, numbers, underscores and hyphens.", FieldName("code"))).list)
       }
     }
 
@@ -60,7 +60,7 @@ class PermissionsSpec extends AkkaSpecification { def is =
       dao.save(first)
       val res = dao.validate(second)
       (res.isFailure must beTrue) and {
-        res.fail.toOption.get.list must haveTheSameElementsAs(nel(ValidationError("Code exists already.", "code")).list)
+        res.fail.toOption.get.list must haveTheSameElementsAs(nel(ValidationError("Code exists already.", FieldName("code"))).list)
       }
     }
 

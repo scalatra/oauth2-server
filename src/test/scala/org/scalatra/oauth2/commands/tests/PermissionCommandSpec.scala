@@ -6,12 +6,14 @@ package tests
 import model.{PermissionDao, Permission}
 import scalaz._
 import Scalaz._
-import command.{SimpleError, ValidationError}
+import org.scalatra.validation.{FieldName, ValidationError}
 import org.json4s._
 import JsonDSL._
 import com.mongodb.casbah.WriteConcern
 import org.junit.runner._
 import org.specs2.runner._
+import databinding.JsonBindingImports
+import util.ParamsValueReaderProperties
 
 @RunWith(classOf[JUnitRunner])
 class PermissionCommandSpec extends AkkaSpecification { def is = sequential ^
@@ -44,41 +46,43 @@ class PermissionCommandSpec extends AkkaSpecification { def is = sequential ^
   def createPermission(asJson: Boolean) = new CreatePermissionCommandSpecContext(asJson)
   def updatePermission(asJson: Boolean) = new UpdatePermissionCommandSpecContext(asJson)
 
-  abstract class PermissionCommandSpecContext(asJson: Boolean)  extends PermissionSpecContextBase with PermissionModelCommands {
+  import org.scalatra.json.NativeJsonValueReaderProperty
+  abstract class PermissionCommandSpecContext(asJson: Boolean)  extends PermissionSpecContextBase with PermissionModelCommands with native.JsonMethods with ParamsValueReaderProperties with NativeJsonValueReaderProperty  {
 
     def cmd: PermissionCommand
     val dao: PermissionDao = new PermissionDao(coll)
 
-    implicit val formats: Formats = new OAuth2Formats
-
+    implicit val jsonFormats: Formats = new OAuth2Formats
+    val imports = new JsonBindingImports
   }
 
   class CreatePermissionCommandSpecContext(asJson: Boolean) extends PermissionCommandSpecContext(asJson) {
 
+    import imports._
 
     val cmd = new CreatePermissionCommand(OAuth2Extension(system))
 
     def failsEmptyName = this {
-      if (asJson) cmd.doBinding(json = ("code" -> "blah"): JValue) else cmd.doBinding(Map("code" -> "blah"))
+      if (asJson) cmd.bindTo(("code" -> "blah"): JValue) else cmd.bindTo(Map("code" -> "blah"))
 
-      (cmd.valid must beSome(false)) and {
-        cmd.errors.filter(_.rejected.isDefined).map(_.rejected.get) must haveTheSameElementsAs(List(ValidationError("Name must be present.", "name")))
+      (cmd.isValid must beFalse) and {
+        cmd.errors.filter(_.isInvalid).map(_.value.fail.toOption.get) must haveTheSameElementsAs(List(ValidationError("Name must be present.", FieldName("name"))))
       }
     }
 
     def failsEmptyCode = this {
-      if (asJson) cmd.doBinding(json = ("name" -> "yada"): JValue) else cmd.doBinding(Map("name" -> "yada"))
+      if (asJson) cmd.bindTo(("name" -> "yada"): JValue) else cmd.bindTo(Map("name" -> "yada"))
 
-      (cmd.valid must beSome(false)) and {
-        cmd.errors.filter(_.rejected.isDefined).map(_.rejected.get) must haveTheSameElementsAs(List(ValidationError("Code must be present.", "code")))
+      (cmd.isValid must beFalse) and {
+        cmd.errors.filter(_.isInvalid).map(_.value.fail.toOption.get) must haveTheSameElementsAs(List(ValidationError("Code must be present.", FieldName("code"))))
       }
     }
 
     def invalidCodeFormat = this {
-      if (asJson) cmd.doBinding(json = ("name" -> "yada") ~ ("code" -> "***")) else cmd.doBinding(Map("name" -> "yada", "code" -> "***"))
+      if (asJson) cmd.bindTo(("name" -> "yada") ~ ("code" -> "***"): JValue) else cmd.bindTo(Map("name" -> "yada", "code" -> "***"))
 
-      (cmd.valid must beSome(false)) and {
-        cmd.errors.filter(_.rejected.isDefined).map(_.rejected.get) must haveTheSameElementsAs(List(ValidationError("Code can only contain letters, numbers, underscores and hyphens.", "code")))
+      (cmd.isValid must beFalse) and {
+        cmd.errors.filter(_.isInvalid).map(_.value.fail.toOption.get) must haveTheSameElementsAs(List(ValidationError("Code can only contain letters, numbers, underscores and hyphens.", FieldName("code"))))
       }
     }
 
@@ -87,33 +91,33 @@ class PermissionCommandSpec extends AkkaSpecification { def is = sequential ^
       val first = Permission("first-permission", "The first permission", "")
       dao.save(first)
       if (asJson)
-        cmd.doBinding(json = ("name" -> "The second permission") ~ ("code" -> "first-permission"))
+        cmd.bindTo(("name" -> "The second permission") ~ ("code" -> "first-permission"): JValue)
       else
-        cmd.doBinding(Map("name" -> "The second permission", "code" -> "first-permission"))
+        cmd.bindTo(Map("name" -> "The second permission", "code" -> "first-permission"))
 
-      (cmd.valid must beSome(false)) and {
-        cmd.errors.filter(_.rejected.isDefined).map(_.rejected.get) must haveTheSameElementsAs(List(ValidationError("Code exists already.", "code")))
+      (cmd.isValid must beFalse) and {
+        cmd.errors.filter(_.isInvalid).map(_.value.fail.toOption.get) must haveTheSameElementsAs(List(ValidationError("Code exists already.", FieldName("code"))))
       }
     }
 
     def modelOnSuccess = this {
       if (asJson)
-        cmd.doBinding(json = ("name" -> "The first permission") ~ ("code" -> "first-permission"))
+        cmd.bindTo(("name" -> "The first permission") ~ ("code" -> "first-permission"): JValue)
       else
-        cmd.doBinding(Map("name" -> "The first permission", "code" -> "first-permission"))
+        cmd.bindTo(Map("name" -> "The first permission", "code" -> "first-permission"))
 
-      (cmd.valid must beSome(true)) and {
+      (cmd.isValid must beTrue) and {
         cmd.model must_== Permission("first-permission", "The first permission", null)
       }
     }
 
     def modelOnFailure = this {
       if (asJson)
-        cmd.doBinding(json = ("name" -> "The first permission") ~ ("code" -> ""))
+        cmd.bindTo(("name" -> "The first permission") ~ ("code" -> ""): JValue)
       else
-        cmd.doBinding(Map("name" -> "The first permission", "code" -> ""))
+        cmd.bindTo(Map("name" -> "The first permission", "code" -> ""))
 
-      (cmd.valid must beSome(false)) and {
+      (cmd.isValid must beFalse) and {
         cmd.model must_== Permission("", "The first permission", null)
       }
     }
@@ -123,49 +127,50 @@ class PermissionCommandSpec extends AkkaSpecification { def is = sequential ^
 
   class UpdatePermissionCommandSpecContext(asJson: Boolean) extends PermissionCommandSpecContext(asJson) {
 
+    import imports._
     val cmd = new UpdatePermissionCommand(OAuth2Extension(system))
     val first = Permission("first-permission", "The first permission", "")
     dao.save(first, WriteConcern.Safe)
 
 
     def failsEmptyName = this {
-      if (asJson) cmd.doBinding(Map("id" -> "first-permission"), jsonOnly = true) else cmd.doBinding(Map("id" -> "first-permission"))
+      if (asJson) cmd.bindTo(JNothing: JValue, Map("id" -> Seq("first-permission"))) else cmd.bindTo(Map("id" -> "first-permission"))
 
-      (cmd.valid must beSome(false)) and {
-        cmd.errors.filter(_.rejected.isDefined).map(_.rejected.get) must haveTheSameElementsAs(List(ValidationError("Name must be present.", "name")))
+      (cmd.isValid must beFalse) and {
+        cmd.errors.filter(_.isInvalid).map(_.value.fail.toOption.get) must haveTheSameElementsAs(List(ValidationError("Name must be present.", FieldName("name"))))
       }
     }
 
 
     def nonExistingCode = this {
       if (asJson)
-        cmd.doBinding(Map("id" -> "second-permission"), ("name" -> "The second permission"))
+        cmd.bindTo(("name" -> "The second permission"): JValue, Map("id" -> Seq("second-permission")))
       else
-        cmd.doBinding(Map("name" -> "The second permission", "id" -> "second-permission"))
+        cmd.bindTo(Map("name" -> "The second permission", "id" -> "second-permission"))
 
-      (cmd.valid must beSome(false)) and {
-        cmd.errors.filter(_.rejected.isDefined).map(_.rejected.get) must haveTheSameElementsAs(List(SimpleError("The permission doesn't exist.")))
+      (cmd.isValid must beFalse) and {
+        cmd.errors.filter(_.isInvalid).map(_.value.fail.toOption.get) must haveTheSameElementsAs(List(ValidationError("The permission doesn't exist.")))
       }
     }
 
     def modelOnSuccess = this {
       if (asJson)
-        cmd.doBinding(Map("id" -> "first-permission"), ("name" -> "The first permission"))
+        cmd.bindTo(("name" -> "The first permission"): JValue, Map("id" -> Seq("first-permission")))
       else
-        cmd.doBinding(Map("name" -> "The first permission", "id" -> "first-permission"))
+        cmd.bindTo(Map("name" -> "The first permission", "id" -> "first-permission"))
 
-      (cmd.valid must beSome(true)) and {
+      (cmd.isValid must beTrue) and {
         cmd.model must_== Permission("first-permission", "The first permission", null)
       }
     }
 
     def modelOnFailure = this {
       if (asJson)
-        cmd.doBinding(Map("id" -> "second-permission"), ("name" -> "The first permission"))
+        cmd.bindTo(("name" -> "The first permission"):JValue, Map("id" -> Seq("second-permission")))
       else
-        cmd.doBinding(Map("name" -> "The first permission", "id" -> "second-permission"))
+        cmd.bindTo(Map("name" -> "The first permission", "id" -> "second-permission"))
 
-      (cmd.valid must beSome(false)) and {
+      (cmd.isValid must beFalse) and {
         cmd.model must_== Permission("", "The first permission", null)
       }
     }
