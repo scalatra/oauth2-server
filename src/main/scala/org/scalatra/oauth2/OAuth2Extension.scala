@@ -3,7 +3,7 @@ package oauth2
 
 import akka.actor._
 import model._
-import net.liftweb.json.Formats
+import org.json4s.Formats
 import service.{ AuthenticationService, SmtpTransport }
 import OAuth2Imports._
 import collection.JavaConverters._

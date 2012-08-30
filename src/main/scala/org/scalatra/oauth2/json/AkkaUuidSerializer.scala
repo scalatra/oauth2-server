@@ -3,7 +3,7 @@ package oauth2
 package json
 
 import akka.actor.Uuid
-import net.liftweb.json._
+import org.json4s._
 
 class AkkaUuidSerializer extends Serializer[Uuid] {
 

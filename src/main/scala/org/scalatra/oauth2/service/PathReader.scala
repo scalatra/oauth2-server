@@ -2,7 +2,7 @@ package org.scalatra
 package oauth2
 package service
 
-import net.liftweb.json._
+import org.json4s._
 import OAuth2Imports._
 
 object PathReading {
@@ -41,10 +41,10 @@ object PathReading {
 
     protected def get[TResult](key: String, subj: Subject)(implicit mf: Manifest[TResult]): Option[TResult]
 
-    def apply[TResult](path: String, subj: Subject = obj)(implicit mf: Manifest[TResult]): TResult =
+    def apply[TResult: Manifest](path: String, subj: Subject = obj): TResult =
       read[TResult](path, subj).get
 
-    final def read[TResult](path: String, subj: Subject = obj)(implicit mf: Manifest[TResult]): Option[TResult] = {
+    final def read[TResult: Manifest](path: String, subj: Subject = obj): Option[TResult] = {
       val partIndex = path.indexOf(separator.beginning)
       val (part, rest) = if (path.indexOf(separator.beginning) > -1) path.splitAt(partIndex) else (path, "")
       val realRest = if (rest.nonEmpty) {

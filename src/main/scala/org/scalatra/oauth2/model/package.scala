@@ -3,11 +3,11 @@ package oauth2
 
 import scalaz._
 import Scalaz._
-import command.FieldError
+import org.scalatra.validation.ValidationError
 
 package object model {
 
-  type ModelValidation[T] = Validation[NonEmptyList[FieldError], T]
+  type ModelValidation[T] = Validation[NonEmptyList[ValidationError], T]
 
   object fieldNames {
     val login = "login"

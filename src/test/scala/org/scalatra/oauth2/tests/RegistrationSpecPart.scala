@@ -1,6 +1,6 @@
 package org.scalatra.oauth2.tests
 
-import net.liftweb.json._
+import org.json4s._
 
 trait RegistrationSpecPart { self: HomeServletSpec ⇒
 

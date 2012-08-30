@@ -5,23 +5,23 @@ package model
 import scalaz._
 import Scalaz._
 import com.novus.salat.dao.SalatDAO
-import command.{ Command, ValidationSupport, FieldError }
+import databinding.Command
 import com.novus.salat.Context
 import OAuth2Imports._
-import commands.IsValidMethod
+import org.scalatra.validation.{ ValidationError, UnknownError }
 
 trait CommandableDao[ObjectType <: Product] {
-  def execute[TCommand <: ValidationSupport with IsValidMethod <% ModelCommand[ObjectType]](cmd: TCommand): ModelValidation[ObjectType] = {
+  def execute[TCommand <: Command <% ModelCommand[ObjectType]](cmd: TCommand): ModelValidation[ObjectType] = {
     if (cmd.isValid) {
       val model = cmd.model
       save(model)
       model.successNel
     } else {
-      val f = cmd.errors.map(_.validation) collect {
+      val f = cmd.errors.map(_.value) collect {
         case Failure(e) ⇒ e
       }
       if (f.nonEmpty) nel(f.head, f.tail: _*).fail
-      else ServerError("The command is invalid but no errors are shown").failNel
+      else ValidationError("The command is invalid but no errors are shown.", UnknownError).failNel
     }
   }
 

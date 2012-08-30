@@ -4,7 +4,7 @@ package json
 
 import akka.util.Duration
 import java.util.concurrent.TimeUnit
-import net.liftweb.json._
+import org.json4s._
 
 class AkkaDurationSerializer extends Serializer[Duration] {
   val klass = classOf[Duration]

@@ -3,16 +3,16 @@ package oauth2
 package auth
 
 import org.scalatra.ScalatraBase
-import liftjson.LiftJsonSupport
 import commands.{ OAuth2Command, LoginCommand }
 import service.CommandHandler
 import org.scalatra.auth.ScentryStrategy
 import scalaz._
 import Scalaz._
 import OAuth2Imports._
+import org.scalatra.json.NativeJsonSupport
 
 class PasswordStrategy[UserClass <: AppAuthSession[_ <: AppUser[_]]](
-    protected val app: ScalatraBase with LiftJsonSupport,
+    protected val app: ScalatraBase with NativeJsonSupport,
     command: LoginCommand,
     handler: CommandHandler) extends ScentryStrategy[UserClass] {
 

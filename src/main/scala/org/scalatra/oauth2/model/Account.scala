@@ -13,7 +13,8 @@ import Scalaz._
 import OAuth2Imports._
 import org.mindrot.jbcrypt.BCrypt
 import akka.actor.ActorSystem
-import command.{ FieldValidation, FieldError, SimpleError }
+import databinding.FieldValidation
+import org.scalatra.validation.{ FieldName, ValidationFail, ValidationError }
 import commands._
 
 case class BCryptPassword(pwd: String, salted: Boolean, stretches: Int) {
@@ -40,7 +41,7 @@ object BCryptPassword {
   def isMatch(candidate: String, toMatch: String): Boolean = { candidate == toMatch }
 
   def matches(candidate: String, toMatch: BCryptPassword): FieldValidation[BCryptPassword] = {
-    if (isMatch(candidate, toMatch)) BCryptPassword(candidate).encrypted.success else FieldError("password", "Passwords don't match.").fail
+    if (isMatch(candidate, toMatch)) BCryptPassword(candidate).encrypted.success else ValidationError("Passwords don't match.", FieldName("password")).fail
   }
 
   def random = {
@@ -116,7 +117,7 @@ class AccountDao(collection: MongoCollection)(implicit system: ActorSystem)
     allCatch {
       command.retrieved foreach { u ⇒ save(u.copy(stats = u.stats.tickFailures)) }
     }
-    FieldError("Login/password don't match.").failNel[Account]
+    ValidationError("Login/password don't match.", ValidationFail).failNel[Account]
   }
 
   def loggedIn(owner: Account, ipAddress: String): Account = {
@@ -135,8 +136,8 @@ class AccountDao(collection: MongoCollection)(implicit system: ActorSystem)
   def findByLinkedAccount(provider: String, id: String) = findOne(Map("linkedOAuthAccounts.provider" -> provider, "linkedOAuthAccounts.id" -> id))
 
   object validations {
-    import org.scalatra.command._
-    import Validation._
+    import org.scalatra.databinding._
+    import org.scalatra.validation.Validation._
     import Validations._
 
     def name(name: String): FieldValidation[String] = nonEmptyString(fieldNames.name, name)
@@ -174,7 +175,7 @@ class AccountDao(collection: MongoCollection)(implicit system: ActorSystem)
 
     def validPassword(owner: Account, password: String): FieldValidation[Account] =
       if (owner.password.isMatch(password)) owner.success
-      else SimpleError("The username/password combination doesn not match").fail
+      else ValidationError("The username/password combination doesn not match", ValidationFail).fail
 
     /*_*/
     def apply(owner: Account): ModelValidation[Account] = {
@@ -201,53 +202,53 @@ class AccountDao(collection: MongoCollection)(implicit system: ActorSystem)
 
   def confirm(cmd: ActivateAccountCommand): ModelValidation[Account] = {
     val key = fieldNames.confirmation + "." + fieldNames.token
-    cmd.token.validation.liftFailNel flatMap { tok ⇒
+    cmd.token.value.liftFailNel flatMap { tok ⇒
       findOne(Map(key -> tok)) map { owner ⇒
         if (!owner.isConfirmed) {
           val upd = owner.copy(confirmedAt = DateTime.now)
           save(upd)
-          upd.successNel[FieldError]
-        } else AlreadyConfirmed().failNel
-      } getOrElse InvalidToken().failNel
+          upd.successNel[ValidationError]
+        } else OAuth2Error.AlreadyConfirmed.failNel
+      } getOrElse OAuth2Error.InvalidToken.failNel
     }
   }
 
   def forgot(forgotCommand: ForgotCommand): ModelValidation[Account] = {
-    forgotCommand.login.validation.liftFailNel flatMap { loe ⇒
+    forgotCommand.login.value.liftFailNel flatMap { loe ⇒
       findByLoginOrEmail(loe) map { owner ⇒
         val updated = owner.copy(reset = Token(), resetAt = MinDate)
         save(updated)
         if (!oauth.isTest) oauth.smtp.send(MailMessage(SendForgotPasswordMail(updated.name, updated.login, updated.email, updated.reset.token)))
         updated.successNel
-      } getOrElse SimpleError("Account not found.").failNel
+      } getOrElse ValidationError("Account not found.", org.scalatra.validation.NotFound).failNel
     }
   }
 
   /*_*/
   def resetPassword(command: ResetCommand): ModelValidation[Account] = {
     if (command.isValid) {
-      doReset(~command.token.converted, ~command.password.converted)
-    } else SimpleError("Password reset failed.").failNel
+      doReset(~command.token.value.toOption, ~command.password.value.toOption)
+    } else ValidationError("Password reset failed.").failNel
   }
   /*_*/
 
   def changePassword(command: ChangePasswordCommand): ModelValidation[Account] = {
     if (command.isValid) {
-      val u = command.user.copy(password = BCryptPassword(~command.password.converted).encrypted, resetAt = DateTime.now, reset = Token())
+      val u = command.user.copy(password = BCryptPassword(~command.password.value.toOption).encrypted, resetAt = DateTime.now, reset = Token())
       save(u)
       u.successNel
-    } else FieldError("Changing password failed.").failNel
+    } else ValidationError("Changing password failed.", org.scalatra.validation.ValidationFail).failNel
   }
 
   private def doReset(token: String, password: String): ModelValidation[Account] = {
     val key = fieldNames.reset + "." + fieldNames.token
     findOne(Map(key -> token)) map { owner ⇒
-      owner.isReset ? (InvalidToken(): FieldError).failNel[Account] | {
+      owner.isReset ? OAuth2Error.InvalidToken.failNel[Account] | {
         val upd = owner.copy(password = BCryptPassword(password).encrypted, resetAt = DateTime.now, reset = Token())
         save(upd)
-        upd.successNel[FieldError]
+        upd.successNel[ValidationError]
       }
-    } getOrElse InvalidToken().failNel[Account]
+    } getOrElse OAuth2Error.InvalidToken.failNel[Account]
   }
 
   override def save(t: Account, wc: WriteConcern) {

@@ -3,7 +3,7 @@ package oauth2
 package tests
 
 import test.specs2.BaseScalatraSpec
-import net.liftweb.json._
+import org.json4s._
 import org.junit.runner._
 import org.specs2.runner._
 

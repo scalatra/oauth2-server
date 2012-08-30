@@ -6,7 +6,7 @@ import model._
 import scalaz._
 import Scalaz._
 import OAuth2Imports._
-import net.liftweb.json._
+import org.json4s._
 
 class ClientsCrudApp(implicit protected val system: ActorSystem) extends OAuth2ServerBaseApp {
 

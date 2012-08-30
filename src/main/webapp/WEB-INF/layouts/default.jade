@@ -76,7 +76,8 @@ html(ng-app="app")
     script(src="/assets/main.js")
 
 
-    - import net.liftweb.json._
+    - import org.json4s._
+    - import org.json4s.native._
     - implicit val jsonFormats: Formats = new OAuth2Formats
     - val userJson = if (isAuthenticated) Serialization.write(account) else JNothing
 

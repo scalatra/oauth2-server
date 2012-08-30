@@ -1,7 +1,7 @@
 package org.scalatra
 package oauth2
 
-import net.liftweb.json._
+import org.json4s._
 import java.nio.charset.Charset
 import rl.UrlCodingUtils
 import mojolly.inflector.Inflector
@@ -55,7 +55,7 @@ class OAuthJValue(json: JValue) {
   def snakizeKeys = rewriteJsonAST(false)
 
   private def rewriteJsonAST(camelize: Boolean): JValue = {
-    json transform {
+    json transformField {
       case JField(nm, x) if !nm.startsWith("_") ⇒ JField(if (camelize) nm.camelize else nm.underscore, x)
       case x                                    ⇒ x
     }

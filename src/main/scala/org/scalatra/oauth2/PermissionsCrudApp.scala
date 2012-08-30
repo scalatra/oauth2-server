@@ -12,12 +12,11 @@ import model.OAuth2Response
 import model.Permission
 import model.Permission
 import OAuth2Imports._
-import net.liftweb.json._
-import command.{ FieldError, ValidationError }
+import org.json4s._
+import org.scalatra.validation.ValidationError
 import _root_.scalaz._
 import Scalaz._
 import com.novus.salat.dao.SalatDAO
-import command.ValidationError
 
 abstract class SalatCrudApp[ObjectType <: Product, ID <: Any](implicit mf: Manifest[ObjectType], protected val system: ActorSystem) extends OAuth2ServerBaseApp {
   def dao: SalatDAO[ObjectType, ID] with CommandableDao[ObjectType]
@@ -61,7 +60,7 @@ abstract class SalatCrudApp[ObjectType <: Product, ID <: Any](implicit mf: Manif
     renderCommandResult(res, cmd.model, clientRoute)
   }
 
-  private def renderCommandResult(result: ValidationNEL[FieldError, ObjectType], model: ObjectType, clientRoute: String) = {
+  private def renderCommandResult(result: ValidationNEL[ValidationError, ObjectType], model: ObjectType, clientRoute: String) = {
     result match {
       case Success(perm) ⇒
         format match {
@@ -70,10 +69,7 @@ abstract class SalatCrudApp[ObjectType <: Product, ID <: Any](implicit mf: Manif
         }
 
       case Failure(errs) ⇒
-        val rr = (errs map {
-          case e: ValidationError ⇒ ApiError(e.field, e.message)
-          case e                  ⇒ ApiError(e.message)
-        })
+        val rr = (errs map { e ⇒ ApiError(e.field.map(_.name), e.message) })
         format match {
           case "json" | "xml" ⇒
             OAuth2Response(Extraction.decompose(model), ApiErrorList(rr.list).toJValue)

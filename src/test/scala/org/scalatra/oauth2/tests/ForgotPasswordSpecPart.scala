@@ -2,8 +2,8 @@ package org.scalatra
 package oauth2
 package tests
 
-import net.liftweb.json._
-import net.liftweb.json.Serialization
+import org.json4s._
+import org.json4s.Serialization
 import java.lang.Boolean
 
 trait ForgotPasswordSpecPart { this: HomeServletSpec ⇒

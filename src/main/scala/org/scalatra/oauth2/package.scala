@@ -1,7 +1,8 @@
 package org.scalatra
 
+import org.scalatra.databinding.{ DefaultZeroes, JsonZeroes }
 import org.slf4j.LoggerFactory
-import _root_.scalaz._
+import scalaz._
 import Scalaz._
 import java.util.Locale
 import org.joda.time._
@@ -10,7 +11,7 @@ import java.net.URI
 import scala.io.Codec
 import javax.servlet.http.HttpServletRequest
 
-package object oauth2 extends _root_.org.scalatra.servlet.ServletApiImplicits {
+package object oauth2 extends _root_.org.scalatra.servlet.ServletApiImplicits with DefaultZeroes with JsonZeroes {
 
   import OAuth2Imports._
   val ENGLISH = Locale.ENGLISH
@@ -49,6 +50,6 @@ package object oauth2 extends _root_.org.scalatra.servlet.ServletApiImplicits {
   private[oauth2] def confKey(path: String) = "scalatra.oauth2." + path
 
   object as {
-    val JValue = dispatch.as.String.andThen(net.liftweb.json.parse)
+    val JValue = dispatch.as.String.andThen(org.json4s.native.parse)
   }
 }

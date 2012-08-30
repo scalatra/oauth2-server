@@ -10,22 +10,22 @@ import Scalaz._
 import org.scalatra.scalate.{ ScalatraRenderContext, ScalateSupport }
 import org.scalatra.auth._
 import ScentryAuthStore.CookieAuthStore
-import command._
+import databinding._
 import model._
-import net.liftweb.json.Extraction
-import liftjson.{ LiftJsonSupport }
+import org.json4s._
 import OAuth2Imports._
-import net.liftweb.json.JsonAST.JNull
 import commands._
 import service.AuthenticationService
 import akka.actor.ActorSystem
 import model.OAuth2Response
 import model.ApiErrorList
+import org.scalatra.validation.ValidationError
+import org.scalatra.json.NativeJsonSupport
 
 class OAuthScentryConfig extends ScentryConfig
 
 trait PasswordAuthSupport[UserClass >: Null <: AppAuthSession[_ <: AppUser[_]]] {
-  self: ScalatraBase with FlashMapSupport with CookieSupport with AuthenticationSupport[UserClass] with LiftJsonSupport with OAuth2CommandSupport ⇒
+  self: ScalatraBase with FlashMapSupport with CookieSupport with AuthenticationSupport[UserClass] with NativeJsonSupport with OAuth2CommandSupport ⇒
 
   protected def bindCommand[T <: OAuth2Command[_]](command: T)(implicit mf: Manifest[T]): T
   get("/login") {
@@ -99,7 +99,7 @@ trait PasswordAuthSupport[UserClass >: Null <: AppAuthSession[_ <: AppUser[_]]] 
 }
 
 trait ForgotPasswordAuthSupport[UserClass >: Null <: AppAuthSession[_ <: AppUser[_]]] {
-  self: ScalatraBase with FlashMapSupport with AuthenticationSupport[UserClass] with LiftJsonSupport with OAuth2CommandSupport ⇒
+  self: ScalatraBase with FlashMapSupport with AuthenticationSupport[UserClass] with NativeJsonSupport with OAuth2CommandSupport ⇒
   get("/forgot") {
     redirectIfAuthenticated()
     jade("angular")
@@ -130,7 +130,7 @@ trait ForgotPasswordAuthSupport[UserClass >: Null <: AppAuthSession[_ <: AppUser
   private def requiresToken(res: ⇒ Any) = {
     params.get("token").flatMap(_.blankOption).flatMap(tok ⇒ oauth.userProvider.findOne(Map("reset.token" -> tok))) map { _ ⇒
       res
-    } getOrElse InvalidToken().fail
+    } getOrElse OAuth2Error.InvalidToken.fail
   }
 
   protected def resetCommand: ResetCommand
@@ -143,8 +143,8 @@ trait ForgotPasswordAuthSupport[UserClass >: Null <: AppAuthSession[_ <: AppUser
         case _ ⇒ res.fold(
           errs ⇒ {
             (errs.list.filter {
-              case a: ValidationError ⇒ false
-              case _                  ⇒ true
+              case ValidationError(_, Some(_), _, _) ⇒ false
+              case _                                 ⇒ true
             }).headOption foreach { m ⇒ flash.now("error") = m.message }
             jade("angular", "errors" -> errs.list.collect { case a: ValidationError ⇒ a })
 
@@ -157,8 +157,9 @@ trait ForgotPasswordAuthSupport[UserClass >: Null <: AppAuthSession[_ <: AppUser
 }
 
 trait AuthenticationSupport[UserClass >: Null <: AppAuthSession[_ <: AppUser[_]]] extends ScentrySupport[UserClass] with ScalateSupport {
-  self: ScalatraBase with SessionSupport with FlashMapSupport with LiftJsonSupport ⇒
+  self: ScalatraBase with SessionSupport with FlashMapSupport with NativeJsonSupport ⇒
 
+  implicit protected def jsonFormats: Formats
   protected def fromSession = { case id: String ⇒ authService.loginFromRemember(id).toOption.map(_.asInstanceOf[UserClass]).orNull }
   protected def toSession = { case usr: AppAuthSession[_] ⇒ usr.token.token }
 
@@ -238,7 +239,7 @@ trait AuthenticationSupport[UserClass >: Null <: AppAuthSession[_ <: AppUser[_]]
 }
 
 trait DefaultAuthenticationSupport[UserClass >: Null <: AppAuthSession[_ <: AppUser[_]]] extends AuthenticationSupport[UserClass] {
-  self: ScalatraBase with SessionSupport with CookieSupport with FlashMapSupport with LiftJsonSupport with OAuth2CommandSupport ⇒
+  self: ScalatraBase with SessionSupport with CookieSupport with FlashMapSupport with NativeJsonSupport with OAuth2CommandSupport ⇒
 
   protected def oauth: OAuth2Extension
 

@@ -3,7 +3,7 @@ package oauth2
 
 import model._
 import akka.actor.ActorSystem
-import net.liftweb.json.Extraction
+import org.json4s.Extraction
 
 class HomeServlet(implicit protected val system: ActorSystem)
     extends OAuth2ServerBaseApp

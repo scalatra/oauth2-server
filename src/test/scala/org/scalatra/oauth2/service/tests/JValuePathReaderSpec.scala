@@ -4,7 +4,7 @@ package service
 package tests
 
 import org.specs2._
-import net.liftweb.json._
+import org.json4s._
 import JsonDSL._
 import org.junit.runner._
 import org.specs2.runner._

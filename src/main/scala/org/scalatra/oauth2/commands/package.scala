@@ -1,160 +1,52 @@
 package org.scalatra
 package oauth2
 
-import _root_.org.scalatra.command._
+import _root_.org.scalatra.databinding._
+import _root_.org.scalatra.validation._
 import model.{ BCryptPassword, Account, fieldNames }
 import OAuth2Imports._
-import util.conversion.TypeConverter
+import util.conversion.{ TypeConverterSupport, TypeConverter }
 import _root_.scalaz._
 import Scalaz._
 import collection.generic.{ Shrinkable, Growable }
-import net.liftweb.json._
-import liftjson.{ LiftJsonSupport, LiftJsonSupportWithoutFormats }
+import org.json4s._
 
 package object commands {
 
-  def get[C <: OAuth2Command[_]](oauth: OAuth2Extension, args: Any*)(implicit mf: Manifest[C]): C = {
+  def get[C <: OAuth2Command[_]](oauth: OAuth2Extension, args: Any*)(implicit mf: Manifest[C], formats: Formats): C = {
     val argClasses = Seq[Class[_]](classOf[OAuth2Extension]) ++ args.map(_.getClass)
     val allArgs = Seq[AnyRef](oauth) ++ args
     val const = mf.erasure.getConstructor(argClasses: _*)
     const.newInstance(allArgs.map(_.asInstanceOf[AnyRef]): _*).asInstanceOf[C]
   }
 
-  trait IsValidMethod { self: ValidationSupport ⇒
-    def isValid = errors.isEmpty
-  }
-
-  trait ValueBinder[S] {
-    def apply[T: Manifest](data: S, binding: Binding[T]): Binding[T]
-  }
-
-  class LiftJsonValueBinder(implicit formats: Formats) extends ValueBinder[JValue] {
-
-    def apply[T: Manifest](data: JValue, binding: Binding[T]) = {
-      val v = (data \ binding.name)
-      v match {
-        case JNothing   ⇒
-        case JString(s) ⇒ binding(s)
-        case jv         ⇒ binding(compact(render(jv)))
-      }
-      binding
-    }
-  }
-
-  class ParamsBinder extends ValueBinder[MultiParams] {
-
-    def apply[T: Manifest](multiParams: MultiParams, binding: Binding[T]) = {
-      val mf = manifest[T]
-      val retr = if (mf <:< manifest[Traversable[_]]) {
-        multiParams.get(binding.name).map(_.mkString("[", ",", "]"))
-      } else multiParams.get(binding.name).flatMap(_.headOption)
-      retr foreach binding.apply
-      binding
-    }
-  }
-
-  class StringMapBinder extends ValueBinder[Map[String, String]] {
-
-    def apply[T: Manifest](params: Map[String, String], binding: Binding[T]) = {
-      params.get(binding.name) foreach binding.apply
-      binding
-    }
-  }
-
-  trait DefaultValueReaders { this: LiftJsonSupport ⇒
-
-    implicit val jvalueBinder = new LiftJsonValueBinder
-    implicit val multiParamsBinder = new ParamsBinder
-    implicit val stringMapBinder = new StringMapBinder
-  }
-
-  trait ForceFromHeaders { self: Command ⇒
-
-    def headersToForce: Set[String]
-  }
-
-  /* trait BindToSupport { this: Command ⇒
-    private[this] var preBindingActions: List[BindingAction] = Nil
-
-    private[this] var postBindingActions: List[BindingAction] = Nil
-    /**
-     * Add an action that will be evaluated before field binding occurs.
-     */
-    abstract override protected def beforeBinding(action: ⇒ Any) {
-      preBindingActions = preBindingActions :+ (() ⇒ action)
-    }
-
-    /**
-     * Add an action that will be evaluated after field binding has been done.
-     */
-    abstract override protected def afterBinding(action: ⇒ Any) {
-      postBindingActions = postBindingActions :+ (() ⇒ action)
-    }
-
-    def bindTo[T : Manifest : ValueBinder](data: T, params: MultiParams = Map.empty, headers: Map[String, String] = Map.empty): this.type = {
-      doBeforeBindingActions()
-      bindings foreach { binding =>
-        this match {
-          case d: ForceFromParams if d.namesToForce.contains(binding.name) => bindFromParams(params, binding)
-          case d: ForceFromHeaders if d.headersToForce.contains(binding.name) =>
-            headers.get(binding.name) foreach binding.apply
-          case _ => implicitly[ValueBinder[T]].apply(data, binding)
-        }
-
-      }
-      doAfterBindingActions()
-      this
-
-    }
-
-    private def bindFromParams(params: MultiParams, binding: Binding[_]) = {
-      params.get(binding.name).flatMap(_.headOption) foreach binding.apply
-    }
-
-//    private def bindFromJson(data: JValue, binding: Binding[_]) = {
-//      val d = (data \ binding.name)
-//      d match {
-//        case JNothing =>
-//        case JString(s) => binding(s)
-//        case jv => binding(compact(render(jv)))
-//      }
-//    }
-//
-
-    private def doBeforeBindingActions() {
-      preBindingActions.foreach(_.apply())
-    }
-
-    private def doAfterBindingActions() {
-      postBindingActions.foreach(_.apply())
-    }
-
-  }*/
-
-  abstract class OAuth2Command[S: Manifest](val oauth: OAuth2Extension) extends Command with ValidationSupport with CommandValidators with IsValidMethod with Growable[Command] with Shrinkable[Command] {
+  abstract class OAuth2Command[S](val oauth: OAuth2Extension)(implicit mf: Manifest[S], protected val jsonFormats: Formats) extends JsonCommand {
 
     type Result = S
-    implicit def toValidator[T: Zero](fn: T ⇒ FieldValidation[T]): Validator[T] = { case s ⇒ fn(~s) }
+    //    implicit def toValidator[T: Zero](fn: T ⇒ FieldValidation[T]): Validator[T] = { case s ⇒ fn(~s) }
 
-    implicit val stringToWebDate: TypeConverter[DateTime] = DateFormats.parse _
+    //    implicit val stringToWebDate: TypeConverter[String, DateTime] = DateFormats.parse _
 
-    implicit val stringToObjectId: TypeConverter[ObjectId] = safe(new ObjectId(_))
+    //    implicit val stringToObjectId: TypeConverter[String, ObjectId] = safe(new ObjectId(_))
 
-    implicit val stringToBCryptPassword: TypeConverter[BCryptPassword] = safeOption(BCryptPassword.parse)
+    implicit val bcryptTypeConverterFactory = new JsonTypeConverterFactory[BCryptPassword] {
+      protected implicit val jsonFormats: Formats = OAuth2Command.this.jsonFormats
+      implicit val stringToBCryptPassword: TypeConverter[String, BCryptPassword] = safeOption(BCryptPassword.parse)
+      implicit val jsonToBCryptPassword: TypeConverter[JValue, BCryptPassword] =
+        safeOption(_.extractOpt[String] flatMap BCryptPassword.parse)
+      implicit val stringSeqHeadToBCryptPassword: TypeConverter[Seq[String], BCryptPassword] =
+        seqHead(stringToBCryptPassword)
+      implicit val stringSeqToBCryptPasswordSeq: TypeConverter[Seq[String], Seq[BCryptPassword]] =
+        seqToSeq(stringToBCryptPassword)
 
-    def +=(elem: Command) = {
-      bindings :::= elem.bindings
-      this
+      def resolveJson: TypeConverter[JValue, BCryptPassword] = implicitly[TypeConverter[JValue, BCryptPassword]]
+
+      def resolveMultiParams: TypeConverter[Seq[String], BCryptPassword] = implicitly[TypeConverter[Seq[String], BCryptPassword]]
+
+      def resolveStringParams: TypeConverter[String, BCryptPassword] = implicitly[TypeConverter[String, BCryptPassword]]
+
     }
 
-    def clear() {
-      bindings = List.empty[Binding[_]]
-    }
-
-    def -=(elem: Command) = {
-      bindings = bindings filterNot (_ == elem)
-      this
-    }
   }
 
   trait OAuth2CommandPart {

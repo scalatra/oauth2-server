@@ -4,19 +4,18 @@ package oauth2
 import model.ApiErrorList
 import model.OAuth2Response
 import model.{ ApiErrorList, ApiError, OAuth2Response }
-import net.liftweb.json._
+import org.json4s._
 import OAuth2Imports._
 import org.scalatra.{ ResponseStatus, ScalatraBase }
 import _root_.scalaz._
 import Scalaz._
-import net.liftweb.json.Xml._
-import scala.Some
-import command.FieldError
+import org.json4s.Xml._
+import org.scalatra.json.JsonOutput
 
 object OAuth2ResponseSupport {
   val JsonContentTypeHeader = Map("Content-Type" -> "application/json")
 }
-trait OAuth2ResponseSupport { self: ScalatraBase with ApiFormats ⇒
+trait OAuth2ResponseSupport { self: ScalatraBase with ApiFormats with JsonOutput[_] ⇒
 
   import OAuth2ResponseSupport.JsonContentTypeHeader
   def halt(bcResponse: OAuth2Response): Nothing = {
@@ -64,11 +63,12 @@ trait OAuth2ResponseSupport { self: ScalatraBase with ApiFormats ⇒
         response.status = ResponseStatus(sc)
       }
       val r = includeStatusInResponse ? x.copy(statusCode = x.statusCode orElse status.some) | x.copy(statusCode = None)
+      val json = r.toJValue.snakizeKeys
       if (format == "xml") {
         contentType = "application/xml"
-        response.writer.println(toXml(r.toJValue.snakizeKeys).toString())
+        writeJsonAsXml(json, response.writer)
       } else {
-        Printer.compact(render(r.toJValue.snakizeKeys), response.writer)
+        writeJson(json, response.writer)
       }
       ()
     }

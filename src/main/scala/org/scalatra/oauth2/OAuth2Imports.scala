@@ -12,7 +12,7 @@ import java.util.concurrent.TimeUnit
 import org.joda.time._
 import format.DateTimeFormatter
 import mojolly.inflector.InflectorImports
-import net.liftweb.json._
+import org.json4s._
 import query.dsl.FluidQueryBarewordOps
 import query.{ ValidDateOrNumericTypeHolder, ValidNumericTypeHolder, ValidDateTypeHolder, ValidBarewordExpressionArgTypeHolder }
 import org.scalatra.oauth2.DateFormats.DateFormat

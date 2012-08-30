@@ -10,10 +10,10 @@ import scalaz._
 import Scalaz._
 import OAuth2Imports._
 import akka.actor.ActorSystem
-import command._
-import command.Validators.PredicateValidator
+import databinding._
+import org.scalatra.validation.Validators.PredicateValidator
 import commands.{ PermissionModelCommands, CreatePermissionCommand }
-import command.Validation
+import org.scalatra.validation.{ ValidationError, Validation }
 
 case class Permission(@Key("_id") code: String, name: String, description: String, isSystem: Boolean = false)
 
@@ -45,13 +45,13 @@ class PermissionDao(collection: MongoCollection)(implicit system: ActorSystem)
     }
 
     /*_*/
-    def apply(perm: Permission): ValidationNEL[FieldError, Permission] = {
+    def apply(perm: Permission): ValidationNEL[ValidationError, Permission] = {
       (code(perm.code).liftFailNel |@|
         name(perm.name).liftFailNel) { (_, _) ⇒ perm }
     }
     /*_*/
   }
 
-  def create(cmd: CreatePermissionCommand): ValidationNEL[FieldError, Permission] = execute(cmd)
+  def create(cmd: CreatePermissionCommand): ValidationNEL[ValidationError, Permission] = execute(cmd)
 
 }

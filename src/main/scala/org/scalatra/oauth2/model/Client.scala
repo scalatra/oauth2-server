@@ -10,7 +10,8 @@ import scalaz._
 import Scalaz._
 import OAuth2Imports._
 import akka.actor.ActorSystem
-import command.{ FieldValidation, FieldError }
+import databinding.FieldValidation
+import org.scalatra.validation.ValidationError
 
 case class Client(
     secret: String,
@@ -32,7 +33,7 @@ class ClientDao(collection: MongoCollection)(implicit system: ActorSystem)
     extends SalatDAO[Client, ObjectId](collection = collection) {
 
   object validate {
-    import org.scalatra.command.Validation._
+    import org.scalatra.validation.Validation._
     import Validations._
 
     def name(displayName: String) = nonEmptyString(fieldNames.displayName, displayName)
@@ -74,7 +75,7 @@ class ClientDao(collection: MongoCollection)(implicit system: ActorSystem)
       authType: String,
       scopes: List[String],
       redirectUri: Option[String],
-      link: Option[String])(factory: Factory): ValidationNEL[FieldError, Client] = {
+      link: Option[String])(factory: Factory): ValidationNEL[ValidationError, Client] = {
       ((validate.clientProfile(profile).liftFailNel)
         |@| (validate.name(displayName).liftFailNel)
         |@| (validate.authorizationType(authType).liftFailNel)

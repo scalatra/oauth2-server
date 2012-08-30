@@ -4,24 +4,27 @@ package model
 
 import java.net.URI
 import OAuth2Imports._
-import command.FieldError
 import collection.mutable
+import validation.{ FieldName, ErrorCode, ValidationError }
 
-sealed trait OAuth2FieldError extends FieldError {
-  def args: Seq[Any] = Nil
-}
-case class AlreadyConfirmed(message: String = "This account has already been confirmed.") extends OAuth2FieldError
-case class InvalidToken(message: String = "The token is invalid.") extends OAuth2FieldError
-case class LoginFailed(message: String = "Username/password did not match.") extends OAuth2FieldError
-case class NotFound(message: String = "Not found.") extends OAuth2FieldError
-case class NotUnique(message: String, field: String) extends OAuth2FieldError
-case class ServerError(message: String = "Unknown server error.") extends OAuth2FieldError
-case class NotImplementedError(message: String = "Not implemented.") extends OAuth2FieldError
-case class BadGatewayError(message: String = "Bad gateway.") extends OAuth2FieldError
-case class ServiceUnavailable(message: String = "Service unavailable.") extends OAuth2FieldError
-case class GatewayTimeout(message: String = "Gateway timeout.") extends OAuth2FieldError
+case object LoginFailed extends ErrorCode
+case object AlreadyConfirmed extends ErrorCode
+case object NotUnique extends ErrorCode
+case object InvalidToken extends ErrorCode
 
 object OAuth2Error {
+
+  def ServerError = ValidationError("Internal server error.", org.scalatra.validation.UnknownError)
+  def AlreadyConfirmed = ValidationError("This account has already been confirmed", model.AlreadyConfirmed)
+  def InvalidToken = ValidationError("The token is invalid.", model.InvalidToken)
+  def LoginFailed = ValidationError("Login failed.", model.LoginFailed)
+  def NotFound = ValidationError("Not found.", org.scalatra.validation.NotFound)
+  def NotUnique(message: String, field: String) = ValidationError(message.format(field), FieldName(field), model.NotUnique)
+  def NotImplementedError = ValidationError("Not implemented.", org.scalatra.validation.NotImplemented)
+  def BadGatewayError = ValidationError("Bad gateway.", org.scalatra.validation.BadGateway)
+  def ServiceUnavailable = ValidationError("Service unavailable.", org.scalatra.validation.ServiceUnavailable)
+  def GatewayTimeout = ValidationError("Gateway timeout.", org.scalatra.validation.GatewayTimeout)
+
   object Code extends Enumeration {
     type Error = Value
     /**

@@ -12,13 +12,12 @@ import scalaz._
 import Scalaz._
 import OAuth2Imports._
 import org.scribe.builder.api.{ TwitterApi, FacebookApi }
-import net.liftweb.json._
+import org.json4s._
 import org.scalatra.{ CookieOptions, CookieSupport, FlashMapSupport, ScalatraServlet }
 import annotation.tailrec
-import command.FieldError
-import org.scalatra.liftjson.LiftJsonSupport
 import service.AuthenticationService
 import com.ning.http.client.oauth.{ RequestToken, ConsumerKey }
+import org.scalatra.json.NativeJsonSupport
 
 class FacebookApiCalls(accessToken: OAuthToken)(implicit formats: Formats) {
   private val urlBase = :/("graph.facebook.com/").secure
@@ -56,7 +55,7 @@ class TwitterApiCalls(accessToken: OAuthToken, provider: OAuthProvider, val call
 }
 
 class OAuthAuthentication(implicit protected val system: ActorSystem)
-    extends ScalatraServlet with XsrfTokenSupport with FlashMapSupport with CookieSupport with LiftJsonSupport with ScribeAuthSupport[AuthSession] {
+    extends ScalatraServlet with XsrfTokenSupport with FlashMapSupport with CookieSupport with NativeJsonSupport with ScribeAuthSupport[AuthSession] {
 
   val oauth = OAuth2Extension(system)
   protected val authProvider: AccountDao = oauth.userProvider

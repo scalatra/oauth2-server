@@ -7,7 +7,7 @@ import model.{PermissionDao, Permission}
 import scalaz._
 import Scalaz._
 import command.{SimpleError, ValidationError}
-import net.liftweb.json._
+import org.json4s._
 import JsonDSL._
 import com.mongodb.casbah.WriteConcern
 import org.junit.runner._

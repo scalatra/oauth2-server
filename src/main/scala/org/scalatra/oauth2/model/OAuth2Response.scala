@@ -2,7 +2,7 @@ package org.scalatra
 package oauth2
 package model
 
-import net.liftweb.json._
+import org.json4s._
 import collection.mutable
 
 object ApiError {

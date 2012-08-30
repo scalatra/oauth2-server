@@ -3,7 +3,7 @@ package oauth2
 package tests
 
 import test.specs2.BaseScalatraSpec
-import net.liftweb.json._
+import org.json4s._
 import org.scalatra.oauth2.{ commands, OAuth2Imports, model }
 import model._
 import OAuth2Imports._

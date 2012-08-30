@@ -2,53 +2,55 @@ package org.scalatra
 package oauth2
 package commands
 
-import command._
+import databinding._
 import model.{ Permission, fieldNames }
 import akka.actor.ActorSystem
 import scalaz._
 import Scalaz._
 import model.Permission
+import org.scalatra.validation.{ ValidationFail, FieldName, ValidationError }
+import org.json4s.Formats
 
 trait PermissionModelCommands {
   import org.scalatra.oauth2.model.ModelCommand
   import ModelCommand._
+  import BindingSyntax._
 
   implicit def createPermissionCommand2ModelCommand(cmd: CreatePermissionCommand): ModelCommand[Permission] =
-    modelCommand(Permission(~cmd.code.converted, ~cmd.name.converted, ~cmd.description.converted, ~cmd.isSystem.converted))
+    modelCommand(Permission(~cmd.code.value.toOption, ~cmd.name.value.toOption, ~cmd.description.value.toOption, ~cmd.isSystem.value.toOption))
 
   implicit def updatePermissionCommand2ModelCommand(cmd: UpdatePermissionCommand): ModelCommand[Permission] =
     modelCommand {
       (cmd.retrieved map {
-        _.copy(name = ~cmd.name.converted, description = ~cmd.description.converted, isSystem = ~cmd.isSystem.converted)
-      }) | Permission("", cmd.name.original, cmd.description.original, ~cmd.isSystem.converted)
+        _.copy(name = ~cmd.name.value.toOption, description = ~cmd.description.value.toOption, isSystem = ~cmd.isSystem.value.toOption)
+      }) | Permission("", ~cmd.name.value.toOption, ~cmd.description.value.toOption, ~cmd.isSystem.value.toOption)
     }
 }
 
-abstract class PermissionCommand(oauth: OAuth2Extension) extends OAuth2Command[Permission](oauth) {
+abstract class PermissionCommand(oauth: OAuth2Extension)(implicit formats: Formats) extends OAuth2Command[Permission](oauth) {
 
-  def code: ValidatedBinding[String]
+  def code: Field[String]
 
-  val name = bind[String](fieldNames.name).withBinding(b ⇒ b validate b.nonEmptyString)
+  val name: Field[String] = asType[String](fieldNames.name).notBlank
 
-  val description = bind[String](fieldNames.description)
+  val description: Field[String] = asType[String](fieldNames.description)
 
-  val isSystem = bind[Boolean](fieldNames.isSystem)
-
-}
-
-class CreatePermissionCommand(oauth: OAuth2Extension) extends PermissionCommand(oauth) {
-
-  val code = bind[String](fieldNames.code) validate {
-    case s ⇒ oauth.permissionDao.validate.code(~s)
-  }
+  val isSystem: Field[Boolean] = asBoolean(fieldNames.isSystem)
 
 }
-class UpdatePermissionCommand(oauth: OAuth2Extension) extends PermissionCommand(oauth) with IdFromParamsBagCommand {
 
-  lazy val retrieved = oauth.permissionDao.findOneById(~code.converted)
+class CreatePermissionCommand(oauth: OAuth2Extension)(implicit formats: Formats) extends PermissionCommand(oauth) {
 
-  val code: ValidatedBinding[String] = bind[String]("id") validate {
-    case s ⇒
-      (retrieved.map(_ ⇒ (~s).success[FieldError]) | SimpleError("The permission doesn't exist.").fail[String]): FieldValidation[String]
+  val code: Field[String] = asType[String](fieldNames.code) validateWith { _ ⇒ _ flatMap oauth.permissionDao.validate.code }
+
+}
+class UpdatePermissionCommand(oauth: OAuth2Extension)(implicit formats: Formats) extends PermissionCommand(oauth) with IdFromParamsBagCommand {
+
+  lazy val retrieved = oauth.permissionDao.findOneById(~code.value.toOption)
+
+  val code: Field[String] = asType[String](fieldNames.id) validateWith { _ ⇒
+    _ flatMap { id ⇒
+      retrieved.map(_ ⇒ id.success[ValidationError]) | ValidationError("The permission doesn't exist", FieldName(fieldNames.id), ValidationFail).fail[String]
+    }
   }
 }

@@ -15,7 +15,8 @@ import Scalaz._
 import OAuth2Imports._
 import org.mindrot.jbcrypt.BCrypt
 import akka.actor.ActorSystem
-import command.{ FieldValidation, FieldError, SimpleError }
+import databinding.FieldValidation
+import org.scalatra.validation.{ ValidationError, UnknownError }
 import commands.{ HasRequestIp, LoginCommand }
 
 object AuthSession {
@@ -64,7 +65,7 @@ class AuthSessionDao(collection: MongoCollection)(implicit system: ActorSystem)
   collection.ensureIndex(Map("expiresAt" -> 1), "expires_at_idx")
 
   def newSession(ipAddress: String)(account: Account): FieldValidation[AuthSession] = {
-    (allCatch withApply (_ ⇒ ServerError("An error occurred while saving an auth session").fail)) {
+    (allCatch withApply (_ ⇒ ValidationError("An error occurred while saving an auth session", UnknownError).fail)) {
       val sess = AuthSession(account.id, ipAddress, expiresAt = DateTime.now + oauth.authSessionTimeout)
       save(sess)
       sess.account_=(account)
@@ -85,21 +86,21 @@ class AuthSessionDao(collection: MongoCollection)(implicit system: ActorSystem)
 
   private[this] def saveError(ex: Throwable): ModelValidation[AuthSession] = {
     logger.error("There was an error while saving an auth session.", ex)
-    ServerError("An error occurred while saving an auth session").failNel
+    ValidationError("An error occurred while saving an auth session", UnknownError).failNel
   }
 
   def loginFromRemember(token: String): ModelValidation[AuthSession] = {
     val key = fieldNames.token + "." + fieldNames.token
-    findOne(Map(key -> token)).map(_.successNel).getOrElse(InvalidToken().failNel)
+    findOne(Map(key -> token)).map(_.successNel).getOrElse(OAuth2Error.InvalidToken.failNel)
   }
 
   def remember(session: AppAuthSession[_]): FieldValidation[String] = {
-    allCatch.withApply(e ⇒ SimpleError(e.getMessage).fail) {
+    allCatch.withApply(e ⇒ ValidationError(e.getMessage).fail) {
       findOneById(new ObjectId(session.idString)) map { sess ⇒
         val token = Token()
         save(sess.copy(token = token, rememberedAt = DateTime.now))
         token.token.success
-      } getOrElse NotFound("Session " + session.idString + " could not be found.").fail
+      } getOrElse ValidationError("Session " + session.idString + " could not be found.", org.scalatra.validation.NotFound).fail
 
     }
   }

@@ -7,16 +7,16 @@ import model.AuthSession
 import org.scalatra.scalate.ScalateSupport
 import akka.actor.ActorSystem
 import javax.servlet.http.{ HttpServletRequestWrapper, HttpServletResponse, HttpServletRequest }
-import liftjson.LiftJsonSupport
 import _root_.scalaz._
 import Scalaz._
-import net.liftweb.json._
+import org.json4s._
 import OAuth2Imports._
 import java.io.PrintWriter
-import command.CommandSupport
+import databinding.{ NativeJsonParsing, CommandSupport }
 import service.AuthenticationService
+import org.scalatra.json.NativeJsonSupport
 
-trait OAuth2CommandSupport { self: ScalatraBase with LiftJsonSupport with CommandSupport ⇒
+trait OAuth2CommandSupport { self: ScalatraBase with NativeJsonSupport with NativeJsonParsing ⇒
 
   protected def oauth: OAuth2Extension
   /**
@@ -46,10 +46,10 @@ trait OAuth2CommandSupport { self: ScalatraBase with LiftJsonSupport with Comman
     format match {
       case "json" | "xml" ⇒
         logger.debug("Binding from json")
-        command.doBinding(json = parsedBody, params = params)
+        command.bindTo(parsedBody, multiParams, request.headers)
       case _ ⇒
         logger.debug("Binding from params")
-        command.doBinding(params)
+        command.bindTo(multiParams, multiParams, request.headers)
     }
     request("_command_" + mf.erasure.getName) = command
     command
@@ -60,7 +60,7 @@ trait OAuth2CommandSupport { self: ScalatraBase with LiftJsonSupport with Comman
 trait AuthenticationApp[UserClass >: Null <: AppAuthSession[_ <: AppUser[_]]]
     extends PasswordAuthSupport[UserClass]
     with ForgotPasswordAuthSupport[UserClass] {
-  self: ScalatraBase with LiftJsonSupport with FlashMapSupport with CookieSupport with ScalateSupport with DefaultAuthenticationSupport[UserClass] with OAuth2CommandSupport ⇒
+  self: ScalatraBase with NativeJsonSupport with FlashMapSupport with CookieSupport with ScalateSupport with DefaultAuthenticationSupport[UserClass] with OAuth2CommandSupport ⇒
 
   protected def forgotCommand: ForgotCommand = new ForgotCommand(oauth)
 
@@ -110,18 +110,18 @@ trait OAuth2ServerBaseApp extends ScalatraServlet
     with OAuth2ResponseSupport
     with OAuth2MethodOverride
     with FlashMapSupport
-    with LiftJsonSupport
+    with NativeJsonSupport
     with OAuth2CommandSupport
     with ScalateSupport
     with CorsSupport
     with LoadBalancedSslRequirement
     with DefaultAuthenticationSupport[AuthSession]
-    with CommandSupport
+    with NativeJsonParsing
     with TypedParamSupport
     with OAuth2RendererSupport {
 
   implicit protected def system: ActorSystem
-  override implicit val jsonFormats: Formats = new OAuth2Formats
+  implicit val jsonFormats: Formats = new OAuth2Formats
   override protected lazy val jsonVulnerabilityGuard: Boolean = true
 
   val oauth = OAuth2Extension(system)

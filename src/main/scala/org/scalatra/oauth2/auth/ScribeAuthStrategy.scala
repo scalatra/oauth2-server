@@ -11,15 +11,11 @@ import OAuth2Imports._
 import java.util.concurrent.ConcurrentHashMap
 import scala.collection.JavaConverters._
 import org.scalatra.auth.{ ScentrySupport, ScentryStrategy }
-import command.{ FieldError, ValidationError, SimpleError }
-import org.scalatra.auth.ScentryAuthStore.{ CookieAuthStore }
-import org.fusesource.scalate.Binding
+import org.scalatra.validation.ValidationError
 import javax.servlet.http.{ HttpServletResponse, HttpServletRequest }
-import java.io.PrintWriter
-import org.scalatra.scalate.{ ScalatraRenderContext, ScalateSupport }
-import org.scribe.builder.ServiceBuilder
-import liftjson.LiftJsonSupport
 import model.{ Account, AuthSession }
+import org.scalatra.auth.ScentryAuthStore.CookieAuthStore
+import org.scalatra.json.NativeJsonSupport
 
 object OAuthToken {
   def apply(scribeToken: org.scribe.model.Token): OAuthToken = OAuthToken(scribeToken.getToken, scribeToken.getSecret)
@@ -34,10 +30,10 @@ trait ScribeAuthStrategyContext[UserClass >: Null <: AppAuthSession[_ <: AppUser
 
   def app: ScalatraBase with FlashMapSupport with ScribeAuthSupport[UserClass]
 
-  def findOrCreateUser(accessToken: OAuthToken): Validation[FieldError, UserClass]
+  def findOrCreateUser(accessToken: OAuthToken): Validation[ValidationError, UserClass]
 }
 
-trait ScribeAuthSupport[UserClass >: Null <: AppAuthSession[_ <: AppUser[_]]] extends AuthenticationSupport[UserClass] { self: ScalatraBase with SessionSupport with FlashMapSupport with LiftJsonSupport ⇒
+trait ScribeAuthSupport[UserClass >: Null <: AppAuthSession[_ <: AppUser[_]]] extends AuthenticationSupport[UserClass] { self: ScalatraBase with SessionSupport with FlashMapSupport with NativeJsonSupport ⇒
 
   private[this] val oauthServicesRegistry = new ConcurrentHashMap[String, ScribeAuthStrategyContext[UserClass]].asScala
 
@@ -45,7 +41,7 @@ trait ScribeAuthSupport[UserClass >: Null <: AppAuthSession[_ <: AppUser[_]]] ex
 
   protected def sslRequired: Boolean = true
 
-  def registerOAuthService(name: String, service: OAuthService)(findOrCreateUser: OAuthToken ⇒ Validation[FieldError, UserClass]) = {
+  def registerOAuthService(name: String, service: OAuthService)(findOrCreateUser: OAuthToken ⇒ Validation[ValidationError, UserClass]) = {
     val nm = name
     val fn = findOrCreateUser
     val ctxt = new ScribeAuthStrategyContext[UserClass] {
@@ -59,7 +55,7 @@ trait ScribeAuthSupport[UserClass >: Null <: AppAuthSession[_ <: AppUser[_]]] ex
         } catch {
           case e ⇒
             e.printStackTrace()
-            SimpleError("Couldn't fetch the access token").fail[UserClass]
+            ValidationError("Couldn't fetch the access token").fail[UserClass]
         }
       }
     }
@@ -119,7 +115,7 @@ trait ScribeAuthSupport[UserClass >: Null <: AppAuthSession[_ <: AppUser[_]]] ex
     }
   }
 
-  protected def trySavingCompletedProfile(): ValidationNEL[FieldError, UserClass]
+  protected def trySavingCompletedProfile(): ValidationNEL[ValidationError, UserClass]
 
   /**
    * Registers authentication strategies.
