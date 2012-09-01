@@ -8,7 +8,7 @@ import akka.actor.ActorSystem
 import scalaz._
 import Scalaz._
 import model.Permission
-import org.scalatra.validation.{ ValidationFail, FieldName, ValidationError }
+import org.scalatra.validation.{ ValidationFail, FieldName, ValidationError, NotFound ⇒ NotFoundError }
 import org.json4s.Formats
 
 trait PermissionModelCommands {
@@ -41,7 +41,7 @@ abstract class PermissionCommand(oauth: OAuth2Extension)(implicit formats: Forma
 
 class CreatePermissionCommand(oauth: OAuth2Extension)(implicit formats: Formats) extends PermissionCommand(oauth) {
 
-  val code: Field[String] = asType[String](fieldNames.code) validateWith { _ ⇒ _ flatMap oauth.permissionDao.validate.code }
+  val code: Field[String] = asType[String](fieldNames.code).required validateWith { _ ⇒ _ flatMap oauth.permissionDao.validate.code }
 
 }
 class UpdatePermissionCommand(oauth: OAuth2Extension)(implicit formats: Formats) extends PermissionCommand(oauth) with IdFromParamsBagCommand {
@@ -50,7 +50,8 @@ class UpdatePermissionCommand(oauth: OAuth2Extension)(implicit formats: Formats)
 
   val code: Field[String] = asType[String](fieldNames.id) validateWith { _ ⇒
     _ flatMap { id ⇒
-      retrieved.map(_ ⇒ id.success[ValidationError]) | ValidationError("The permission doesn't exist", FieldName(fieldNames.id), ValidationFail).fail[String]
+      println("The id params is: %s" format id)
+      oauth.permissionDao.findOneById(id).map(_ ⇒ id.success[ValidationError]) | ValidationError("The permission doesn't exist", FieldName(fieldNames.id), NotFoundError).fail[String]
     }
   }
 }

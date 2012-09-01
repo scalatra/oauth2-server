@@ -21,7 +21,7 @@ trait CommandHandler { self: Logging ⇒
       logger.debug("Command [%s] executed %s." format (cmd.getClass.getName, res.isSuccess ? "successfully." | ftext))
       res
     } else {
-      val f = cmd.errors.map(_.value) collect {
+      val f = cmd.errors.map(_.validation) collect {
         case Failure(e) ⇒ e
       }
       logger.debug("Command [%s] executed with %d failures.\n%s" format (cmd.getClass.getName, f.size, f.toList))

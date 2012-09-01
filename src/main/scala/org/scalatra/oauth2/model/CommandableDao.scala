@@ -17,7 +17,7 @@ trait CommandableDao[ObjectType <: Product] {
       save(model)
       model.successNel
     } else {
-      val f = cmd.errors.map(_.value) collect {
+      val f = cmd.errors.map(_.validation) collect {
         case Failure(e) ⇒ e
       }
       if (f.nonEmpty) nel(f.head, f.tail: _*).fail

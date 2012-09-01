@@ -36,14 +36,14 @@ seq(webSettings:_*)
 classpathTypes ~= (_ + "orbit")
 
 libraryDependencies ++= Seq(
-  "org.scalatra"             % "scalatra"               % "2.2.0-SNAPSHOT",
-  "org.scalatra"             % "scalatra-auth"          % "2.2.0-SNAPSHOT",
-  "org.scalatra"             % "scalatra-scalate"       % "2.2.0-SNAPSHOT",
-  "org.scalatra"             % "scalatra-json"          % "2.2.0-SNAPSHOT",
-  "org.scalatra"             % "scalatra-swagger"       % "2.2.0-SNAPSHOT",
-  "org.scalatra"             % "scalatra-slf4j"         % "2.2.0-SNAPSHOT",
-  "org.scalatra"             % "scalatra-specs2"        % "2.2.0-SNAPSHOT"      % "test",
-  "org.scalatra"             % "scalatra-data-binding"  % "2.2.0-SNAPSHOT",
+//  "org.scalatra"             % "scalatra"               % "2.2.0-SNAPSHOT",
+//  "org.scalatra"             % "scalatra-auth"          % "2.2.0-SNAPSHOT",
+//  "org.scalatra"             % "scalatra-scalate"       % "2.2.0-SNAPSHOT",
+//  "org.scalatra"             % "scalatra-json"          % "2.2.0-SNAPSHOT",
+//  "org.scalatra"             % "scalatra-swagger"       % "2.2.0-SNAPSHOT",
+//  "org.scalatra"             % "scalatra-slf4j"         % "2.2.0-SNAPSHOT",
+//  "org.scalatra"             % "scalatra-specs2"        % "2.2.0-SNAPSHOT"      % "test",
+//  "org.scalatra"             % "scalatra-data-binding"  % "2.2.0-SNAPSHOT",
   "com.novus"               %% "salat"                  % "1.9.0" exclude("org.scala-lang", "scalap"),
   "org.scalaz"              %% "scalaz"                 % "6.0.4",
   "org.mozilla"              % "rhino"                  % "1.7R4",

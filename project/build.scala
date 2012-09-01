@@ -17,13 +17,14 @@ object OAuth2ServerBuild extends Build {
   def scalatra(name: String = null) =
     ProjectRef(scalatraLocation, if (name == null || name.trim.isEmpty) "scalatra" else "scalatra-" + name)
 
-  val root = (Project("oauth2-server", file(".")) )
-               // dependsOn(scalatra(""))
-               // dependsOn(scalatra("auth"))
-               // dependsOn(scalatra("lift-json"))
-               // dependsOn(scalatra("swagger"))
-               // dependsOn(scalatra("slf4j"))
-               // dependsOn(scalatra("scalate"))
-               // dependsOn(scalatra("specs2") % "test->compile"))
+  val root = (Project("oauth2-server", file(".")) //)
+               dependsOn(scalatra(""))
+               dependsOn(scalatra("auth"))
+               dependsOn(scalatra("json"))
+               dependsOn(scalatra("swagger"))
+               dependsOn(scalatra("slf4j"))
+               dependsOn(scalatra("scalate"))
+               dependsOn(scalatra("data-binding"))
+               dependsOn(scalatra("specs2") % "test->compile"))
 }
 
