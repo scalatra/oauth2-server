@@ -12,5 +12,5 @@ trait IdFromParamsBagCommand extends ForceFromParams { self: Command ⇒
 trait TokenFromParamsBagCommand extends JsonCommand with ForceFromParams { this: Command ⇒
   val namesToForce: Set[String] = Set(fieldNames.token)
 
-  val token = asType[String](fieldNames.token).notBlank
+  val token: Field[String] = asType[String](fieldNames.token).notBlank
 }

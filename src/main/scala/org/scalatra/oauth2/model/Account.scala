@@ -202,7 +202,7 @@ class AccountDao(collection: MongoCollection)(implicit system: ActorSystem)
 
   def confirm(cmd: ActivateAccountCommand): ModelValidation[Account] = {
     val key = fieldNames.confirmation + "." + fieldNames.token
-    cmd.token.value.liftFailNel flatMap { tok ⇒
+    cmd.token.validation.liftFailNel flatMap { tok ⇒
       findOne(Map(key -> tok)) map { owner ⇒
         if (!owner.isConfirmed) {
           val upd = owner.copy(confirmedAt = DateTime.now)
@@ -214,7 +214,7 @@ class AccountDao(collection: MongoCollection)(implicit system: ActorSystem)
   }
 
   def forgot(forgotCommand: ForgotCommand): ModelValidation[Account] = {
-    forgotCommand.login.value.liftFailNel flatMap { loe ⇒
+    forgotCommand.login.validation.liftFailNel flatMap { loe ⇒
       findByLoginOrEmail(loe) map { owner ⇒
         val updated = owner.copy(reset = Token(), resetAt = MinDate)
         save(updated)
@@ -227,14 +227,14 @@ class AccountDao(collection: MongoCollection)(implicit system: ActorSystem)
   /*_*/
   def resetPassword(command: ResetCommand): ModelValidation[Account] = {
     if (command.isValid) {
-      doReset(~command.token.value.toOption, ~command.password.value.toOption)
+      doReset(~command.token.value, ~command.password.value)
     } else ValidationError("Password reset failed.").failNel
   }
   /*_*/
 
   def changePassword(command: ChangePasswordCommand): ModelValidation[Account] = {
     if (command.isValid) {
-      val u = command.user.copy(password = BCryptPassword(~command.password.value.toOption).encrypted, resetAt = DateTime.now, reset = Token())
+      val u = command.user.copy(password = BCryptPassword(~command.password.value).encrypted, resetAt = DateTime.now, reset = Token())
       save(u)
       u.successNel
     } else ValidationError("Changing password failed.", org.scalatra.validation.ValidationFail).failNel

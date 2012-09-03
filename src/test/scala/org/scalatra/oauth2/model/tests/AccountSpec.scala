@@ -103,7 +103,7 @@ class AccountSpec extends AkkaSpecification { def is = sequential ^
     def resetsPassword = this {
       val reset = {
         val c = new ResetCommand(oauth, "127.0.0.1")
-        c.bindTo(Map("token" -> forgotten.reset.token, "password" -> "blah124", "passwordConfirmation" -> "blah124"))
+        c.bindTo(Map("password" -> "blah124", "passwordConfirmation" -> "blah124"), Map("token" -> Seq(forgotten.reset.token)))
         c
       }
       dao.resetPassword(reset) must beSuccess[Account]
@@ -126,7 +126,7 @@ class AccountSpec extends AkkaSpecification { def is = sequential ^
     def invalidTokenError = this {
       val reset = {
         val c = new ResetCommand(oauth, "127.0.0.1")
-        c.bindTo(Map("token" -> "plain wrong", "password" -> "blah124", "passwordConfirmation" -> "blah124"))
+        c.bindTo(Map("password" -> "blah124", "passwordConfirmation" -> "blah124"), Map("token" -> Seq("plain wrong")))
         c
       }
       dao.resetPassword(reset) must beFailure[ValidationError]
@@ -155,7 +155,7 @@ class AccountSpec extends AkkaSpecification { def is = sequential ^
     def activatesCorrectToken = this {
       val confirm = {
         val c = new ActivateAccountCommand(oauth, "127.0.0.1")
-        c.bindTo(Map("token" -> registered.confirmation.token))
+        c.bindTo(Map.empty[String, String], Map("token" -> Seq(registered.confirmation.token)))
         c
       }
       val res = dao.confirm(confirm)
@@ -168,7 +168,7 @@ class AccountSpec extends AkkaSpecification { def is = sequential ^
     def alreadyConfirmed = this {
       val confirm = {
         val c = new ActivateAccountCommand(oauth, "127.0.0.1")
-        c.bindTo(Map("token" -> registered.confirmation.token))
+        c.bindTo(Map.empty[String, String], Map("token" -> Seq(registered.confirmation.token)))
         c
       }
       dao.confirm(confirm)
@@ -179,7 +179,7 @@ class AccountSpec extends AkkaSpecification { def is = sequential ^
     def invalidTokenError = this {
       val confirm = {
         val c = new ActivateAccountCommand(oauth, "127.0.0.1")
-        c.bindTo(Map("token" -> "plain wrong"))
+        c.bindTo(Map.empty[String, String], Map("token" -> Seq("plain wrong")))
         c
       }
       dao.confirm(confirm) must beFailure[ValidationError]
@@ -277,7 +277,7 @@ class AccountSpec extends AkkaSpecification { def is = sequential ^
     def failsRegistrationEmptyPassword = this {
       val res = dao.register(reg("tommy", "aaa@bbb.com", "name", "", "password"))
       (res.isFailure must beTrue) and {
-        res.fail.toOption.get.list must haveTheSameElementsAs(nel(ValidationError("Password must be present.", FieldName("password"))).list)
+        res.fail.toOption.get.list must haveTheSameElementsAs(nel(ValidationError("Password is required.", FieldName("password"))).list)
       }
     }
     def failsRegistrationTooShortPassword = this {
@@ -298,8 +298,8 @@ class AccountSpec extends AkkaSpecification { def is = sequential ^
       val res = dao.register(reg(" ", "", "", "blah123", "password"))
       val exp = nel(
         ValidationError("Login must be present.", FieldName("login")),
-        ValidationError("Email must be present.", FieldName("email")),
-        ValidationError("Name must be present.", FieldName("name")),
+        ValidationError("Email is required.", FieldName("email")),
+        ValidationError("Name is required.", FieldName("name")),
         ValidationError("Password must match password confirmation.", FieldName("password")))
       (res.isFailure must beTrue) and {
         res.fail.toOption.get.list must haveTheSameElementsAs(exp.list)
@@ -349,7 +349,7 @@ class AccountSpec extends AkkaSpecification { def is = sequential ^
     def failsRegistrationEmptyEmail =  this {
       val res = dao.register(reg("tommy", "", "Tommy Hiltfiger", "blah123", "blah123"))
       (res.isFailure must beTrue) and {
-        res.fail.toOption.get.list must haveTheSameElementsAs(nel(ValidationError("Email must be present.", FieldName("email"))).list)
+        res.fail.toOption.get.list must haveTheSameElementsAs(nel(ValidationError("Email is required.", FieldName("email"))).list)
       }
     }
 

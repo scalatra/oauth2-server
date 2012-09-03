@@ -21,7 +21,7 @@ trait AccountModelCommands {
     modelCommand(cmd.retrieved.toOption.get)
 
   implicit def registerCommand2Model(cmd: RegisterCommand): ModelCommand[Account] = {
-    modelCommand(Account(~cmd.login.value.toOption, ~cmd.email.value.toOption, ~cmd.name.value.toOption, cmd.password.value.toOption.map(BCryptPassword(_)).orNull))
+    modelCommand(Account(~cmd.login.value, ~cmd.email.value, ~cmd.name.value, cmd.password.value.map(BCryptPassword(_)).orNull))
   }
 
 }
@@ -42,7 +42,7 @@ trait PasswordParam extends OAuth2CommandPart { this: OAuth2Command[_] ⇒
 trait RetrievingLoginParam { this: OAuth2Command[_] ⇒
 
   lazy val retrieved: FieldValidation[Account] = {
-    val r = login.value.toOption.flatMap(s ⇒ oauth.userProvider.findByLoginOrEmail(s))
+    val r = login.value.flatMap(s ⇒ oauth.userProvider.findByLoginOrEmail(s))
     r some (_.success[ValidationError]) none ValidationError("Not found").fail[Account]
   }
 
@@ -58,10 +58,10 @@ trait HasRequestIp { this: OAuth2Command[_] ⇒
 trait ConfirmedPasswordParams extends OAuth2CommandPart { this: OAuth2Command[_] ⇒
 
   val passwordConfirmation: Field[String] =
-    asType[String](fieldNames.passwordConfirmation).notBlank
+    asType[String](fieldNames.passwordConfirmation).notBlank.minLength(6)
 
   val password: Field[String] =
-    asType[String](fieldNames.password).notBlank.validForConfirmation("passwordConfirmation", ~passwordConfirmation.value.toOption)
+    asType[String](fieldNames.password).notBlank.minLength(6).validForConfirmation(passwordConfirmation)
 
 }
 
@@ -69,14 +69,14 @@ trait EmailParam extends OAuth2CommandPart { this: OAuth2Command[_] ⇒
 
   import oauth.userProvider.validations
 
-  val email: Field[String] = asType[String](fieldNames.email).validateWith(_ ⇒ _ flatMap (validations.email(_: String, None)))
+  val email: Field[String] = asType[String](fieldNames.email).required.validateWith(_ ⇒ _ flatMap (validations.email(_: String, None)))
 }
 
 trait NameParam extends OAuth2CommandPart { this: OAuth2Command[_] ⇒
 
   import oauth.userProvider.validations
 
-  val name: Field[String] = asType[String](fieldNames.name) validateWith (_ ⇒ _ flatMap (validations.name _))
+  val name: Field[String] = asType[String](fieldNames.name).notBlank
 }
 
 class LoginCommand(oauth: OAuth2Extension, getIpAddress: ⇒ String)(implicit formats: Formats) extends OAuth2Command[AuthSession](oauth) with RetrievingLoginParam with HasRequestIp {

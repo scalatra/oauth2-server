@@ -17,13 +17,13 @@ trait PermissionModelCommands {
   import BindingSyntax._
 
   implicit def createPermissionCommand2ModelCommand(cmd: CreatePermissionCommand): ModelCommand[Permission] =
-    modelCommand(Permission(~cmd.code.value.toOption, ~cmd.name.value.toOption, ~cmd.description.value.toOption, ~cmd.isSystem.value.toOption))
+    modelCommand(Permission(~cmd.code.value, ~cmd.name.value, ~cmd.description.value, ~cmd.isSystem.value))
 
   implicit def updatePermissionCommand2ModelCommand(cmd: UpdatePermissionCommand): ModelCommand[Permission] =
     modelCommand {
       (cmd.retrieved map {
-        _.copy(name = ~cmd.name.value.toOption, description = ~cmd.description.value.toOption, isSystem = ~cmd.isSystem.value.toOption)
-      }) | Permission("", ~cmd.name.value.toOption, ~cmd.description.value.toOption, ~cmd.isSystem.value.toOption)
+        _.copy(name = ~cmd.name.value, description = ~cmd.description.value, isSystem = ~cmd.isSystem.value)
+      }) | Permission("", ~cmd.name.value, ~cmd.description.value, ~cmd.isSystem.value)
     }
 }
 
@@ -46,11 +46,10 @@ class CreatePermissionCommand(oauth: OAuth2Extension)(implicit formats: Formats)
 }
 class UpdatePermissionCommand(oauth: OAuth2Extension)(implicit formats: Formats) extends PermissionCommand(oauth) with IdFromParamsBagCommand {
 
-  lazy val retrieved = oauth.permissionDao.findOneById(~code.value.toOption)
+  lazy val retrieved = oauth.permissionDao.findOneById(~code.value)
 
   val code: Field[String] = asType[String](fieldNames.id) validateWith { _ ⇒
     _ flatMap { id ⇒
-      println("The id params is: %s" format id)
       oauth.permissionDao.findOneById(id).map(_ ⇒ id.success[ValidationError]) | ValidationError("The permission doesn't exist", FieldName(fieldNames.id), NotFoundError).fail[String]
     }
   }
