@@ -8,7 +8,7 @@ import scalaz._
 import Scalaz._
 import com.mongodb.casbah.commons.conversions.scala.RegisterJodaTimeConversionHelpers
 import org.specs2.specification.After
-import org.scalatra.validation.{ValidationError, FieldName}
+import org.scalatra.validation.{ValidationFail, ValidationError, FieldName}
 import commands._
 import java.util.concurrent.atomic.AtomicInteger
 import org.junit.runner._
@@ -277,30 +277,30 @@ class AccountSpec extends AkkaSpecification { def is = sequential ^
     def failsRegistrationEmptyPassword = this {
       val res = dao.register(reg("tommy", "aaa@bbb.com", "name", "", "password"))
       (res.isFailure must beTrue) and {
-        res.fail.toOption.get.list must haveTheSameElementsAs(nel(ValidationError("Password is required.", FieldName("password"))).list)
+        res.fail.toOption.get.list must haveTheSameElementsAs(nel(ValidationError("Password is required.", FieldName("password"), ValidationFail)).list)
       }
     }
     def failsRegistrationTooShortPassword = this {
       val res = dao.register(reg("tommy", "aaa@bbb.com", "name", "abc", "password"))
        (res.isFailure must beTrue) and {
-        res.fail.toOption.get.list must haveTheSameElementsAs(nel(ValidationError("Password must be at least 6 characters long.", FieldName("password"))).list)
+        res.fail.toOption.get.list must haveTheSameElementsAs(nel(ValidationError("Password must be at least 6 characters long.", FieldName("password"), ValidationFail)).list)
       }
     }
 
     def failsRegistrationPasswordMismatch = this {
       val res = dao.register(reg("tommy", "aaa@bbb.com", "name", "blah123", "password"))
       (res.isFailure must beTrue) and {
-        res.fail.toOption.get.list must haveTheSameElementsAs(nel(ValidationError("Password must match password confirmation.", FieldName("password"))).list)
+        res.fail.toOption.get.list must haveTheSameElementsAs(nel(ValidationError("Password must match password confirmation.", FieldName("password"), ValidationFail)).list)
       }
     }
 
     def failsRegistrationAll = this {
       val res = dao.register(reg(" ", "", "", "blah123", "password"))
       val exp = nel(
-        ValidationError("Login must be present.", FieldName("login")),
-        ValidationError("Email is required.", FieldName("email")),
-        ValidationError("Name is required.", FieldName("name")),
-        ValidationError("Password must match password confirmation.", FieldName("password")))
+        ValidationError("Login must be present.", FieldName("login"), ValidationFail),
+        ValidationError("Email is required.", FieldName("email"), ValidationFail),
+        ValidationError("Name is required.", FieldName("name"), ValidationFail),
+        ValidationError("Password must match password confirmation.", FieldName("password"), ValidationFail))
       (res.isFailure must beTrue) and {
         res.fail.toOption.get.list must haveTheSameElementsAs(exp.list)
       }
@@ -328,35 +328,35 @@ class AccountSpec extends AkkaSpecification { def is = sequential ^
     def failsRegistrationEmptyLogin = this {
       val res = dao.register(reg(" ", "tommy@hiltfiger.no", "Tommy Hiltfiger", "blah123", "blah123"))
       (res.isFailure must beTrue) and {
-        res.fail.toOption.get.list must haveTheSameElementsAs(nel(ValidationError("Login must be present.", FieldName("login"))).list)
+        res.fail.toOption.get.list must haveTheSameElementsAs(nel(ValidationError("Login must be present.", FieldName("login"), ValidationFail)).list)
       }
     }
 
     def failsRegistrationMissingLogin = this {
       val res = dao.register(reg(null, "tommy@hiltfiger.no", "Tommy Hiltfiger", "blah123", "blah123"))
       (res.isFailure must beTrue) and {
-        res.fail.toOption.get.list must haveTheSameElementsAs(nel(ValidationError("Login must be present.", FieldName("login"))).list)
+        res.fail.toOption.get.list must haveTheSameElementsAs(nel(ValidationError("Login must be present.", FieldName("login"), ValidationFail)).list)
       }
     }
 
     def failsRegistrationInvalidLogin = this {
       val res = dao.register(reg("a b", "tommy@hiltfiger.no", "Tommy Hiltfiger", "blah123", "blah123"))
       (res.isFailure must beTrue) and {
-        res.fail.toOption.get.list must haveTheSameElementsAs(nel(ValidationError("Login can only contain letters, numbers, underscores and dots.", FieldName("login"))).list)
+        res.fail.toOption.get.list must haveTheSameElementsAs(nel(ValidationError("Login can only contain letters, numbers, underscores and dots.", FieldName("login"), ValidationFail)).list)
       }
     }
 
     def failsRegistrationEmptyEmail =  this {
       val res = dao.register(reg("tommy", "", "Tommy Hiltfiger", "blah123", "blah123"))
       (res.isFailure must beTrue) and {
-        res.fail.toOption.get.list must haveTheSameElementsAs(nel(ValidationError("Email is required.", FieldName("email"))).list)
+        res.fail.toOption.get.list must haveTheSameElementsAs(nel(ValidationError("Email is required.", FieldName("email"), ValidationFail)).list)
       }
     }
 
     def failsRegistrationInvalidEmail = this {
       val res = dao.register(reg("tommy", "bad", "Tommy Hiltfiger", "blah123", "blah123"))
       (res.isFailure must beTrue) and {
-        res.fail.toOption.get.list must haveTheSameElementsAs(nel(ValidationError("Email must be a valid email.", FieldName("email"))).list)
+        res.fail.toOption.get.list must haveTheSameElementsAs(nel(ValidationError("Email must be a valid email.", FieldName("email"), ValidationFail)).list)
       }
     }
   }

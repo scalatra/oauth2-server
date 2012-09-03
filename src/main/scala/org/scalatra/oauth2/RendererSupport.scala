@@ -31,7 +31,7 @@ trait RendererSupport extends LowPriorityRenderer { self: NativeJsonSupport ⇒
     case m @ ValidationError(_, _, Some(InvalidToken), _) ⇒ (3, m)
     case m @ ValidationError(_, _, Some(NotUnique), _) ⇒ (4, m)
     case m @ ValidationError(_, _, Some(AlreadyConfirmed), _) ⇒ (5, m)
-    case m @ ValidationError(_, Some(_), None, _) ⇒ (6, m)
+    case m @ ValidationError(_, Some(_), _, _) ⇒ (6, m)
     case m @ ValidationError(_, _, Some(ValidationFail), _) ⇒ (6, m)
     case m @ ValidationError(_, _, Some(BadGateway), _) ⇒ (7, m)
     case m @ ValidationError(_, _, Some(ServiceUnavailable), _) ⇒ (8, m)
@@ -52,23 +52,24 @@ trait RendererSupport extends LowPriorityRenderer { self: NativeJsonSupport ⇒
 
   protected def fieldErrorListAsActionResult(ferrs: List[ValidationError]): ActionResult = {
     // Pick the error to determine the status code
-    val err = (ferrs map errorsWithPriority.apply).sortWith(_._1 < _._1).headOption.map(_._2) getOrElse OAuth2Error.ServerError
+    val errorWithScore = (ferrs map errorsWithPriority.apply).sortWith(_._1 < _._1).headOption
+    val err = errorWithScore.map(_._2) getOrElse OAuth2Error.ServerError
     fieldError2ActionResult(err)(oauthResponseFor(ferrs))
   }
   protected def fieldError2ActionResult: PartialFunction[ValidationError, OAuth2Response ⇒ ActionResult] = {
-    case m @ ValidationError(_, _, Some(NotUnique), _) ⇒ (o: OAuth2Response) ⇒ Conflict(o)
-    case m @ ValidationError(_, Some(_), None, _) ⇒ (o: OAuth2Response) ⇒ UnprocessableEntity(o)
-    case m @ ValidationError(_, _, Some(ValidationFail), _) ⇒ (o: OAuth2Response) ⇒ UnprocessableEntity(o)
-    case m @ ValidationError(_, _, Some(UnknownError), _) ⇒ (o: OAuth2Response) ⇒ InternalServerError(o)
-    case m @ ValidationError(_, _, Some(LoginFailed), _) ⇒ (o: OAuth2Response) ⇒ Unauthorized(o)
-    case m @ ValidationError(_, _, Some(NotFound), _) ⇒ (o: OAuth2Response) ⇒ org.scalatra.NotFound(o)
-    case m @ ValidationError(_, _, Some(InvalidToken), _) ⇒ (o: OAuth2Response) ⇒ org.scalatra.NotFound(o)
-    case m @ ValidationError(_, _, Some(AlreadyConfirmed), _) ⇒ (o: OAuth2Response) ⇒ Conflict(o)
-    case m @ ValidationError(_, _, Some(BadGateway), _) ⇒ (o: OAuth2Response) ⇒ org.scalatra.BadGateway(o)
-    case m @ ValidationError(_, _, Some(NotImplemented), _) ⇒ (o: OAuth2Response) ⇒ org.scalatra.NotImplemented(o)
-    case m @ ValidationError(_, _, Some(ServiceUnavailable), _) ⇒ (o: OAuth2Response) ⇒ org.scalatra.ServiceUnavailable(o)
-    case m @ ValidationError(_, _, Some(GatewayTimeout), _) ⇒ (o: OAuth2Response) ⇒ org.scalatra.GatewayTimeout(o)
-    case m ⇒ (o: OAuth2Response) ⇒ BadRequest(o)
+    case ValidationError(_, _, Some(NotUnique), _) ⇒ (o: OAuth2Response) ⇒ Conflict(o)
+    case ValidationError(_, Some(_), _, _) ⇒ (o: OAuth2Response) ⇒ UnprocessableEntity(o)
+    case ValidationError(_, _, Some(ValidationFail), _) ⇒ (o: OAuth2Response) ⇒ UnprocessableEntity(o)
+    case ValidationError(_, _, Some(UnknownError), _) ⇒ (o: OAuth2Response) ⇒ InternalServerError(o)
+    case ValidationError(_, _, Some(LoginFailed), _) ⇒ (o: OAuth2Response) ⇒ Unauthorized(o)
+    case ValidationError(_, _, Some(NotFound), _) ⇒ (o: OAuth2Response) ⇒ org.scalatra.NotFound(o)
+    case ValidationError(_, _, Some(InvalidToken), _) ⇒ (o: OAuth2Response) ⇒ org.scalatra.NotFound(o)
+    case ValidationError(_, _, Some(AlreadyConfirmed), _) ⇒ (o: OAuth2Response) ⇒ Conflict(o)
+    case ValidationError(_, _, Some(BadGateway), _) ⇒ (o: OAuth2Response) ⇒ org.scalatra.BadGateway(o)
+    case ValidationError(_, _, Some(NotImplemented), _) ⇒ (o: OAuth2Response) ⇒ org.scalatra.NotImplemented(o)
+    case ValidationError(_, _, Some(ServiceUnavailable), _) ⇒ (o: OAuth2Response) ⇒ org.scalatra.ServiceUnavailable(o)
+    case ValidationError(_, _, Some(GatewayTimeout), _) ⇒ (o: OAuth2Response) ⇒ org.scalatra.GatewayTimeout(o)
+    case _ ⇒ (o: OAuth2Response) ⇒ BadRequest(o)
   }
 
   private def oauthResponseFor(fieldErrors: List[ValidationError]) =

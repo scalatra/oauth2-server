@@ -66,7 +66,7 @@ class PermissionCommandSpec extends AkkaSpecification { def is = sequential ^
       if (asJson) cmd.bindTo(("code" -> "blah"): JValue) else cmd.bindTo(Map("code" -> "blah"))
 
       (cmd.isValid must beFalse) and {
-        cmd.errors.filter(_.isInvalid).map(_.validation.fail.toOption.get) must haveTheSameElementsAs(List(ValidationError("Name is required.", FieldName("name"))))
+        cmd.errors.filter(_.isInvalid).map(_.validation.fail.toOption.get) must haveTheSameElementsAs(List(ValidationError("Name is required.", FieldName("name"), ValidationFail)))
       }
     }
 
@@ -74,7 +74,7 @@ class PermissionCommandSpec extends AkkaSpecification { def is = sequential ^
       if (asJson) cmd.bindTo(("name" -> "yada"): JValue) else cmd.bindTo(Map("name" -> "yada"))
 
       (cmd.isValid must beFalse) and {
-        cmd.errors.filter(_.isInvalid).map(_.validation.fail.toOption.get) must haveTheSameElementsAs(List(ValidationError("Code is required.", FieldName("code"))))
+        cmd.errors.filter(_.isInvalid).map(_.validation.fail.toOption.get) must haveTheSameElementsAs(List(ValidationError("Code is required.", FieldName("code"), ValidationFail)))
       }
     }
 
@@ -82,7 +82,7 @@ class PermissionCommandSpec extends AkkaSpecification { def is = sequential ^
       if (asJson) cmd.bindTo(("name" -> "yada") ~ ("code" -> "***"): JValue) else cmd.bindTo(Map("name" -> "yada", "code" -> "***"))
 
       (cmd.isValid must beFalse) and {
-        cmd.errors.filter(_.isInvalid).map(_.validation.fail.toOption.get) must haveTheSameElementsAs(List(ValidationError("Code can only contain letters, numbers, underscores and hyphens.", FieldName("code"))))
+        cmd.errors.filter(_.isInvalid).map(_.validation.fail.toOption.get) must haveTheSameElementsAs(List(ValidationError("Code can only contain letters, numbers, underscores and hyphens.", FieldName("code"), ValidationFail)))
       }
     }
 
@@ -96,7 +96,7 @@ class PermissionCommandSpec extends AkkaSpecification { def is = sequential ^
         cmd.bindTo(Map("name" -> "The second permission", "code" -> "first-permission"))
 
       (cmd.isValid must beFalse) and {
-        cmd.errors.filter(_.isInvalid).map(_.validation.fail.toOption.get) must haveTheSameElementsAs(List(ValidationError("Code exists already.", FieldName("code"))))
+        cmd.errors.filter(_.isInvalid).map(_.validation.fail.toOption.get) must haveTheSameElementsAs(List(ValidationError("Code exists already.", FieldName("code"), ValidationFail)))
       }
     }
 
@@ -140,7 +140,7 @@ class PermissionCommandSpec extends AkkaSpecification { def is = sequential ^
       if (asJson) cmd.bindTo(JNothing: JValue, idParam) else cmd.bindTo(Map("id" -> "first-permission"), idParam)
 
       (cmd.isValid must beFalse) and {
-        cmd.errors.filter(_.isInvalid).map(_.validation.fail.toOption.get) must haveTheSameElementsAs(List(ValidationError("Name is required.", FieldName("name"))))
+        cmd.errors.filter(_.isInvalid).map(_.validation.fail.toOption.get) must haveTheSameElementsAs(List(ValidationError("Name is required.", FieldName("name"), ValidationFail)))
       }
     }
 

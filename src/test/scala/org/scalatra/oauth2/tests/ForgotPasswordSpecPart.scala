@@ -14,24 +14,24 @@ trait ForgotPasswordSpecPart { this: HomeServletSpec ⇒
       "shows a reset form if unauthenticated" ! renderAngular("/forgot") ^
       "when posting to /forgot" ^
       "for invalid data" ^
-      "returns status 422" ! invalidForgot(Map("login" -> ""), checkStatus = true) ^
-      "return error messages in response" ! invalidForgot(Map("login" -> "bl"), checkStatus = false) ^ bt ^
-      "for valid data" ^
-      "changes the reset token" ! validForgot(json = true) ^
-      "redirects to /login for a html request" ! validForgot(json = false) ^ bt ^ bt ^ p ^
-      "when getting /reset" ^
-      "returns 404 when token is missing" ! resetWithMissingToken() ^
-      "redirects to / if authenticated" ! redirectAuthenticated("/reset") ^
-      "shows a reset form if unauthenticated" ! resetGetValidToken() ^
-      "when posting to /reset" ^
-      "fail for a missing token" ! resetWithMissingToken("post") ^
-      "with invalid data" ^
-      "return status 422" ! resetInvalidData(checkStatus = true) ^
-      "return error messages in response" ! resetInvalidData(checkStatus = false) ^ bt ^
-      "with valid data" ^
-      "changes the password" ! resetChangesPassword() ^
-      "redirects to authenticated for a html request" ! resetSucceeds(json = false) ^
-      "returns the user json for a json request" ! resetSucceeds(json = true) ^ bt ^ bt ^ p
+      "returns status 422" ! invalidForgot(Map("login" -> ""), checkStatus = true) //^
+  "return error messages in response" ! invalidForgot(Map("login" -> "bl"), checkStatus = false) ^ bt ^
+    "for valid data" ^
+    "changes the reset token" ! validForgot(json = true) ^
+    "redirects to /login for a html request" ! validForgot(json = false) ^ bt ^ bt ^ p ^
+    "when getting /reset" ^
+    "returns 404 when token is missing" ! resetWithMissingToken() ^
+    "redirects to / if authenticated" ! redirectAuthenticated("/reset") ^
+    "shows a reset form if unauthenticated" ! resetGetValidToken() ^
+    "when posting to /reset" ^
+    "fail for a missing token" ! resetWithMissingToken("post") ^
+    "with invalid data" ^
+    "return status 422" ! resetInvalidData(checkStatus = true) ^
+    "return error messages in response" ! resetInvalidData(checkStatus = false) ^ bt ^
+    "with valid data" ^
+    "changes the password" ! resetChangesPassword() ^
+    "redirects to authenticated for a html request" ! resetSucceeds(json = false) ^
+    "returns the user json for a json request" ! resetSucceeds(json = true) ^ bt ^ bt ^ p
 
   def createResetAccount() = {
     clearDB
