@@ -234,7 +234,7 @@ seq(uniqueVersionSettings:_*)
 
 uniqueVersion := true
 
-seq(pomGenSettings:_*)
+// seq(pomGenSettings:_*)
 
 seq(jelasticSettings:_*)
 

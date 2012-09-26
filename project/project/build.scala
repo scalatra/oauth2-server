@@ -8,7 +8,7 @@ object PluginsBuild extends Build {
   val startScript = uri("git://github.com/casualjim/xsbt-start-script-plugin.git#59230926295fdf17f588bb37ab7fc2e9b98ffc11")
 //  val sbtRequireJs = uri("git://github.com/scalatra/sbt-requirejs")
 //  val sbtRequireJs = file("/Users/ivan/projects/sbt-requirejs")
-  lazy val root = Project("plugins", file(".")).dependsOn(sbtGenPom).dependsOn(scct).dependsOn(startScript) //.dependsOn(sbtRequireJs) //settings (scalacOptions += "-deprecation")
+  lazy val root = Project("plugins", file(".")).dependsOn(scct).dependsOn(startScript) //.dependsOn(sbtRequireJs) //settings (scalacOptions += "-deprecation")
 
 //  lazy val scalateGenerate = ProjectRef(uri("git://github.com/mojolly/xsbt-scalate-generate.git"), "xsbt-scalate-generator")
 }

@@ -12,7 +12,6 @@ import JsonDSL._
 import com.mongodb.casbah.WriteConcern
 import org.junit.runner._
 import org.specs2.runner._
-import databinding.JsonBindingImports
 import util.{MultiMap, ParamsValueReaderProperties}
 
 @RunWith(classOf[JUnitRunner])
@@ -53,12 +52,11 @@ class PermissionCommandSpec extends AkkaSpecification { def is = sequential ^
     val dao: PermissionDao = new PermissionDao(coll)
 
     implicit val jsonFormats: Formats = new OAuth2Formats
-    val imports = new JsonBindingImports
+
   }
 
   class CreatePermissionCommandSpecContext(asJson: Boolean) extends PermissionCommandSpecContext(asJson) {
 
-    import imports._
 
     val cmd = new CreatePermissionCommand(OAuth2Extension(system))
 
@@ -127,7 +125,6 @@ class PermissionCommandSpec extends AkkaSpecification { def is = sequential ^
 
   class UpdatePermissionCommandSpecContext(asJson: Boolean) extends PermissionCommandSpecContext(asJson) {
 
-    import imports._
     val cmd = new UpdatePermissionCommand(OAuth2Extension(system))
     val first = Permission("first-permission", "The first permission", "")
     dao.save(first, WriteConcern.Safe)

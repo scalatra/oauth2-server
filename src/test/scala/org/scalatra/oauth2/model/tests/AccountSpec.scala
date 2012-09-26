@@ -16,7 +16,6 @@ import org.specs2.runner._
 import org.json4s.native
 import util.ParamsValueReaderProperties
 import org.scalatra.json.NativeJsonValueReaderProperty
-import databinding.JsonBindingImports
 
 @RunWith(classOf[JUnitRunner])
 class AccountSpec extends AkkaSpecification { def is = sequential ^
@@ -69,7 +68,6 @@ class AccountSpec extends AkkaSpecification { def is = sequential ^
     dao.collection.drop()
     implicit val jsonFormats = new OAuth2Formats
     
-    val imports = new JsonBindingImports
 
     def after = {
 
@@ -78,7 +76,6 @@ class AccountSpec extends AkkaSpecification { def is = sequential ^
   }
 
   class ResetPasswordSpecContext extends AccountSpecContextBase {
-    import imports._
     val cmd = {
       val c = new RegisterCommand(oauth, "127.0.0.1")
       c.bindTo(
@@ -135,7 +132,6 @@ class AccountSpec extends AkkaSpecification { def is = sequential ^
   }
 
   class ActivationSpecContext extends AccountSpecContextBase {
-    import imports._
     val cmd = {
       val c = new RegisterCommand(oauth, "127.0.0.1")
       c.bindTo(
@@ -188,7 +184,6 @@ class AccountSpec extends AkkaSpecification { def is = sequential ^
 
   class LoginSpecContext extends AccountSpecContextBase {
 
-    import imports._
     val cmd = {
       val c = new RegisterCommand(oauth, "127.0.0.1")
       c.bindTo(
@@ -245,7 +240,7 @@ class AccountSpec extends AkkaSpecification { def is = sequential ^
   }
 
   class RegistrationSpecContext extends AccountSpecContextBase {
-    import imports._
+
     def reg(login: String, email: String, name: String, password: String, passwordConfirmation: String) = {
       val c = new RegisterCommand(oauth, "127.0.0.1")
       c.bindTo(
